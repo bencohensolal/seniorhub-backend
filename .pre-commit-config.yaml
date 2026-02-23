@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: agents-proof-check
+        name: agents proof freshness check
+        entry: python3 scripts/agents_proof.py --check
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Node
+api/node_modules/
+
+# Build outputs
+api/dist/
+
+# Env files
+api/.env
+api/.env.local
+api/.env.*
+!api/.env.example
+
+# Logs
+*.log
+
+# OS/editor
+.DS_Store
+.vscode/
