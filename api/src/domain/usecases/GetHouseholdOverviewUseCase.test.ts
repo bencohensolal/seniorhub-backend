@@ -9,7 +9,7 @@ describe('GetHouseholdOverviewUseCase', () => {
 
     const result = await useCase.execute({
       householdId: 'household-1',
-      requesterMemberId: 'member-2',
+      requesterUserId: 'user-2',
     });
 
     expect(result.household.id).toBe('household-1');
@@ -21,7 +21,7 @@ describe('GetHouseholdOverviewUseCase', () => {
     const useCase = new GetHouseholdOverviewUseCase(repository);
 
     await expect(
-      useCase.execute({ householdId: 'household-1', requesterMemberId: 'member-999' }),
+      useCase.execute({ householdId: 'household-1', requesterUserId: 'user-999' }),
     ).rejects.toThrow('Access denied to this household.');
   });
 });

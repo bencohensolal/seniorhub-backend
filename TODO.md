@@ -25,36 +25,36 @@
 
 ### 2) Domain rules
 
-- [ ] Household creator is automatically added as `caregiver` member (`active`)
-- [ ] Invitations can only be sent by household caregivers (or owner)
-- [ ] Invitation role is pre-assigned and immutable at acceptance time
-- [ ] Accepting invitation creates/activates membership with assigned role (no role prompt)
-- [ ] If invite is accepted after expiration, return explicit actionable error
-- [ ] Joining without deep-link token should resolve pending invitation by authenticated user email
+- [x] Household creator is automatically added as `caregiver` member (`active`)
+- [x] Invitations can only be sent by household caregivers (or owner)
+- [x] Invitation role is pre-assigned and immutable at acceptance time
+- [x] Accepting invitation creates/activates membership with assigned role (no role prompt)
+- [x] If invite is accepted after expiration, return explicit actionable error
+- [x] Joining without deep-link token should resolve pending invitation by authenticated user email
 
 ### 3) API endpoints
 
-- [ ] `POST /households`
-	- [ ] body: `{ name: string }`
-	- [ ] behavior: create household + add authenticated user as caregiver
+- [x] `POST /households`
+	- [x] body: `{ name: string }`
+	- [x] behavior: create household + add authenticated user as caregiver
 
-- [ ] `POST /households/:householdId/invitations/bulk`
-	- [ ] body: `{ users: [{ firstName, lastName, email, role }] }`
-	- [ ] behavior: validate payload, create invitations, send emails asynchronously
-	- [ ] response: accepted count, skipped duplicates, per-user errors
+- [x] `POST /households/:householdId/invitations/bulk`
+	- [x] body: `{ users: [{ firstName, lastName, email, role }] }`
+	- [x] behavior: validate payload, create invitations, send emails asynchronously
+	- [x] response: accepted count, skipped duplicates, per-user errors
 
-- [ ] `GET /households/invitations/my-pending`
-	- [ ] behavior: list pending invitations for authenticated email
-	- [ ] use case: app flow when user is not coming from deep link
+- [x] `GET /households/invitations/my-pending`
+	- [x] behavior: list pending invitations for authenticated email
+	- [x] use case: app flow when user is not coming from deep link
 
-- [ ] `GET /households/invitations/resolve?token=...`
-	- [ ] behavior: validate token and return invitation summary (household, inviter, assigned role)
-	- [ ] do not expose sensitive data beyond what UI needs
+- [x] `GET /households/invitations/resolve?token=...`
+	- [x] behavior: validate token and return invitation summary (household, inviter, assigned role)
+	- [x] do not expose sensitive data beyond what UI needs
 
-- [ ] `POST /households/invitations/accept`
-	- [ ] body: `{ token?: string, invitationId?: string }`
-	- [ ] behavior: accept by token OR by selected pending invitation
-	- [ ] response: final role + household context for app bootstrap
+- [x] `POST /households/invitations/accept`
+	- [x] body: `{ token?: string, invitationId?: string }`
+	- [x] behavior: accept by token OR by selected pending invitation
+	- [x] response: final role + household context for app bootstrap
 
 ### 4) Email invitation system
 
@@ -68,8 +68,8 @@
 
 ### 5) Security, privacy, and compliance
 
-- [ ] Rate-limit invitation creation endpoints
-- [ ] Enforce strict role validation (`senior`, `caregiver`) server-side
+- [x] Rate-limit invitation creation endpoints
+- [x] Enforce strict role validation (`senior`, `caregiver`) server-side
 - [ ] Audit log for invitation creation, acceptance, cancellation
 - [ ] Never leak whether an arbitrary email exists as an account
 - [ ] Redact personal data in logs (email partial masking)
@@ -83,7 +83,7 @@
 	- [ ] deep-link token resolves assigned role without profile selection
 	- [ ] accept by email pending invitation when no token provided
 	- [ ] expired token and duplicate acceptance are handled correctly
-- [ ] Auth/access tests for caregiver-only invitation endpoints
+- [x] Auth/access tests for caregiver-only invitation endpoints
 
 ### 7) API contract & docs
 
