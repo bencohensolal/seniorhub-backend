@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { householdsRoutes } from './routes/households.js';
+import { authContextPlugin } from './plugins/authContext.js';
 
 export const buildApp = () => {
   const app = Fastify({ logger: true });
@@ -8,6 +9,7 @@ export const buildApp = () => {
     return { status: 'ok' };
   });
 
+  app.register(authContextPlugin);
   app.register(householdsRoutes);
 
   return app;
