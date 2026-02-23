@@ -15,6 +15,7 @@ Build a robust API platform that can:
 - Node.js + TypeScript
 - Fastify
 - Zod for request validation
+- OpenAPI via Fastify Swagger
 - Vitest for unit testing
 
 ## Engineering principles
@@ -67,6 +68,11 @@ cd api
 npm run migrate
 ```
 
+## OpenAPI contract
+
+- Swagger UI: `GET /docs`
+- OpenAPI JSON: `GET /documentation/json`
+
 ## Install contribution hooks
 
 ```bash
@@ -102,7 +108,9 @@ python3 scripts/agents_proof.py --refresh
 - `GET /v1/households/invitations/my-pending`
 - `GET /v1/households/invitations/resolve?token=<token>`
 - `POST /v1/households/invitations/accept`
+- `POST /v1/households/:householdId/invitations/:invitationId/cancel`
 - `GET /v1/households/:householdId/overview`
+- `GET /v1/observability/invitations/email-metrics`
 
 Authentication context is currently provided through headers:
 
@@ -110,6 +118,20 @@ Authentication context is currently provided through headers:
 - `x-user-email`
 - `x-user-first-name`
 - `x-user-last-name`
+
+All non-health endpoints require these headers. Missing authentication context returns `401`.
+
+## Mobile integration notes
+
+- Invitation deep-link format:
+	- `seniorhub://invite?type=household-invite&token=<signed_token>`
+- Optional web fallback:
+	- configure `INVITATION_WEB_FALLBACK_URL` in `api/.env`
+	- API returns both `deepLinkUrl` and `fallbackUrl` in invitation deliveries
+- Invitation acceptance supports:
+	- direct token (`POST /v1/households/invitations/accept` with `{ token }`)
+	- selected invitation id (`{ invitationId }`)
+	- email-based pending selection (`{}` with authenticated invitee email)
 
 ## Governance checklist
 

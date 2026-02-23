@@ -3,9 +3,9 @@
 ## Immediate priorities
 
 - [x] Add persistent repository implementation (PostgreSQL)
-- [ ] Add auth middleware and role-based guards
-- [ ] Add OpenAPI generation for API contracts
-- [ ] Add CI pipeline (lint, typecheck, tests)
+- [x] Add auth middleware and role-based guards
+- [x] Add OpenAPI generation for API contracts
+- [x] Add CI pipeline (lint, typecheck, tests)
 
 ## Household onboarding API (mobile-first flow)
 
@@ -58,35 +58,35 @@
 
 ### 4) Email invitation system
 
-- [ ] Add invitation email template (simple, high-readability copy)
-- [ ] Generate signed single-use invitation token (store hash only)
-- [ ] Build deep link URL for app:
-	- [ ] `seniorhub://invite?type=household-invite&token=...`
-	- [ ] optional web fallback if app not installed
-- [ ] Add background job/retry for email provider failures
-- [ ] Track delivery/send failures and expose observability metrics
+- [x] Add invitation email template (simple, high-readability copy)
+- [x] Generate signed single-use invitation token (store hash only)
+- [x] Build deep link URL for app:
+	- [x] `seniorhub://invite?type=household-invite&token=...`
+	- [x] optional web fallback if app not installed
+- [x] Add background job/retry for email provider failures
+- [x] Track delivery/send failures and expose observability metrics
 
 ### 5) Security, privacy, and compliance
 
 - [x] Rate-limit invitation creation endpoints
 - [x] Enforce strict role validation (`senior`, `caregiver`) server-side
-- [ ] Audit log for invitation creation, acceptance, cancellation
-- [ ] Never leak whether an arbitrary email exists as an account
-- [ ] Redact personal data in logs (email partial masking)
+- [x] Audit log for invitation creation, acceptance, cancellation
+- [x] Never leak whether an arbitrary email exists as an account
+- [x] Redact personal data in logs (email partial masking)
 
 ### 6) Tests
 
-- [ ] Unit tests for invitation lifecycle domain rules
-- [ ] Integration tests:
-	- [ ] creator becomes caregiver automatically
-	- [ ] bulk invite creates records and triggers email job
-	- [ ] deep-link token resolves assigned role without profile selection
-	- [ ] accept by email pending invitation when no token provided
-	- [ ] expired token and duplicate acceptance are handled correctly
+- [x] Unit tests for invitation lifecycle domain rules
+- [x] Integration tests:
+	- [x] creator becomes caregiver automatically
+	- [x] bulk invite creates records and triggers email job
+	- [x] deep-link token resolves assigned role without profile selection
+	- [x] accept by email pending invitation when no token provided
+	- [x] expired token and duplicate acceptance are handled correctly
 - [x] Auth/access tests for caregiver-only invitation endpoints
 
 ### 7) API contract & docs
 
-- [ ] Document onboarding endpoints and payloads in OpenAPI
-- [ ] Add sequence diagram in backend docs (create household, invite, accept)
-- [ ] Provide mobile integration notes for deep-link and fallback flow
+- [x] Document onboarding endpoints and payloads in OpenAPI
+- [x] Add sequence diagram in backend docs (create household, invite, accept)
+- [x] Provide mobile integration notes for deep-link and fallback flow

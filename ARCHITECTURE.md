@@ -90,3 +90,35 @@ flowchart TB
 - runtime repository selection is handled by `data/repositories/createHouseholdRepository.ts`
 - PostgreSQL schema is versioned in `api/migrations/*.sql`
 - migration execution uses `npm run migrate` and stores applied versions in `schema_migrations`
+
+## 11. Onboarding sequence (create household, invite, accept)
+
+```mermaid
+sequenceDiagram
+  participant M as Mobile App
+  participant API as SeniorHub API
+  participant DB as PostgreSQL
+  participant Q as Email Queue
+
+  M->>API: POST /v1/households
+  API->>DB: create household + caregiver membership
+  DB-->>API: household created
+  API-->>M: household context
+
+  M->>API: POST /v1/households/:id/invitations/bulk
+  API->>DB: persist invitation(s) with token hash
+  API->>DB: write invitation_created audit event(s)
+  API->>Q: enqueue invitation email jobs
+  API-->>M: accepted/skipped/errors + deepLink/fallback URLs
+
+  M->>API: POST /v1/households/invitations/accept
+  API->>DB: validate pending invitation, activate membership
+  API->>DB: write invitation_accepted audit event
+  API-->>M: final household + role context
+```
+
+## 12. Contracts and observability
+
+- OpenAPI is generated and exposed through Fastify Swagger (`/docs`, `/documentation/json`)
+- invitation email delivery metrics are exposed at `GET /v1/observability/invitations/email-metrics`
+- audit events are persisted in `audit_events` for invitation create/accept/cancel actions
