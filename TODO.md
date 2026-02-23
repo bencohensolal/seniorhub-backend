@@ -2,7 +2,7 @@
 
 ## Immediate priorities
 
-- [ ] Add persistent repository implementation (PostgreSQL)
+- [x] Add persistent repository implementation (PostgreSQL)
 - [ ] Add auth middleware and role-based guards
 - [ ] Add OpenAPI generation for API contracts
 - [ ] Add CI pipeline (lint, typecheck, tests)
@@ -11,17 +11,17 @@
 
 ### 1) Data model & migrations
 
-- [ ] Add `households` table (`id`, `name`, `created_by_user_id`, `created_at`, `updated_at`)
-- [ ] Add `household_members` table (`id`, `household_id`, `user_id`, `role`, `status`, `joined_at`, `created_at`)
-- [ ] Add `household_invitations` table:
-	- [ ] `id`, `household_id`, `inviter_user_id`, `invitee_email`, `invitee_first_name`, `invitee_last_name`
-	- [ ] `assigned_role` (`senior` | `caregiver`)
-	- [ ] `token_hash`, `token_expires_at`, `status` (`pending` | `accepted` | `expired` | `cancelled`)
-	- [ ] `created_at`, `accepted_at`
-- [ ] Add unique constraints and indexes:
-	- [ ] one active membership per user per household
-	- [ ] indexes on `invitee_email`, `status`, `token_expires_at`
-	- [ ] prevent duplicate pending invitation for same `household + email + role`
+- [x] Add `households` table (`id`, `name`, `created_by_user_id`, `created_at`, `updated_at`)
+- [x] Add `household_members` table (`id`, `household_id`, `user_id`, `role`, `status`, `joined_at`, `created_at`)
+- [x] Add `household_invitations` table:
+	- [x] `id`, `household_id`, `inviter_user_id`, `invitee_email`, `invitee_first_name`, `invitee_last_name`
+	- [x] `assigned_role` (`senior` | `caregiver`)
+	- [x] `token_hash`, `token_expires_at`, `status` (`pending` | `accepted` | `expired` | `cancelled`)
+	- [x] `created_at`, `accepted_at`
+- [x] Add unique constraints and indexes:
+	- [x] one active membership per user per household
+	- [x] indexes on `invitee_email`, `status`, `token_expires_at`
+	- [x] prevent duplicate pending invitation for same `household + email + role`
 
 ### 2) Domain rules
 

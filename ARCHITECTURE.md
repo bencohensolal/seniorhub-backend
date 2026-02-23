@@ -78,6 +78,15 @@ flowchart TB
 
 ## 9. Near-term decisions
 
-- persistent storage strategy (PostgreSQL + migration tool)
+- persistence is implemented with a driver switch:
+  - `in-memory` for lightweight local development
+  - `postgres` for persistent household/membership/invitation data
 - auth integration strategy (JWT/session)
 - audit trail model for sensitive mutations
+
+## 10. Persistence and migrations
+
+- DB access is encapsulated in `data/repositories/PostgresHouseholdRepository.ts`
+- runtime repository selection is handled by `data/repositories/createHouseholdRepository.ts`
+- PostgreSQL schema is versioned in `api/migrations/*.sql`
+- migration execution uses `npm run migrate` and stores applied versions in `schema_migrations`

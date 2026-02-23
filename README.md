@@ -44,6 +44,29 @@ npm run dev
 
 API will run on `http://localhost:4000` by default.
 
+## Persistence configuration
+
+By default, API routes use in-memory repositories.
+
+To enable PostgreSQL persistence:
+
+```bash
+cd api
+cp .env.example .env
+```
+
+Set:
+
+- `PERSISTENCE_DRIVER=postgres`
+- `DATABASE_URL=postgres://<user>:<password>@<host>:<port>/<database>`
+
+Then run migrations:
+
+```bash
+cd api
+npm run migrate
+```
+
 ## Install contribution hooks
 
 ```bash
@@ -74,9 +97,19 @@ python3 scripts/agents_proof.py --refresh
 ## API baseline endpoint
 
 - `GET /health`
-- `GET /v1/households/:householdId/overview?requesterMemberId=<id>`
+- `POST /v1/households`
+- `POST /v1/households/:householdId/invitations/bulk`
+- `GET /v1/households/invitations/my-pending`
+- `GET /v1/households/invitations/resolve?token=<token>`
+- `POST /v1/households/invitations/accept`
+- `GET /v1/households/:householdId/overview`
 
-Both endpoints currently use in-memory data; persistence is planned in the next milestones.
+Authentication context is currently provided through headers:
+
+- `x-user-id`
+- `x-user-email`
+- `x-user-first-name`
+- `x-user-last-name`
 
 ## Governance checklist
 
