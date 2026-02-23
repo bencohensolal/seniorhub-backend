@@ -4,9 +4,9 @@ import type { HouseholdRepository } from '../repositories/HouseholdRepository.js
 export class GetHouseholdOverviewUseCase {
   constructor(private readonly repository: HouseholdRepository) {}
 
-  async execute(input: { householdId: string; requesterMemberId: string }): Promise<HouseholdOverview> {
-    const member = await this.repository.findMemberInHousehold(
-      input.requesterMemberId,
+  async execute(input: { householdId: string; requesterUserId: string }): Promise<HouseholdOverview> {
+    const member = await this.repository.findActiveMemberByUserInHousehold(
+      input.requesterUserId,
       input.householdId,
     );
 
