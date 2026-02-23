@@ -6,7 +6,7 @@ import { CreateHouseholdUseCase } from '../domain/usecases/CreateHouseholdUseCas
 import { GetHouseholdOverviewUseCase } from '../domain/usecases/GetHouseholdOverviewUseCase.js';
 import { ListPendingInvitationsUseCase } from '../domain/usecases/ListPendingInvitationsUseCase.js';
 import { ResolveInvitationUseCase } from '../domain/usecases/ResolveInvitationUseCase.js';
-import { InMemoryHouseholdRepository } from '../data/repositories/InMemoryHouseholdRepository.js';
+import { createHouseholdRepository } from '../data/repositories/createHouseholdRepository.js';
 
 const paramsSchema = z.object({
   householdId: z.string().min(1),
@@ -88,7 +88,7 @@ const sanitizeInvitation = (invitation: {
 });
 
 export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
-  const repository = new InMemoryHouseholdRepository();
+  const repository = createHouseholdRepository();
   const getHouseholdOverviewUseCase = new GetHouseholdOverviewUseCase(repository);
   const createHouseholdUseCase = new CreateHouseholdUseCase(repository);
   const createBulkInvitationsUseCase = new CreateBulkInvitationsUseCase(repository);
