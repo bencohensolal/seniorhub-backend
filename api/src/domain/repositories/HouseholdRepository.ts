@@ -1,7 +1,7 @@
 import type { HouseholdOverview } from '../entities/Household.js';
 import type { Member } from '../entities/Member.js';
 import type { Household, AuthenticatedRequester } from '../entities/Household.js';
-import type { HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
+import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
 import type { HouseholdRole } from '../entities/Member.js';
 
 export interface InvitationCandidate {
@@ -35,4 +35,10 @@ export interface HouseholdRepository {
     token?: string;
     invitationId?: string;
   }): Promise<{ householdId: string; role: HouseholdRole }>;
+  cancelInvitation(input: {
+    householdId: string;
+    invitationId: string;
+    requesterUserId: string;
+  }): Promise<void>;
+  logAuditEvent(input: AuditEventInput): Promise<void>;
 }

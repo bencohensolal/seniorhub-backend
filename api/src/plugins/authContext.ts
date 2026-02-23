@@ -1,16 +1,19 @@
 import type { FastifyPluginAsync } from 'fastify';
 
-const normalize = (value: string | undefined, fallback: string): string =>
-  value && value.trim().length > 0 ? value.trim() : fallback;
+const normalize = (value: string | undefined): string => (value && value.trim().length > 0 ? value.trim() : '');
 
 export const authContextPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', async (request, reply) => {
-    const userId = normalize(request.headers['x-user-id'] as string | undefined, 'user-2');
-    const email = normalize(request.headers['x-user-email'] as string | undefined, 'ben@example.com');
-    const firstName = normalize(request.headers['x-user-first-name'] as string | undefined, 'Ben');
-    const lastName = normalize(request.headers['x-user-last-name'] as string | undefined, 'Martin');
+    if (request.url === '/health') {
+      return;
+    }
 
-    if (!userId || !email) {
+    const userId = normalize(request.headers['x-user-id'] as string | undefined);
+    const email = normalize(request.headers['x-user-email'] as string | undefined);
+    const firstName = normalize(request.headers['x-user-first-name'] as string | undefined);
+    const lastName = normalize(request.headers['x-user-last-name'] as string | undefined);
+
+    if (!userId || !email || !firstName || !lastName) {
       return reply.status(401).send({
         status: 'error',
         message: 'Authentication context is missing.',

@@ -21,5 +21,25 @@ export interface InvitationDeliveryResult {
   invitationId: string;
   inviteeEmail: string;
   status: 'sent' | 'failed';
+  deepLinkUrl: string;
+  fallbackUrl: string | null;
   reason: string | null;
+}
+
+export interface AuditEvent {
+  id: string;
+  householdId: string;
+  actorUserId: string;
+  action: 'invitation_created' | 'invitation_accepted' | 'invitation_cancelled';
+  targetId: string;
+  metadata: Record<string, string>;
+  createdAt: string;
+}
+
+export interface AuditEventInput {
+  householdId: string;
+  actorUserId: string;
+  action: 'invitation_created' | 'invitation_accepted' | 'invitation_cancelled';
+  targetId: string;
+  metadata: Record<string, string>;
 }

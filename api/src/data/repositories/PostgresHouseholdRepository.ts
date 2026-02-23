@@ -1,8 +1,11 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
+import { env } from '../../config/env.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
-import type { HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import type { AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
+import { isInvitationTokenValid, signInvitationToken } from '../../domain/security/invitationToken.js';
+import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
 import type {
   BulkInvitationResult,
   HouseholdRepository,
@@ -263,15 +266,15 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       if (memberCheck.rowCount && memberCheck.rowCount > 0) {
         result.perUserErrors.push({
           email,
-          reason: 'User is already an active household member.',
+          reason: 'Invitation cannot be created for this recipient.',
         });
         continue;
       }
 
-      const token = randomBytes(24).toString('hex');
       const createdAt = nowIso();
       const tokenExpiresAt = addHours(createdAt, INVITATION_TTL_HOURS);
       const invitationId = randomUUID();
+      const token = signInvitationToken(invitationId, env.TOKEN_SIGNING_SECRET);
 
       await this.pool.query(
         `INSERT INTO household_invitations
@@ -293,12 +296,20 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       );
 
       result.acceptedCount += 1;
-      const deepLink = `seniorhub://invite?type=household-invite&token=${token}`;
+      const links = buildInvitationLinks({
+        token,
+        ...(env.INVITATION_WEB_FALLBACK_URL
+          ? { fallbackBaseUrl: env.INVITATION_WEB_FALLBACK_URL }
+          : {}),
+      });
+
       result.deliveries.push({
         invitationId,
         inviteeEmail: email,
         status: 'sent',
-        reason: `deepLink=${deepLink}`,
+        deepLinkUrl: links.deepLinkUrl,
+        fallbackUrl: links.fallbackUrl,
+        reason: null,
       });
     }
 
@@ -344,6 +355,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   }
 
   async resolveInvitationByToken(token: string): Promise<HouseholdInvitation | null> {
+    if (!isInvitationTokenValid(token, env.TOKEN_SIGNING_SECRET)) {
+      return null;
+    }
+
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -397,6 +412,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     let transactionCommitted = false;
 
     try {
+      if (input.token && !isInvitationTokenValid(input.token, env.TOKEN_SIGNING_SECRET)) {
+        throw new Error('Invitation not found.');
+      }
+
       const normalizedEmail = normalizeEmail(input.requester.email);
       await client.query('BEGIN');
 
@@ -473,6 +492,75 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     } finally {
       client.release();
     }
+  }
+
+  async cancelInvitation(input: {
+    householdId: string;
+    invitationId: string;
+    requesterUserId: string;
+  }): Promise<void> {
+    const client = await this.pool.connect();
+    let transactionCommitted = false;
+
+    try {
+      await client.query('BEGIN');
+
+      const requester = await client.query<{ role: HouseholdRole }>(
+        `SELECT role
+         FROM household_members
+         WHERE household_id = $1 AND user_id = $2 AND status = 'active'
+         LIMIT 1`,
+        [input.householdId, input.requesterUserId],
+      );
+
+      const requesterRole = requester.rows[0]?.role;
+      if (requesterRole !== 'caregiver') {
+        throw new Error('Only caregivers can cancel invitations.');
+      }
+
+      const invitation = await client.query<{ id: string; status: 'pending' | 'accepted' | 'expired' | 'cancelled' }>(
+        `SELECT id, status
+         FROM household_invitations
+         WHERE id = $1 AND household_id = $2
+         LIMIT 1
+         FOR UPDATE`,
+        [input.invitationId, input.householdId],
+      );
+
+      const invitationRow = invitation.rows[0];
+      if (!invitationRow) {
+        throw new Error('Invitation not found.');
+      }
+
+      if (invitationRow.status !== 'pending') {
+        throw new Error('Invitation is not pending.');
+      }
+
+      await client.query(
+        `UPDATE household_invitations
+         SET status = 'cancelled'
+         WHERE id = $1`,
+        [invitationRow.id],
+      );
+
+      await client.query('COMMIT');
+      transactionCommitted = true;
+    } catch (error) {
+      if (!transactionCommitted) {
+        await client.query('ROLLBACK');
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async logAuditEvent(input: AuditEventInput): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO audit_events (id, household_id, actor_user_id, action, target_id, metadata, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)`,
+      [randomUUID(), input.householdId, input.actorUserId, input.action, input.targetId, JSON.stringify(input.metadata), nowIso()],
+    );
   }
 
   private async findInvitationForAccept(

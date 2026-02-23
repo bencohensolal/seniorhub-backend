@@ -1,7 +1,10 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { env } from '../../config/env.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
-import type { HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import type { AuditEvent, AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
 import type { Member } from '../../domain/entities/Member.js';
+import { signInvitationToken, isInvitationTokenValid } from '../../domain/security/invitationToken.js';
+import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
 import type {
   BulkInvitationResult,
   HouseholdRepository,
@@ -65,6 +68,7 @@ const members: Member[] = [
 ];
 
 const invitations: HouseholdInvitation[] = [];
+const auditEvents: AuditEvent[] = [];
 
 export class InMemoryHouseholdRepository implements HouseholdRepository {
   async getOverviewById(householdId: string): Promise<HouseholdOverview | null> {
@@ -170,15 +174,16 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       if (activeMember) {
         result.perUserErrors.push({
           email,
-          reason: 'User is already an active household member.',
+          reason: 'Invitation cannot be created for this recipient.',
         });
         continue;
       }
 
-      const token = randomBytes(24).toString('hex');
       const createdAt = nowIso();
+      const invitationId = randomUUID();
+      const token = signInvitationToken(invitationId, env.TOKEN_SIGNING_SECRET);
       const invitation: HouseholdInvitation = {
-        id: randomUUID(),
+        id: invitationId,
         householdId: input.householdId,
         inviterUserId: input.inviterUserId,
         inviteeEmail: email,
@@ -195,12 +200,20 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       invitations.push(invitation);
       result.acceptedCount += 1;
 
-      const deepLink = `seniorhub://invite?type=household-invite&token=${token}`;
+      const links = buildInvitationLinks({
+        token,
+        ...(env.INVITATION_WEB_FALLBACK_URL
+          ? { fallbackBaseUrl: env.INVITATION_WEB_FALLBACK_URL }
+          : {}),
+      });
+
       result.deliveries.push({
         invitationId: invitation.id,
         inviteeEmail: email,
         status: 'sent',
-        reason: `deepLink=${deepLink}`,
+        deepLinkUrl: links.deepLinkUrl,
+        fallbackUrl: links.fallbackUrl,
+        reason: null,
       });
     }
 
@@ -228,6 +241,10 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   async resolveInvitationByToken(token: string): Promise<HouseholdInvitation | null> {
+    if (!isInvitationTokenValid(token, env.TOKEN_SIGNING_SECRET)) {
+      return null;
+    }
+
     const tokenHash = hashToken(token);
     const invitation = invitations.find((item) => item.tokenHash === tokenHash);
 
@@ -257,6 +274,10 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     let invitation: HouseholdInvitation | undefined;
 
     if (input.token) {
+      if (!isInvitationTokenValid(input.token, env.TOKEN_SIGNING_SECRET)) {
+        throw new Error('Invitation not found.');
+      }
+
       const tokenHash = hashToken(input.token);
       invitation = invitations.find((item) => item.tokenHash === tokenHash);
     } else if (input.invitationId) {
@@ -315,5 +336,42 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       householdId: invitation.householdId,
       role: invitation.assignedRole,
     };
+  }
+
+  async cancelInvitation(input: {
+    householdId: string;
+    invitationId: string;
+    requesterUserId: string;
+  }): Promise<void> {
+    const requester = await this.findActiveMemberByUserInHousehold(input.requesterUserId, input.householdId);
+    if (!requester || requester.role !== 'caregiver') {
+      throw new Error('Only caregivers can cancel invitations.');
+    }
+
+    const invitation = invitations.find(
+      (item) => item.id === input.invitationId && item.householdId === input.householdId,
+    );
+
+    if (!invitation) {
+      throw new Error('Invitation not found.');
+    }
+
+    if (invitation.status !== 'pending') {
+      throw new Error('Invitation is not pending.');
+    }
+
+    invitation.status = 'cancelled';
+  }
+
+  async logAuditEvent(input: AuditEventInput): Promise<void> {
+    auditEvents.push({
+      id: randomUUID(),
+      householdId: input.householdId,
+      actorUserId: input.actorUserId,
+      action: input.action,
+      targetId: input.targetId,
+      metadata: input.metadata,
+      createdAt: nowIso(),
+    });
   }
 }
