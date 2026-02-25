@@ -1,8 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import type { CreateHouseholdUseCase } from '../../domain/usecases/CreateHouseholdUseCase.js';
 import type { GetHouseholdOverviewUseCase } from '../../domain/usecases/GetHouseholdOverviewUseCase.js';
+import type { LeaveHouseholdUseCase } from '../../domain/usecases/LeaveHouseholdUseCase.js';
 import type { ListHouseholdMembersUseCase } from '../../domain/usecases/ListHouseholdMembersUseCase.js';
 import type { ListUserHouseholdsUseCase } from '../../domain/usecases/ListUserHouseholdsUseCase.js';
+import type { RemoveHouseholdMemberUseCase } from '../../domain/usecases/RemoveHouseholdMemberUseCase.js';
+import type { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/UpdateHouseholdMemberRoleUseCase.js';
 import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './schemas.js';
 
 export const registerHouseholdRoutes = (
@@ -12,6 +15,9 @@ export const registerHouseholdRoutes = (
     getHouseholdOverviewUseCase: GetHouseholdOverviewUseCase;
     listUserHouseholdsUseCase: ListUserHouseholdsUseCase;
     listHouseholdMembersUseCase: ListHouseholdMembersUseCase;
+    removeHouseholdMemberUseCase: RemoveHouseholdMemberUseCase;
+    updateHouseholdMemberRoleUseCase: UpdateHouseholdMemberRoleUseCase;
+    leaveHouseholdUseCase: LeaveHouseholdUseCase;
   },
 ) => {
   // POST /v1/households - Create a new household
@@ -259,6 +265,210 @@ export const registerHouseholdRoutes = (
         const message = error instanceof Error ? error.message : 'Unexpected error.';
 
         return reply.status(403).send({
+          status: 'error',
+          message,
+        });
+      }
+    },
+  );
+
+  // DELETE /v1/households/:householdId/members/:memberId - Remove a household member
+  fastify.delete(
+    '/v1/households/:householdId/members/:memberId',
+    {
+      schema: {
+        tags: ['Households'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            memberId: { type: 'string' },
+          },
+          required: ['householdId', 'memberId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              message: { type: 'string' },
+            },
+            required: ['status', 'message'],
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const params = request.params as { householdId: string; memberId: string };
+
+      try {
+        await useCases.removeHouseholdMemberUseCase.execute({
+          householdId: params.householdId,
+          memberId: params.memberId,
+          requester: request.requester,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          message: 'Member removed successfully.',
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error.';
+        let statusCode: 400 | 403 | 404 = 400;
+
+        if (message.includes('Access denied') || message.includes('Only caregivers')) {
+          statusCode = 403;
+        } else if (message.includes('not found') || message.includes('does not exist')) {
+          statusCode = 404;
+        }
+
+        return reply.status(statusCode).send({
+          status: 'error',
+          message,
+        });
+      }
+    },
+  );
+
+  // PATCH /v1/households/:householdId/members/:memberId - Update member role
+  fastify.patch(
+    '/v1/households/:householdId/members/:memberId',
+    {
+      schema: {
+        tags: ['Households'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            memberId: { type: 'string' },
+          },
+          required: ['householdId', 'memberId'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            role: { type: 'string', enum: ['senior', 'caregiver'] },
+          },
+          required: ['role'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  userId: { type: 'string' },
+                  householdId: { type: 'string' },
+                  role: { type: 'string', enum: ['senior', 'caregiver'] },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  joinedAt: { type: 'string' },
+                  status: { type: 'string' },
+                },
+                required: ['id', 'userId', 'householdId', 'role', 'firstName', 'lastName', 'joinedAt', 'status'],
+              },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const params = request.params as { householdId: string; memberId: string };
+      const body = request.body as { role: 'senior' | 'caregiver' };
+
+      try {
+        const updatedMember = await useCases.updateHouseholdMemberRoleUseCase.execute({
+          householdId: params.householdId,
+          memberId: params.memberId,
+          newRole: body.role,
+          requester: request.requester,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: updatedMember,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error.';
+        let statusCode: 400 | 403 | 404 = 400;
+
+        if (message.includes('Access denied') || message.includes('Only caregivers') || message.includes('cannot demote')) {
+          statusCode = 403;
+        } else if (message.includes('not found') || message.includes('does not exist')) {
+          statusCode = 404;
+        }
+
+        return reply.status(statusCode).send({
+          status: 'error',
+          message,
+        });
+      }
+    },
+  );
+
+  // DELETE /v1/households/:householdId/members/me - Leave a household
+  fastify.delete(
+    '/v1/households/:householdId/members/me',
+    {
+      schema: {
+        tags: ['Households'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              message: { type: 'string' },
+            },
+            required: ['status', 'message'],
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const params = request.params as { householdId: string };
+
+      try {
+        await useCases.leaveHouseholdUseCase.execute({
+          householdId: params.householdId,
+          requester: request.requester,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          message: 'Successfully left the household.',
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error.';
+        let statusCode: 400 | 403 | 404 = 400;
+
+        if (message.includes('Access denied') || message.includes('cannot leave') || message.includes('last caregiver')) {
+          statusCode = 403;
+        } else if (message.includes('not found') || message.includes('not a member')) {
+          statusCode = 404;
+        }
+
+        return reply.status(statusCode).send({
           status: 'error',
           message,
         });

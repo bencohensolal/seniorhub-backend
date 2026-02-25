@@ -5,10 +5,13 @@ import { CreateBulkInvitationsUseCase } from '../../domain/usecases/CreateBulkIn
 import { CreateHouseholdUseCase } from '../../domain/usecases/CreateHouseholdUseCase.js';
 import { EnsureHouseholdRoleUseCase } from '../../domain/usecases/EnsureHouseholdRoleUseCase.js';
 import { GetHouseholdOverviewUseCase } from '../../domain/usecases/GetHouseholdOverviewUseCase.js';
+import { LeaveHouseholdUseCase } from '../../domain/usecases/LeaveHouseholdUseCase.js';
 import { ListHouseholdMembersUseCase } from '../../domain/usecases/ListHouseholdMembersUseCase.js';
 import { ListPendingInvitationsUseCase } from '../../domain/usecases/ListPendingInvitationsUseCase.js';
 import { ListUserHouseholdsUseCase } from '../../domain/usecases/ListUserHouseholdsUseCase.js';
+import { RemoveHouseholdMemberUseCase } from '../../domain/usecases/RemoveHouseholdMemberUseCase.js';
 import { ResolveInvitationUseCase } from '../../domain/usecases/ResolveInvitationUseCase.js';
+import { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/UpdateHouseholdMemberRoleUseCase.js';
 import { createHouseholdRepository } from '../../data/repositories/createHouseholdRepository.js';
 import { registerHouseholdRoutes } from './householdRoutes.js';
 import { registerInvitationRoutes } from './invitationRoutes.js';
@@ -38,6 +41,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     resolveInvitationUseCase: new ResolveInvitationUseCase(repository),
     acceptInvitationUseCase: new AcceptInvitationUseCase(repository),
     cancelInvitationUseCase: new CancelInvitationUseCase(repository),
+    removeHouseholdMemberUseCase: new RemoveHouseholdMemberUseCase(repository),
+    updateHouseholdMemberRoleUseCase: new UpdateHouseholdMemberRoleUseCase(repository),
+    leaveHouseholdUseCase: new LeaveHouseholdUseCase(repository),
   };
 
   // Register route modules
@@ -46,6 +52,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     getHouseholdOverviewUseCase: useCases.getHouseholdOverviewUseCase,
     listUserHouseholdsUseCase: useCases.listUserHouseholdsUseCase,
     listHouseholdMembersUseCase: useCases.listHouseholdMembersUseCase,
+    removeHouseholdMemberUseCase: useCases.removeHouseholdMemberUseCase,
+    updateHouseholdMemberRoleUseCase: useCases.updateHouseholdMemberRoleUseCase,
+    leaveHouseholdUseCase: useCases.leaveHouseholdUseCase,
   });
 
   registerInvitationRoutes(fastify, repository, {
