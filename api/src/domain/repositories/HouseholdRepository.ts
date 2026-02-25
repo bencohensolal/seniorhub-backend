@@ -31,6 +31,7 @@ export interface HouseholdRepository {
   findMemberInHousehold(memberId: string, householdId: string): Promise<Member | null>;
   findActiveMemberByUserInHousehold(userId: string, householdId: string): Promise<Member | null>;
   listUserHouseholds(userId: string): Promise<UserHouseholdMembership[]>;
+  listHouseholdMembers(householdId: string): Promise<Member[]>;
   createHousehold(name: string, requester: AuthenticatedRequester): Promise<Household>;
   createBulkInvitations(input: {
     householdId: string;

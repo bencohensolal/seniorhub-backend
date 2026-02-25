@@ -155,6 +155,29 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     }));
   }
 
+  async listHouseholdMembers(householdId: string): Promise<Member[]> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      user_id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      role: HouseholdRole;
+      status: 'active' | 'pending';
+      joined_at: string | Date;
+      created_at: string | Date;
+    }>(
+      `SELECT id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at
+       FROM household_members
+       WHERE household_id = $1 AND status = 'active'
+       ORDER BY joined_at ASC`,
+      [householdId],
+    );
+
+    return result.rows.map(mapMember);
+  }
+
   async createHousehold(name: string, requester: AuthenticatedRequester): Promise<Household> {
     const client = await this.pool.connect();
     try {

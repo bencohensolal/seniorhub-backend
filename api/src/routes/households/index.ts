@@ -5,6 +5,7 @@ import { CreateBulkInvitationsUseCase } from '../../domain/usecases/CreateBulkIn
 import { CreateHouseholdUseCase } from '../../domain/usecases/CreateHouseholdUseCase.js';
 import { EnsureHouseholdRoleUseCase } from '../../domain/usecases/EnsureHouseholdRoleUseCase.js';
 import { GetHouseholdOverviewUseCase } from '../../domain/usecases/GetHouseholdOverviewUseCase.js';
+import { ListHouseholdMembersUseCase } from '../../domain/usecases/ListHouseholdMembersUseCase.js';
 import { ListPendingInvitationsUseCase } from '../../domain/usecases/ListPendingInvitationsUseCase.js';
 import { ListUserHouseholdsUseCase } from '../../domain/usecases/ListUserHouseholdsUseCase.js';
 import { ResolveInvitationUseCase } from '../../domain/usecases/ResolveInvitationUseCase.js';
@@ -30,6 +31,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     getHouseholdOverviewUseCase: new GetHouseholdOverviewUseCase(repository),
     createHouseholdUseCase: new CreateHouseholdUseCase(repository),
     listUserHouseholdsUseCase: new ListUserHouseholdsUseCase(repository),
+    listHouseholdMembersUseCase: new ListHouseholdMembersUseCase(repository),
     ensureHouseholdRoleUseCase: new EnsureHouseholdRoleUseCase(repository),
     createBulkInvitationsUseCase: new CreateBulkInvitationsUseCase(repository),
     listPendingInvitationsUseCase: new ListPendingInvitationsUseCase(repository),
@@ -43,6 +45,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createHouseholdUseCase: useCases.createHouseholdUseCase,
     getHouseholdOverviewUseCase: useCases.getHouseholdOverviewUseCase,
     listUserHouseholdsUseCase: useCases.listUserHouseholdsUseCase,
+    listHouseholdMembersUseCase: useCases.listHouseholdMembersUseCase,
   });
 
   registerInvitationRoutes(fastify, repository, {

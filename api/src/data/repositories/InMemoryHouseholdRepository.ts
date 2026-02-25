@@ -139,6 +139,12 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
   }
 
+  async listHouseholdMembers(householdId: string): Promise<Member[]> {
+    return members
+      .filter((member) => member.householdId === householdId && member.status === 'active')
+      .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
+  }
+
   async createHousehold(name: string, requester: AuthenticatedRequester): Promise<Household> {
     const createdAt = nowIso();
     const household: Household = {
