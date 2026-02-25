@@ -98,3 +98,8 @@
 	- [x] response: `{ data: [{ householdId, householdName, myRole, joinedAt, memberCount }] }`
 	- [x] sorted by most recently joined or most recently used
 	- [x] needed for app startup (show "Use my household" button vs create household)
+
+- [x] **URGENT - App integration:** Verify endpoint is deployed and accessible
+	- App was calling `GET /v1/households/my-households` (was getting 404)
+	- Renamed endpoint from `/my-memberships` to `/my-households` to match app expectation
+	- Endpoint now returns proper format: `{ status: 'success', data: [...] }`

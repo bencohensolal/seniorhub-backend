@@ -22,3 +22,6 @@ The format is inspired by Keep a Changelog.
 - CI workflow for lint, typecheck, tests, docs guard, and AGENTS proof checks.
 - Expanded test suite with invitation lifecycle unit tests and onboarding integration tests.
 - Separated email templates from code into `api/templates/emails/` directory structure with text-based template files supporting variable substitution and conditional blocks.
+
+### Changed
+- Renamed `GET /v1/households/my-memberships` to `GET /v1/households/my-households` for app integration compatibility.

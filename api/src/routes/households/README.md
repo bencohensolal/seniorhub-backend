@@ -44,7 +44,7 @@ routes/households/
 - **Purpose**: Household management endpoints
 - **Routes**:
   - `POST /v1/households` - Create household
-  - `GET /v1/households/my-memberships` - List user households
+  - `GET /v1/households/my-households` - List user households
   - `GET /v1/households/:householdId/overview` - Get household details
 - **Responsibility**: CRUD operations for households
 

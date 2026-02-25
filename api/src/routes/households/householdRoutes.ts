@@ -68,9 +68,9 @@ export const registerHouseholdRoutes = (
     },
   );
 
-  // GET /v1/households/my-memberships - List user's households
+  // GET /v1/households/my-households - List user's households
   fastify.get(
-    '/v1/households/my-memberships',
+    '/v1/households/my-households',
     {
       schema: {
         tags: ['Households'],
