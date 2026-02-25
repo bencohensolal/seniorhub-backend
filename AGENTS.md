@@ -57,6 +57,12 @@ Build a secure, maintainable backend platform for Senior Hub that can reliably s
 - API quality gate before merge:
   - `cd api && npm run quality:check`
 
+## Cross-project coordination
+
+- If a task requires changes in the mobile app, document it in the app's `TODO.md` file.
+- When backend changes impact the app (new endpoints, contract changes, etc.), add corresponding tasks to the app's TODO.
+- Keep backend and app TODOs in sync for coordinated feature delivery.
+
 ## Mandatory documentation maintenance
 
 These files are the reference baseline and must stay consistent:
