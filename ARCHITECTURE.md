@@ -122,3 +122,45 @@ sequenceDiagram
 - OpenAPI is generated and exposed through Fastify Swagger (`/docs`, `/documentation/json`)
 - invitation email delivery metrics are exposed at `GET /v1/observability/invitations/email-metrics`
 - audit events are persisted in `audit_events` for invitation create/accept/cancel actions
+
+## 13. Route module structure (refactored)
+
+Routes are organized by domain in modular subdirectories following SRP:
+
+```
+api/src/routes/households/
+├── index.ts                  # Plugin entry point, dependency injection
+├── schemas.ts                # Zod and JSON Schema definitions
+├── utils.ts                  # Shared utilities (rate limiting, sanitization)
+├── householdRoutes.ts        # Household CRUD endpoints
+├── invitationRoutes.ts       # Invitation lifecycle endpoints
+├── observabilityRoutes.ts    # Metrics and monitoring endpoints
+└── README.md                 # Module documentation
+```
+
+**Benefits:**
+- Single Responsibility: each file has one clear purpose
+- Maintainability: smaller, focused files easier to navigate
+- Testability: utilities and schemas testable independently
+- Scalability: clear pattern for adding new domains
+
+## 14. Repository structure and helpers
+
+Database repositories share common helpers to eliminate duplication:
+
+```
+api/src/data/repositories/
+├── postgres/
+│   └── helpers.ts            # Shared DB utilities (mappers, normalizers)
+├── PostgresHouseholdRepository.ts
+├── InMemoryHouseholdRepository.ts
+└── createHouseholdRepository.ts
+```
+
+**Helpers include:**
+- Date/time utilities (`nowIso`, `toIso`, `addHours`)
+- Normalization functions (`normalizeEmail`, `normalizeName`)
+- Security utilities (`hashToken`)
+- Database row mappers (`mapMember`, `mapInvitation`)
+
+This structure reduces code duplication and centralizes data transformation logic.
