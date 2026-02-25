@@ -162,6 +162,9 @@ Set these variables on the API service:
 - `TOKEN_SIGNING_SECRET=<strong secret, at least 16 chars>`
 - `INVITATION_WEB_FALLBACK_URL=<your mobile/web invite fallback URL>`
 - `HOST=0.0.0.0`
+- `EMAIL_PROVIDER=resend` (use 'console' for dev/testing)
+- `RESEND_API_KEY=<your Resend API key>` (get from https://resend.com)
+- `EMAIL_FROM=Senior Hub <noreply@yourdomain.com>` (must use verified domain)
 
 `PORT` is provided by Railway automatically.
 
@@ -180,6 +183,24 @@ After first deploy:
 - `GET /health`
 - `GET /docs`
 - `GET /documentation/json`
+
+## Railway database operations
+
+### Clear all data from Railway database
+
+To reset the database (useful for testing or fresh starts):
+
+```bash
+cd api
+./scripts/clear-railway-db.sh
+```
+
+This script:
+- Fetches the public database URL from Railway
+- Truncates all tables (keeps schema and migrations)
+- Verifies tables are empty
+
+**Note:** This operation is destructive. All data will be permanently deleted.
 
 ## Governance checklist
 
