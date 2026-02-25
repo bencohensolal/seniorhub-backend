@@ -19,6 +19,9 @@ const envSchema = z
     INVITATION_WEB_FALLBACK_URL: optionalUrlFromEnv,
     EMAIL_JOB_MAX_RETRIES: z.coerce.number().int().min(0).max(10).default(3),
     EMAIL_JOB_RETRY_DELAY_MS: z.coerce.number().int().min(10).max(60_000).default(1000),
+    EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
+    RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
   })
   .superRefine((value, context) => {
     if (value.PERSISTENCE_DRIVER === 'postgres' && !value.DATABASE_URL) {
@@ -27,6 +30,23 @@ const envSchema = z
         path: ['DATABASE_URL'],
         message: 'DATABASE_URL is required when PERSISTENCE_DRIVER=postgres.',
       });
+    }
+
+    if (value.EMAIL_PROVIDER === 'resend') {
+      if (!value.RESEND_API_KEY) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['RESEND_API_KEY'],
+          message: 'RESEND_API_KEY is required when EMAIL_PROVIDER=resend.',
+        });
+      }
+      if (!value.EMAIL_FROM) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['EMAIL_FROM'],
+          message: 'EMAIL_FROM is required when EMAIL_PROVIDER=resend.',
+        });
+      }
     }
   });
 
