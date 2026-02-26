@@ -358,6 +358,45 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     return result.rows.map(mapInvitation);
   }
 
+  async listHouseholdInvitations(householdId: string): Promise<HouseholdInvitation[]> {
+    // First, expire any pending invitations that have passed their expiry date
+    await this.pool.query(
+      `UPDATE household_invitations
+       SET status = 'expired'
+       WHERE household_id = $1
+         AND status = 'pending'
+         AND token_expires_at <= NOW()`,
+      [householdId],
+    );
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      household_name: string;
+      inviter_user_id: string;
+      invitee_email: string;
+      invitee_first_name: string;
+      invitee_last_name: string;
+      assigned_role: HouseholdRole;
+      token_hash: string;
+      token_expires_at: string | Date;
+      status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+      created_at: string | Date;
+      accepted_at: string | Date | null;
+    }>(
+      `SELECT i.id, i.household_id, h.name AS household_name, i.inviter_user_id, i.invitee_email, 
+              i.invitee_first_name, i.invitee_last_name, i.assigned_role, i.token_hash, 
+              i.token_expires_at, i.status, i.created_at, i.accepted_at
+       FROM household_invitations i
+       JOIN households h ON h.id = i.household_id
+       WHERE i.household_id = $1
+       ORDER BY i.created_at DESC`,
+      [householdId],
+    );
+
+    return result.rows.map(mapInvitation);
+  }
+
   async resolveInvitationByToken(token: string): Promise<HouseholdInvitation | null> {
     if (!isInvitationTokenValid(token, env.TOKEN_SIGNING_SECRET)) {
       return null;

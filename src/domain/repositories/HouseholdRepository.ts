@@ -40,6 +40,7 @@ export interface HouseholdRepository {
     users: InvitationCandidate[];
   }): Promise<BulkInvitationResult>;
   listPendingInvitationsByEmail(email: string): Promise<HouseholdInvitation[]>;
+  listHouseholdInvitations(householdId: string): Promise<HouseholdInvitation[]>;
   resolveInvitationByToken(token: string): Promise<HouseholdInvitation | null>;
   acceptInvitation(input: {
     requester: AuthenticatedRequester;

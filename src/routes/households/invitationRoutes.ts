@@ -5,6 +5,7 @@ import type { CancelInvitationUseCase } from '../../domain/usecases/CancelInvita
 import type { CreateBulkInvitationsUseCase } from '../../domain/usecases/CreateBulkInvitationsUseCase.js';
 import type { EnsureHouseholdRoleUseCase } from '../../domain/usecases/EnsureHouseholdRoleUseCase.js';
 import type { ListPendingInvitationsUseCase } from '../../domain/usecases/ListPendingInvitationsUseCase.js';
+import type { ListHouseholdInvitationsUseCase } from '../../domain/usecases/ListHouseholdInvitationsUseCase.js';
 import type { ResolveInvitationUseCase } from '../../domain/usecases/ResolveInvitationUseCase.js';
 import { invitationEmailRuntime } from '../../data/services/email/invitationEmailRuntime.js';
 import {
@@ -24,6 +25,7 @@ export const registerInvitationRoutes = (
     createBulkInvitationsUseCase: CreateBulkInvitationsUseCase;
     ensureHouseholdRoleUseCase: EnsureHouseholdRoleUseCase;
     listPendingInvitationsUseCase: ListPendingInvitationsUseCase;
+    listHouseholdInvitationsUseCase: ListHouseholdInvitationsUseCase;
     resolveInvitationUseCase: ResolveInvitationUseCase;
     acceptInvitationUseCase: AcceptInvitationUseCase;
     cancelInvitationUseCase: CancelInvitationUseCase;
@@ -184,6 +186,58 @@ export const registerInvitationRoutes = (
               ? 403
               : 404;
         return reply.status(statusCode).send({ status: 'error', message: 'Unable to create invitations.' });
+      }
+    },
+  );
+
+  // GET /v1/households/:householdId/invitations - List household invitations
+  fastify.get(
+    '/v1/households/:householdId/invitations',
+    {
+      schema: {
+        tags: ['Invitations'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'array' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const invitations = await useCases.listHouseholdInvitationsUseCase.execute({
+          householdId: paramsResult.data.householdId,
+          requesterUserId: request.requester.userId,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: invitations.map(sanitizeInvitation),
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error.';
+        return reply.status(403).send({ status: 'error', message });
       }
     },
   );

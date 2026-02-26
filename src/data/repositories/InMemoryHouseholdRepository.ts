@@ -288,6 +288,27 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       .map((invitation) => ({ ...invitation }));
   }
 
+  async listHouseholdInvitations(householdId: string): Promise<HouseholdInvitation[]> {
+    const now = new Date();
+
+    // Expire old invitations
+    invitations.forEach((invitation) => {
+      if (
+        invitation.householdId === householdId &&
+        invitation.status === 'pending' &&
+        new Date(invitation.tokenExpiresAt) <= now
+      ) {
+        invitation.status = 'expired';
+      }
+    });
+
+    // Return all invitations for the household
+    return invitations
+      .filter((invitation) => invitation.householdId === householdId)
+      .map((invitation) => ({ ...invitation }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async resolveInvitationByToken(token: string): Promise<HouseholdInvitation | null> {
     if (!isInvitationTokenValid(token, env.TOKEN_SIGNING_SECRET)) {
       return null;
