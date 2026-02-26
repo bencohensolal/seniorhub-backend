@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
+buildCommand = "rm -rf node_modules/.cache && npm ci && npm run build"
 
 [deploy]
 startCommand = "npm run start:railway"
