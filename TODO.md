@@ -124,3 +124,13 @@
 	- [x] Validation: cannot leave if last caregiver or last member
 	- [x] Response: `{ status: 'success' }`
 	- [x] App usage: HouseholdManagementScreen leave button
+
+### 10) Invitation data enrichment
+
+- [ ] **IMPORTANT:** `GET /v1/households/invitations/my-pending` should include household name
+	- Current response only has `householdId` but not the household name
+	- Add `householdName` field to the response for each invitation
+	- This allows app to display meaningful invitation cards like:
+	  "Invitation to join 'Smith Family Household'" instead of just showing an ID
+	- App currently shows: "Invitation from John Doe" + "ID: abc123..."
+	- Should show: "Invitation to 'Smith Family' from John Doe"
