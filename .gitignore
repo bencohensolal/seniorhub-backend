@@ -17,6 +17,9 @@ dist/
 # Logs
 *.log
 
+# Railway
+.railway.json
+
 # OS/editor
 .DS_Store
 .vscode/
