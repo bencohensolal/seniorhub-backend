@@ -134,3 +134,32 @@
 	  "Invitation to join 'Smith Family Household'" instead of just showing an ID
 	- App currently shows: "Invitation from John Doe" + "ID: abc123..."
 	- Should show: "Invitation to 'Smith Family' from John Doe"
+
+### 11) Invitation management for household admins
+
+- [ ] **CRITICAL BUG:** Bulk invitation endpoint not persisting invitations
+	- When calling `POST /v1/households/:householdId/invitations/bulk`, invitations are not saved to DB
+	- No records appear in `household_invitations` table
+	- No emails are sent
+	- Issue observed: user invites member through app, nothing happens
+	- Need to debug: transaction commit, error handling, async job execution
+
+- [ ] `GET /v1/households/:householdId/invitations` - List sent invitations
+	- Authorization: only household members can view
+	- Response: `{ data: [{ id, inviteeEmail, inviteeFirstName, inviteeLastName, assignedRole, status, createdAt, expiresAt }] }`
+	- Include invitation status: pending, accepted, expired, cancelled
+	- Needed for app to show "Sent Invitations" section in HouseholdManagementScreen
+
+- [ ] `DELETE /v1/households/:householdId/invitations/:invitationId` - Revoke invitation
+	- Authorization: only caregivers or invitation sender
+	- Set status to 'cancelled'
+	- Response: `{ status: 'success' }`
+	- App usage: "Revoke" button in sent invitations list
+
+- [ ] `POST /v1/households/:householdId/invitations/:invitationId/resend` - Resend invitation email
+	- Authorization: only caregivers or invitation sender
+	- Validation: only resend if status is 'pending' and not expired
+	- Generate new token and extend expiry
+	- Queue email job
+	- Response: `{ status: 'success', newExpiresAt: '...' }`
+	- App usage: "Resend Email" button in sent invitations list
