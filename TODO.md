@@ -127,7 +127,7 @@
 
 ### 10) Invitation data enrichment
 
-- [ ] **IMPORTANT:** `GET /v1/households/invitations/my-pending` should include household name
+- [x] **IMPORTANT:** `GET /v1/households/invitations/my-pending` should include household name
 	- Current response only has `householdId` but not the household name
 	- Add `householdName` field to the response for each invitation
 	- This allows app to display meaningful invitation cards like:
