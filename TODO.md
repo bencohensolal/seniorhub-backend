@@ -144,19 +144,22 @@
 	- Works immediately with Gmail App Password
 	- Complete setup guide: `docs/GMAIL_SMTP_SETUP.md`
 
-- [ ] **ACTION REQUIRED:** Configure email provider in Railway
-	- **Option 1 (Recommended for testing):** Gmail SMTP
-		- Set `EMAIL_PROVIDER=gmail`
-		- Set `GMAIL_USER=your-email@gmail.com`
-		- Set `GMAIL_APP_PASSWORD=your-16-char-password`
-		- Set `EMAIL_FROM=Senior Hub <your-email@gmail.com>`
-		- See: `docs/GMAIL_SMTP_SETUP.md`
-	- **Option 2 (For production):** Resend (requires domain verification)
-		- Set `EMAIL_PROVIDER=resend`
-		- Set `RESEND_API_KEY=re_your_key`
-		- Set `EMAIL_FROM=Senior Hub <noreply@your-domain.com>`
-		- See: `docs/RESEND_SETUP.md`
-	- **Current:** Console mode (emails logged but not sent)
+- [x] **DEPLOYED:** Gmail SMTP configured and running in Railway ✅
+	- Service successfully using Gmail SMTP provider
+	- Railway environment variables configured:
+		- `EMAIL_PROVIDER=gmail`
+		- `GMAIL_USER` (configured)
+		- `GMAIL_APP_PASSWORD` (configured)
+		- `EMAIL_FROM` (configured)
+	- Production logs confirm: `[Email] Using Gmail SMTP provider`
+	- **Status:** Real email delivery is now ACTIVE in production
+
+- [ ] **OPTIONAL:** Migrate to Resend for production (when ready)
+	- Set `EMAIL_PROVIDER=resend`
+	- Set `RESEND_API_KEY=re_your_key`
+	- Set `EMAIL_FROM=Senior Hub <noreply@your-domain.com>`
+	- See: `docs/RESEND_SETUP.md`
+	- Benefits: Better deliverability, analytics, domain reputation
 
 ### 12) Invitation management for household admins
 

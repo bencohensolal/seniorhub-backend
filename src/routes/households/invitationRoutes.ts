@@ -119,7 +119,7 @@ export const registerInvitationRoutes = (
       const paramsResult = paramsSchema.safeParse(request.params);
       const payloadResult = bulkInvitationBodySchema.safeParse(request.body);
 
-      console.log('[INVITE] Received bulk invitation request:', {
+      console.info('[INVITE] Received bulk invitation request:', {
         householdId: request.params,
         body: request.body,
         paramsValid: paramsResult.success,
@@ -157,22 +157,27 @@ export const registerInvitationRoutes = (
           users: payloadResult.data.users,
         });
 
-        invitationEmailRuntime.queue.enqueueBulk(
-          result.deliveries.map((delivery) => {
-            const sourceUser = payloadResult.data.users.find(
-              (user) => user.email.trim().toLowerCase() === delivery.inviteeEmail,
-            );
+        const emailJobs = result.deliveries.map((delivery) => {
+          const sourceUser = payloadResult.data.users.find(
+            (user) => user.email.trim().toLowerCase() === delivery.inviteeEmail,
+          );
 
-            return {
-              invitationId: delivery.invitationId,
-              inviteeEmail: delivery.inviteeEmail,
-              inviteeFirstName: sourceUser?.firstName ?? 'there',
-              assignedRole: sourceUser?.role ?? 'senior',
-              deepLinkUrl: delivery.deepLinkUrl,
-              fallbackUrl: delivery.fallbackUrl,
-            };
-          }),
-        );
+          return {
+            invitationId: delivery.invitationId,
+            inviteeEmail: delivery.inviteeEmail,
+            inviteeFirstName: sourceUser?.firstName ?? 'there',
+            assignedRole: sourceUser?.role ?? 'senior',
+            deepLinkUrl: delivery.deepLinkUrl,
+            fallbackUrl: delivery.fallbackUrl,
+          };
+        });
+
+        console.info('[Invitations] Enqueuing bulk emails:', {
+          count: emailJobs.length,
+          recipients: emailJobs.map(j => j.inviteeEmail),
+        });
+
+        invitationEmailRuntime.queue.enqueueBulk(emailJobs);
 
         for (const delivery of result.deliveries) {
           await repository.logAuditEvent({
@@ -502,6 +507,11 @@ export const registerInvitationRoutes = (
         const invitation = invitations.find((inv) => inv.id === paramsResult.data.invitationId);
 
         if (invitation) {
+          console.info('[Invitations] Resending invitation email:', {
+            invitationId: paramsResult.data.invitationId,
+            inviteeEmail: invitation.inviteeEmail,
+          });
+
           // Queue the email with the new token
           invitationEmailRuntime.queue.enqueueBulk([{
             invitationId: paramsResult.data.invitationId,
@@ -511,6 +521,10 @@ export const registerInvitationRoutes = (
             deepLinkUrl: result.deepLinkUrl,
             fallbackUrl: result.fallbackUrl,
           }]);
+        } else {
+          console.warn('[Invitations] Cannot resend email - invitation not found:', {
+            invitationId: paramsResult.data.invitationId,
+          });
         }
 
         await repository.logAuditEvent({
