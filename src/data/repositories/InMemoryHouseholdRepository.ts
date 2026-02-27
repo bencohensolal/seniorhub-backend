@@ -10,6 +10,7 @@ import type {
   HouseholdRepository,
   InvitationCandidate,
 } from '../../domain/repositories/HouseholdRepository.js';
+import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../../domain/entities/Medication.js';
 import { nowIso, addHours, hashToken, normalizeEmail, normalizeName } from './postgres/helpers.js';
 
 const INVITATION_TTL_HOURS = 72;
@@ -509,5 +510,26 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     }
     member.role = newRole;
     return member;
+  }
+
+  // Medication methods - stub implementations for test compatibility
+  async listHouseholdMedications(_householdId: string): Promise<Medication[]> {
+    return [];
+  }
+
+  async getMedicationById(_medicationId: string, _householdId: string): Promise<Medication | null> {
+    return null;
+  }
+
+  async createMedication(_input: CreateMedicationInput): Promise<Medication> {
+    throw new Error('Medication operations not implemented in InMemoryRepository');
+  }
+
+  async updateMedication(_medicationId: string, _householdId: string, _input: UpdateMedicationInput): Promise<Medication> {
+    throw new Error('Medication operations not implemented in InMemoryRepository');
+  }
+
+  async deleteMedication(_medicationId: string, _householdId: string): Promise<void> {
+    throw new Error('Medication operations not implemented in InMemoryRepository');
   }
 }
