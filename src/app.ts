@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { householdsRoutes } from './routes/households/index.js';
+import { registerPublicMedicationRoutes } from './routes/medicationRoutes.js';
 import { registerAuthContext } from './plugins/authContext.js';
 
 export const buildApp = () => {
@@ -31,7 +32,7 @@ export const buildApp = () => {
         version: '0.1.0',
         description: 'Household onboarding and invitation management API contracts.',
       },
-      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Observability' }],
+      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Medications' }, { name: 'Observability' }],
     },
   });
 
@@ -43,6 +44,7 @@ export const buildApp = () => {
 
   registerAuthContext(app);
   app.register(householdsRoutes);
+  registerPublicMedicationRoutes(app);
 
   return app;
 };
