@@ -13,7 +13,7 @@ const TEMPLATES_DIR = join(__dirname, '../../../templates/emails');
  * 
  * @param templateName - Name of the template directory (e.g., 'invitation')
  * @param variables - Variables to substitute in the template
- * @returns Email subject and body with variables replaced
+ * @returns Email subject and body (HTML if available, otherwise plain text) with variables replaced
  */
 export async function loadEmailTemplate(
   templateName: string,
@@ -21,11 +21,17 @@ export async function loadEmailTemplate(
 ): Promise<{ subject: string; body: string }> {
   const templatePath = join(TEMPLATES_DIR, templateName);
 
-  // Load template files
-  const [subject, body] = await Promise.all([
-    readFile(join(templatePath, 'subject.txt'), 'utf-8'),
-    readFile(join(templatePath, 'body.txt'), 'utf-8'),
-  ]);
+  // Load template files (prefer HTML over plain text)
+  const subject = await readFile(join(templatePath, 'subject.txt'), 'utf-8');
+  
+  let body: string;
+  try {
+    // Try to load HTML template first
+    body = await readFile(join(templatePath, 'body.html'), 'utf-8');
+  } catch {
+    // Fall back to plain text template
+    body = await readFile(join(templatePath, 'body.txt'), 'utf-8');
+  }
 
   // Simple template engine: replace {{variable}} with values
   const render = (content: string): string => {
