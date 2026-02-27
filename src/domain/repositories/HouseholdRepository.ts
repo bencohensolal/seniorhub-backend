@@ -3,6 +3,7 @@ import type { Member } from '../entities/Member.js';
 import type { Household, AuthenticatedRequester } from '../entities/Household.js';
 import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
 import type { HouseholdRole } from '../entities/Member.js';
+import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../entities/Medication.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -60,4 +61,11 @@ export interface HouseholdRepository {
   removeMember(memberId: string): Promise<void>;
   updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member>;
   logAuditEvent(input: AuditEventInput): Promise<void>;
+  
+  // Medications
+  listHouseholdMedications(householdId: string): Promise<Medication[]>;
+  getMedicationById(medicationId: string, householdId: string): Promise<Medication | null>;
+  createMedication(input: CreateMedicationInput): Promise<Medication>;
+  updateMedication(medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication>;
+  deleteMedication(medicationId: string, householdId: string): Promise<void>;
 }

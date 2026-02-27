@@ -210,3 +210,67 @@
 	- Queue email job
 	- Response: `{ status: 'success', newExpiresAt: '...' }`
 	- App usage: "Resend Email" button in sent invitations list
+
+### 13) Medications management
+
+- [ ] **Data model & migrations**
+	- [ ] Add `medications` table:
+		- `id` (uuid, primary key)
+		- `household_id` (uuid, foreign key to households)
+		- `name` (string, medication name)
+		- `dosage` (string, e.g., "500mg", "10ml")
+		- `form` (enum: tablet, capsule, syrup, injection, drops, cream, patch, inhaler, suppository, other)
+		- `frequency` (string, e.g., "2 times daily", "Once a day")
+		- `schedule` (jsonb array of times, e.g., ["08:00", "20:00"])
+		- `prescribed_by` (string, nullable, doctor's name)
+		- `prescription_date` (date, nullable)
+		- `start_date` (date, required)
+		- `end_date` (date, nullable, for limited treatments)
+		- `instructions` (text, nullable, special instructions)
+		- `created_at`, `updated_at` (timestamps)
+		- `created_by_user_id` (uuid, foreign key to users, who added it)
+	- [ ] Add indexes on `household_id`, `created_at`
+	- [ ] Add constraint: household members can only access their household's medications
+
+- [ ] **API endpoints**
+	- [ ] `GET /v1/households/:householdId/medications`
+		- Authorization: household members only
+		- Response: `{ data: [...medications] }`
+		- Sort by name or created_at (configurable)
+		
+	- [ ] `POST /v1/households/:householdId/medications`
+		- Authorization: caregivers only (or all members - TBD based on use case)
+		- Body: `{ name, dosage, form, frequency, schedule, prescribedBy?, prescriptionDate?, startDate, endDate?, instructions? }`
+		- Validation: validate form enum, required fields, date formats
+		- Response: `{ data: createdMedication }`
+		
+	- [ ] `PATCH /v1/households/:householdId/medications/:medicationId`
+		- Authorization: caregivers only
+		- Body: partial update (any medication field)
+		- Response: `{ data: updatedMedication }`
+		
+	- [ ] `DELETE /v1/households/:householdId/medications/:medicationId`
+		- Authorization: caregivers only
+		- Soft delete or hard delete (TBD - soft delete recommended for audit)
+		- Response: `{ status: 'success' }`
+
+- [ ] **Domain rules**
+	- [ ] Only household members can view medications
+	- [ ] Only caregivers (or specific roles) can add/edit/delete medications
+	- [ ] Schedule times must be valid HH:MM format
+	- [ ] Start date cannot be in the future beyond reasonable threshold
+	- [ ] End date must be after start date if provided
+	- [ ] Audit log for medication changes (especially deletions)
+
+- [ ] **Tests**
+	- [ ] Unit tests for medication validation rules
+	- [ ] Integration tests for CRUD operations
+	- [ ] Authorization tests (member vs caregiver permissions)
+	- [ ] Edge cases: invalid dates, empty schedule, etc.
+
+- [ ] **Future enhancements**
+	- [ ] Medication reminders/notifications
+	- [ ] Track medication adherence (taken/missed)
+	- [ ] Medication interactions warnings
+	- [ ] Photo upload for medication (pill identification)
+	- [ ] Barcode scanning for medication details
