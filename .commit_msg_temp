@@ -1,22 +1,20 @@
-fix(medications): use native https module instead of fetch for French API
+fix(medications): make autocomplete endpoint truly public (no auth)
 
-Root cause of empty results:
-- Node.js native fetch() API ignores custom agent parameter
-- The rejectUnauthorized option was being ignored
-- SSL certificate validation was still happening despite agent config
+Root cause of 401 errors:
+- Mobile app was receiving 401 Unauthorized responses
+- registerAuthContext plugin was enforcing auth on ALL routes
+- Only /health was exempted from authentication
+- Medication autocomplete needs to be public for CORS proxy use case
 
 Solution:
-- Replace fetch() with native https.get() for French API
-- Native https module properly supports rejectUnauthorized option
-- Implement promise-based wrapper with proper error handling
-- Maintain 5-second timeout protection
-- Keep same response format and error handling
+- Add /v1/medications/autocomplete to public endpoints list
+- Update authContext plugin to check multiple public endpoints
+- Remove authentication-related code from route handler
+- Update documentation to clarify endpoint is truly public
 
-Technical details:
-- Use https.get() with rejectUnauthorized: false option
-- Stream response data and parse JSON manually
-- Proper cleanup of timeout handlers
-- Graceful error handling with empty array fallback
+Changes:
+- src/plugins/authContext.ts: Add publicEndpoints array with autocomplete
+- src/routes/medicationRoutes.ts: Remove requester logging, clarify no auth
 
-This fixes the "fetch failed" error seen in Railway logs.
-French medications (DOLIPRANE, etc.) will now appear in results.
+This fixes the 401 errors preventing the mobile app from searching
+French medications. The endpoint now works without authentication headers.

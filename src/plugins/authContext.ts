@@ -4,7 +4,13 @@ const normalize = (value: string | undefined): string => (value && value.trim().
 
 export const registerAuthContext = (fastify: FastifyInstance): void => {
   fastify.addHook('preHandler', async (request, reply) => {
-    if (request.url === '/health') {
+    // Public endpoints that don't require authentication
+    const publicEndpoints = [
+      '/health',
+      '/v1/medications/autocomplete',
+    ];
+
+    if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
       return;
     }
 
