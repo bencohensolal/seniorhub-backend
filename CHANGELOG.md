@@ -28,5 +28,23 @@ The format is inspired by Keep a Changelog.
 - Real email sending with Resend integration (`ResendEmailProvider`) for production invitation delivery.
 - Configurable email provider system with `EMAIL_PROVIDER` environment variable (supports 'console' for dev and 'resend' for production).
 
+- Gmail SMTP email provider (`GmailSmtpProvider`) for free invitation email delivery using nodemailer.
+- Gmail SMTP configuration support with `GMAIL_USER` and `GMAIL_APP_PASSWORD` environment variables.
+- Complete Gmail SMTP setup guide (`docs/GMAIL_SMTP_SETUP.md`) with app password configuration instructions.
+- GET `/v1/households/:householdId/invitations` endpoint to list sent invitations for household admins.
+- POST `/v1/households/:householdId/invitations/:invitationId/cancel` endpoint to cancel pending invitations.
+- POST `/v1/households/:householdId/invitations/:invitationId/resend` endpoint to resend invitation emails with new tokens.
+- `ListHouseholdInvitationsUseCase` for retrieving sent invitations with caregiver authorization.
+- `CancelInvitationUseCase` for cancelling pending invitations.
+- `ResendInvitationUseCase` for regenerating invitation tokens and resending emails.
+- Railway deployment resolution guide (`DEPLOYMENT_RESOLUTION.md`) documenting Docker cache mount conflict fixes.
+
 ### Changed
 - Renamed `GET /v1/households/my-memberships` to `GET /v1/households/my-households` for app integration compatibility.
+- Updated email provider configuration to support 'gmail' option alongside 'console' and 'resend'.
+- Railway deployment now uses pure Nixpacks build process without custom buildCommand to prevent cache mount conflicts.
+
+### Fixed
+- Railway deployment Docker cache mount conflict ("Device or resource busy" errors) by removing custom buildCommand.
+- Service deployment stability by letting Nixpacks manage build phases natively through nixpacks.toml.
+- Gmail SMTP now successfully sending invitation emails in production (500 emails/day free tier).
