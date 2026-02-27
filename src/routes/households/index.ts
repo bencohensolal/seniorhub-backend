@@ -18,6 +18,11 @@ import { createHouseholdRepository } from '../../data/repositories/createHouseho
 import { registerHouseholdRoutes } from './householdRoutes.js';
 import { registerInvitationRoutes } from './invitationRoutes.js';
 import { registerObservabilityRoutes } from './observabilityRoutes.js';
+import { registerMedicationRoutes } from './medicationRoutes.js';
+import { ListHouseholdMedicationsUseCase } from '../../domain/usecases/ListHouseholdMedicationsUseCase.js';
+import { CreateMedicationUseCase } from '../../domain/usecases/CreateMedicationUseCase.js';
+import { UpdateMedicationUseCase } from '../../domain/usecases/UpdateMedicationUseCase.js';
+import { DeleteMedicationUseCase } from '../../domain/usecases/DeleteMedicationUseCase.js';
 
 /**
  * Households plugin
@@ -48,6 +53,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     removeHouseholdMemberUseCase: new RemoveHouseholdMemberUseCase(repository),
     updateHouseholdMemberRoleUseCase: new UpdateHouseholdMemberRoleUseCase(repository),
     leaveHouseholdUseCase: new LeaveHouseholdUseCase(repository),
+    listHouseholdMedicationsUseCase: new ListHouseholdMedicationsUseCase(repository),
+    createMedicationUseCase: new CreateMedicationUseCase(repository),
+    updateMedicationUseCase: new UpdateMedicationUseCase(repository),
+    deleteMedicationUseCase: new DeleteMedicationUseCase(repository),
   };
 
   // Register route modules
@@ -73,4 +82,11 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerObservabilityRoutes(fastify);
+
+  registerMedicationRoutes(fastify, {
+    listHouseholdMedicationsUseCase: useCases.listHouseholdMedicationsUseCase,
+    createMedicationUseCase: useCases.createMedicationUseCase,
+    updateMedicationUseCase: useCases.updateMedicationUseCase,
+    deleteMedicationUseCase: useCases.deleteMedicationUseCase,
+  });
 };

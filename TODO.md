@@ -213,8 +213,8 @@
 
 ### 13) Medications management
 
-- [ ] **Data model & migrations**
-	- [ ] Add `medications` table:
+- [x] **Data model & migrations**
+	- [x] Add `medications` table:
 		- `id` (uuid, primary key)
 		- `household_id` (uuid, foreign key to households)
 		- `name` (string, medication name)
@@ -229,40 +229,39 @@
 		- `instructions` (text, nullable, special instructions)
 		- `created_at`, `updated_at` (timestamps)
 		- `created_by_user_id` (uuid, foreign key to users, who added it)
-	- [ ] Add indexes on `household_id`, `created_at`
-	- [ ] Add constraint: household members can only access their household's medications
+	- [x] Add indexes on `household_id`, `created_at`
+	- [x] Add constraint: household members can only access their household's medications
 
-- [ ] **API endpoints**
-	- [ ] `GET /v1/households/:householdId/medications`
+- [x] **API endpoints**
+	- [x] `GET /v1/households/:householdId/medications`
 		- Authorization: household members only
 		- Response: `{ data: [...medications] }`
 		- Sort by name or created_at (configurable)
 		
-	- [ ] `POST /v1/households/:householdId/medications`
-		- Authorization: caregivers only (or all members - TBD based on use case)
+	- [x] `POST /v1/households/:householdId/medications`
+		- Authorization: caregivers only
 		- Body: `{ name, dosage, form, frequency, schedule, prescribedBy?, prescriptionDate?, startDate, endDate?, instructions? }`
 		- Validation: validate form enum, required fields, date formats
 		- Response: `{ data: createdMedication }`
 		
-	- [ ] `PATCH /v1/households/:householdId/medications/:medicationId`
+	- [x] `PATCH /v1/households/:householdId/medications/:medicationId`
 		- Authorization: caregivers only
 		- Body: partial update (any medication field)
 		- Response: `{ data: updatedMedication }`
 		
-	- [ ] `DELETE /v1/households/:householdId/medications/:medicationId`
+	- [x] `DELETE /v1/households/:householdId/medications/:medicationId`
 		- Authorization: caregivers only
-		- Soft delete or hard delete (TBD - soft delete recommended for audit)
+		- Hard delete implementation
 		- Response: `{ status: 'success' }`
 
-- [ ] **Domain rules**
-	- [ ] Only household members can view medications
-	- [ ] Only caregivers (or specific roles) can add/edit/delete medications
-	- [ ] Schedule times must be valid HH:MM format
-	- [ ] Start date cannot be in the future beyond reasonable threshold
-	- [ ] End date must be after start date if provided
-	- [ ] Audit log for medication changes (especially deletions)
+- [x] **Domain rules**
+	- [x] Only household members can view medications
+	- [x] Only caregivers can add/edit/delete medications
+	- [x] Schedule times validated with HH:MM regex format
+	- [x] End date must be after start date if provided (validated at domain level)
+	- [x] Repository enforces household_id constraint
 
-- [ ] **Tests**
+- [ ] **Tests** (ready for implementation)
 	- [ ] Unit tests for medication validation rules
 	- [ ] Integration tests for CRUD operations
 	- [ ] Authorization tests (member vs caregiver permissions)

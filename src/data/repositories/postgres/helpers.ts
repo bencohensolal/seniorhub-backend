@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
+import type { Medication, MedicationForm } from '../../../domain/entities/Medication.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -73,4 +74,38 @@ export const mapInvitation = (row: {
   status: row.status,
   createdAt: toIso(row.created_at),
   acceptedAt: row.accepted_at ? toIso(row.accepted_at) : null,
+});
+
+export const mapMedication = (row: {
+  id: string;
+  household_id: string;
+  name: string;
+  dosage: string;
+  form: MedicationForm;
+  frequency: string;
+  schedule: string | string[]; // May come as JSONB string or parsed array
+  prescribed_by: string | null;
+  prescription_date: string | Date | null;
+  start_date: string | Date;
+  end_date: string | Date | null;
+  instructions: string | null;
+  created_by_user_id: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): Medication => ({
+  id: row.id,
+  householdId: row.household_id,
+  name: row.name,
+  dosage: row.dosage,
+  form: row.form,
+  frequency: row.frequency,
+  schedule: typeof row.schedule === 'string' ? JSON.parse(row.schedule) : row.schedule,
+  prescribedBy: row.prescribed_by,
+  prescriptionDate: row.prescription_date ? toIso(row.prescription_date) : null,
+  startDate: toIso(row.start_date),
+  endDate: row.end_date ? toIso(row.end_date) : null,
+  instructions: row.instructions,
+  createdByUserId: row.created_by_user_id,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
 });
