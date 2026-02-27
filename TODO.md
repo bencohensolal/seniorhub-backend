@@ -211,7 +211,37 @@
 	- Response: `{ status: 'success', newExpiresAt: '...' }`
 	- App usage: "Resend Email" button in sent invitations list
 
-### 13) Household details endpoint
+### 13) 🐛 CRITICAL BUG: 403 Access denied after invitation acceptance
+
+- [ ] **URGENT:** User gets 403 "Access denied to this household" after accepting invitation
+	- **Symptom:** User successfully accepts invitation but cannot access household
+	- **Household ID:** 3617e173-d359-492b-94b7-4c32622e7526
+	- **Invitation ID:** 22db9a60-6852-4b6c-a5a9-49d216f5b89e
+	- **Errors:**
+		- GET /v1/households/:id → 403 "Access denied to this household"
+		- GET /v1/households/:id/members → 403 "Access denied to this household"
+	
+	**Root Cause Investigation:**
+	1. Check `POST /households/invitations/accept` - does it create membership?
+	2. Verify membership has status='active' after acceptance
+	3. Check user_id matches authenticated user in membership
+	4. Query household_members table after invitation acceptance
+	5. Check authorization guard queries for status='active'
+	
+	**Expected Flow:**
+	- User accepts invitation (by invitationId)
+	- Membership created: {user_id, household_id, role, status='active'}
+	- User can immediately access household resources
+	
+	**Current Broken Flow:**
+	- User accepts invitation ✅
+	- Household ID saved in app ✅
+	- Membership NOT created or NOT active ❌
+	- 403 on all household endpoints ❌
+	
+	**Impact:** CRITICAL - Users cannot use household after accepting invitation
+
+### 14) Household details endpoint
 
 - [x] **IMPLEMENTED:** `GET /v1/households/:householdId` - Get household details
 	- **Status:** Endpoint successfully implemented ✅
@@ -236,7 +266,7 @@
 		- Show member count
 	- **Note:** `/overview` endpoint still available for more detailed stats
 
-### 14) Medications management
+### 15) Medications management
 
 - [x] **Data model & migrations**
 	- [x] Add `medications` table:

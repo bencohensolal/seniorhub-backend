@@ -8,6 +8,7 @@ import type { ListPendingInvitationsUseCase } from '../../domain/usecases/ListPe
 import type { ListHouseholdInvitationsUseCase } from '../../domain/usecases/ListHouseholdInvitationsUseCase.js';
 import type { ResolveInvitationUseCase } from '../../domain/usecases/ResolveInvitationUseCase.js';
 import type { ResendInvitationUseCase } from '../../domain/usecases/ResendInvitationUseCase.js';
+import type { AutoAcceptPendingInvitationsUseCase } from '../../domain/usecases/AutoAcceptPendingInvitationsUseCase.js';
 import { invitationEmailRuntime } from '../../data/services/email/invitationEmailRuntime.js';
 import { env } from '../../config/env.js';
 import {
@@ -42,6 +43,7 @@ export const registerInvitationRoutes = (
     acceptInvitationUseCase: AcceptInvitationUseCase;
     cancelInvitationUseCase: CancelInvitationUseCase;
     resendInvitationUseCase: ResendInvitationUseCase;
+    autoAcceptPendingInvitationsUseCase: AutoAcceptPendingInvitationsUseCase;
   },
 ) => {
   // GET /v1/invitations/accept-link - Smart redirect for invitation acceptance
@@ -363,6 +365,55 @@ export const registerInvitationRoutes = (
         const message = error instanceof Error ? error.message : 'Unexpected error.';
         return reply.status(403).send({ status: 'error', message });
       }
+    },
+  );
+
+  // POST /v1/households/invitations/auto-accept - Auto-accept all pending invitations
+  fastify.post(
+    '/v1/households/invitations/auto-accept',
+    {
+      schema: {
+        tags: ['Invitations'],
+        description: 'Auto-accept all pending invitations for authenticated user',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: {
+                type: 'object',
+                properties: {
+                  acceptedCount: { type: 'number' },
+                  households: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        householdId: { type: 'string' },
+                        role: { type: 'string', enum: ['senior', 'caregiver'] },
+                      },
+                      required: ['householdId', 'role'],
+                    },
+                  },
+                },
+                required: ['acceptedCount', 'households'],
+              },
+            },
+            required: ['status', 'data'],
+          },
+          401: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const result = await useCases.autoAcceptPendingInvitationsUseCase.execute({
+        requester: request.requester,
+      });
+
+      return reply.status(200).send({
+        status: 'success',
+        data: result,
+      });
     },
   );
 
