@@ -41,34 +41,58 @@ export class MedicationAutocompleteUseCase {
    * 
    * Note: This API has an invalid SSL certificate, so we need to disable verification.
    * This is a known issue with the French government API.
+   * We use Node.js native https module instead of fetch() because fetch doesn't support custom agents properly.
    */
   private async autocompleteFrench(term: string): Promise<MedicationSuggestion[]> {
     const url = `https://base-donnees-publique.medicaments.gouv.fr/api/options_autocompilation?searchType=medicine&term=${encodeURIComponent(term)}&contains=${encodeURIComponent(term)}`;
 
     try {
-      // Create custom agent to handle invalid SSL certificate
       const https = await import('https');
-      const agent = new https.Agent({
-        rejectUnauthorized: false, // Required due to invalid SSL cert on French API
+      
+      // Use native https module with custom agent to bypass SSL verification
+      const data = await new Promise<any>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Request timeout'));
+        }, 5000);
+
+        const request = https.get(url, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SeniorHub-Backend/1.0',
+          },
+          rejectUnauthorized: false, // Required due to invalid SSL cert on French API
+        }, (response) => {
+          clearTimeout(timeoutId);
+
+          if (response.statusCode !== 200) {
+            console.error(`[MedicationAutocomplete] French API returned ${response.statusCode}`);
+            resolve([]);
+            return;
+          }
+
+          let rawData = '';
+          response.setEncoding('utf8');
+          response.on('data', (chunk) => {
+            rawData += chunk;
+          });
+          response.on('end', () => {
+            try {
+              const parsed = JSON.parse(rawData);
+              resolve(parsed);
+            } catch (e) {
+              console.error('[MedicationAutocomplete] Failed to parse French API response');
+              resolve([]);
+            }
+          });
+        });
+
+        request.on('error', (error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        });
+
+        request.end();
       });
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'SeniorHub-Backend/1.0',
-        },
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-        // @ts-ignore - agent is valid but types don't include it
-        agent,
-      });
-
-      if (!response.ok) {
-        console.error(`[MedicationAutocomplete] French API returned ${response.status}`);
-        return [];
-      }
-
-      const data = await response.json();
 
       // French API returns array: [{value: "DOLIPRANE 500mg", url: "/medicament/123"}, ...]
       if (!Array.isArray(data)) {

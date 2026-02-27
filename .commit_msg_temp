@@ -1,0 +1,22 @@
+fix(medications): use native https module instead of fetch for French API
+
+Root cause of empty results:
+- Node.js native fetch() API ignores custom agent parameter
+- The rejectUnauthorized option was being ignored
+- SSL certificate validation was still happening despite agent config
+
+Solution:
+- Replace fetch() with native https.get() for French API
+- Native https module properly supports rejectUnauthorized option
+- Implement promise-based wrapper with proper error handling
+- Maintain 5-second timeout protection
+- Keep same response format and error handling
+
+Technical details:
+- Use https.get() with rejectUnauthorized: false option
+- Stream response data and parse JSON manually
+- Proper cleanup of timeout handlers
+- Graceful error handling with empty array fallback
+
+This fixes the "fetch failed" error seen in Railway logs.
+French medications (DOLIPRANE, etc.) will now appear in results.
