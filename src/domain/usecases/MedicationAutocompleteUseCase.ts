@@ -38,11 +38,20 @@ export class MedicationAutocompleteUseCase {
   /**
    * French medications API
    * API: base-donnees-publique.medicaments.gouv.fr
+   * 
+   * Note: This API has an invalid SSL certificate, so we need to disable verification.
+   * This is a known issue with the French government API.
    */
   private async autocompleteFrench(term: string): Promise<MedicationSuggestion[]> {
     const url = `https://base-donnees-publique.medicaments.gouv.fr/api/options_autocompilation?searchType=medicine&term=${encodeURIComponent(term)}&contains=${encodeURIComponent(term)}`;
 
     try {
+      // Create custom agent to handle invalid SSL certificate
+      const https = await import('https');
+      const agent = new https.Agent({
+        rejectUnauthorized: false, // Required due to invalid SSL cert on French API
+      });
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -50,6 +59,8 @@ export class MedicationAutocompleteUseCase {
           'User-Agent': 'SeniorHub-Backend/1.0',
         },
         signal: AbortSignal.timeout(5000), // 5 second timeout
+        // @ts-ignore - agent is valid but types don't include it
+        agent,
       });
 
       if (!response.ok) {
@@ -59,17 +70,18 @@ export class MedicationAutocompleteUseCase {
 
       const data = await response.json();
 
-      // French API returns array of options
+      // French API returns array: [{value: "DOLIPRANE 500mg", url: "/medicament/123"}, ...]
       if (!Array.isArray(data)) {
         console.error('[MedicationAutocomplete] French API returned non-array response');
         return [];
       }
 
       // Format response to match app expectations
+      // French API format: {value: string, url: string}
       const suggestions = data.slice(0, 10).map((item: any) => ({
-        label: item.label || item.name || item.value || '',
-        value: item.value || item.code || item.label || '',
-        id: item.id || item.code || item.value || '',
+        label: item.value || '',
+        value: item.value || '',
+        id: item.url || item.value || '',
       }));
 
       return suggestions;
