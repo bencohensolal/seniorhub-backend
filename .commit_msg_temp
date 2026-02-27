@@ -1,17 +1,27 @@
-debug(invitations): add logging to diagnose 403 errors after accepting
+feat(invitations): add auto-accept endpoint for seamless onboarding
 
-Adding comprehensive logging to identify why users get 403 errors
-when accessing household details immediately after accepting invitation.
+Add POST /v1/households/invitations/auto-accept endpoint to automatically
+accept all pending invitations for authenticated user's email.
 
-Debug logs added:
-- AcceptInvitation route: Log requester userId/email before acceptance
-- AcceptInvitation route: Log success with householdId/role/userId
-- GetHouseholdOverviewUseCase: Log access check parameters
-- GetHouseholdOverviewUseCase: Log whether member was found
+Problem solved:
+- User clicks invitation link → redirected to app
+- User authenticates/signs up
+- App now calls /auto-accept
+- All pending invitations for that email automatically accepted
+- User immediately becomes household member
+- No manual "accept invitation" step needed
 
-This will help identify if the issue is:
-1. userId mismatch between accept and subsequent requests
-2. Race condition (member not yet visible)
-3. Transaction not properly committed
+Implementation:
+- AutoAcceptPendingInvitationsUseCase: finds and accepts all pending invitations
+- Endpoint returns acceptedCount and list of households joined
+- Comprehensive logging for debugging
+- Continues processing even if one invitation fails
 
-Temporary logging for production debugging - will be removed once root cause identified.
+User flow:
+1. Click email link → app opens with token
+2. Sign in/sign up → authenticated
+3. App calls POST /auto-accept → memberships created
+4. App navigates to household → full access ✅
+
+This fixes the URGENT TODO item #13: 403 errors after invitation acceptance.
+Now the onboarding flow is seamless and automatic.
