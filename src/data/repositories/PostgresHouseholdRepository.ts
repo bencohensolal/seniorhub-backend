@@ -4,6 +4,7 @@ import { env } from '../../config/env.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
 import type { AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
+import type { CreateMedicationInput, Medication, MedicationForm, UpdateMedicationInput } from '../../domain/entities/Medication.js';
 import { isInvitationTokenValid, signInvitationToken } from '../../domain/security/invitationToken.js';
 import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
 import type {
@@ -20,6 +21,7 @@ import {
   normalizeName,
   mapMember,
   mapInvitation,
+  mapMedication,
 } from './postgres/helpers.js';
 
 const INVITATION_TTL_HOURS = 72;
@@ -826,5 +828,227 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     );
 
     return byEmail.rows[0] ?? null;
+  }
+
+  // Medications
+
+  async listHouseholdMedications(householdId: string): Promise<Medication[]> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      dosage: string;
+      form: MedicationForm;
+      frequency: string;
+      schedule: string | string[];
+      prescribed_by: string | null;
+      prescription_date: string | Date | null;
+      start_date: string | Date;
+      end_date: string | Date | null;
+      instructions: string | null;
+      created_by_user_id: string;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT id, household_id, name, dosage, form, frequency, schedule,
+              prescribed_by, prescription_date, start_date, end_date, instructions,
+              created_by_user_id, created_at, updated_at
+       FROM medications
+       WHERE household_id = $1
+       ORDER BY name ASC`,
+      [householdId],
+    );
+
+    return result.rows.map(mapMedication);
+  }
+
+  async getMedicationById(medicationId: string, householdId: string): Promise<Medication | null> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      dosage: string;
+      form: MedicationForm;
+      frequency: string;
+      schedule: string | string[];
+      prescribed_by: string | null;
+      prescription_date: string | Date | null;
+      start_date: string | Date;
+      end_date: string | Date | null;
+      instructions: string | null;
+      created_by_user_id: string;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT id, household_id, name, dosage, form, frequency, schedule,
+              prescribed_by, prescription_date, start_date, end_date, instructions,
+              created_by_user_id, created_at, updated_at
+       FROM medications
+       WHERE id = $1 AND household_id = $2
+       LIMIT 1`,
+      [medicationId, householdId],
+    );
+
+    const row = result.rows[0];
+    return row ? mapMedication(row) : null;
+  }
+
+  async createMedication(input: CreateMedicationInput): Promise<Medication> {
+    const id = randomUUID();
+    const now = nowIso();
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      dosage: string;
+      form: MedicationForm;
+      frequency: string;
+      schedule: string | string[];
+      prescribed_by: string | null;
+      prescription_date: string | Date | null;
+      start_date: string | Date;
+      end_date: string | Date | null;
+      instructions: string | null;
+      created_by_user_id: string;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `INSERT INTO medications (
+         id, household_id, name, dosage, form, frequency, schedule,
+         prescribed_by, prescription_date, start_date, end_date, instructions,
+         created_by_user_id, created_at, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $14)
+       RETURNING id, household_id, name, dosage, form, frequency, schedule,
+                 prescribed_by, prescription_date, start_date, end_date, instructions,
+                 created_by_user_id, created_at, updated_at`,
+      [
+        id,
+        input.householdId,
+        input.name,
+        input.dosage,
+        input.form,
+        input.frequency,
+        JSON.stringify(input.schedule),
+        input.prescribedBy ?? null,
+        input.prescriptionDate ?? null,
+        input.startDate,
+        input.endDate ?? null,
+        input.instructions ?? null,
+        input.createdByUserId,
+        now,
+      ],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Failed to create medication.');
+    }
+
+    return mapMedication(row);
+  }
+
+  async updateMedication(medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (input.name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(input.name);
+    }
+    if (input.dosage !== undefined) {
+      updates.push(`dosage = $${paramIndex++}`);
+      values.push(input.dosage);
+    }
+    if (input.form !== undefined) {
+      updates.push(`form = $${paramIndex++}`);
+      values.push(input.form);
+    }
+    if (input.frequency !== undefined) {
+      updates.push(`frequency = $${paramIndex++}`);
+      values.push(input.frequency);
+    }
+    if (input.schedule !== undefined) {
+      updates.push(`schedule = $${paramIndex++}::jsonb`);
+      values.push(JSON.stringify(input.schedule));
+    }
+    if (input.prescribedBy !== undefined) {
+      updates.push(`prescribed_by = $${paramIndex++}`);
+      values.push(input.prescribedBy);
+    }
+    if (input.prescriptionDate !== undefined) {
+      updates.push(`prescription_date = $${paramIndex++}`);
+      values.push(input.prescriptionDate);
+    }
+    if (input.startDate !== undefined) {
+      updates.push(`start_date = $${paramIndex++}`);
+      values.push(input.startDate);
+    }
+    if (input.endDate !== undefined) {
+      updates.push(`end_date = $${paramIndex++}`);
+      values.push(input.endDate);
+    }
+    if (input.instructions !== undefined) {
+      updates.push(`instructions = $${paramIndex++}`);
+      values.push(input.instructions);
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No fields to update.');
+    }
+
+    const now = nowIso();
+    updates.push(`updated_at = $${paramIndex++}`);
+    values.push(now);
+
+    values.push(medicationId);
+    values.push(householdId);
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      dosage: string;
+      form: MedicationForm;
+      frequency: string;
+      schedule: string | string[];
+      prescribed_by: string | null;
+      prescription_date: string | Date | null;
+      start_date: string | Date;
+      end_date: string | Date | null;
+      instructions: string | null;
+      created_by_user_id: string;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `UPDATE medications
+       SET ${updates.join(', ')}
+       WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
+       RETURNING id, household_id, name, dosage, form, frequency, schedule,
+                 prescribed_by, prescription_date, start_date, end_date, instructions,
+                 created_by_user_id, created_at, updated_at`,
+      values,
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Medication not found.');
+    }
+
+    return mapMedication(row);
+  }
+
+  async deleteMedication(medicationId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `DELETE FROM medications
+       WHERE id = $1 AND household_id = $2`,
+      [medicationId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('Medication not found.');
+    }
   }
 }
