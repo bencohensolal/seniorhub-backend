@@ -27,7 +27,8 @@ const errorResponseSchema = {
 export function registerPublicMedicationRoutes(fastify: FastifyInstance): void {
   const medicationAutocompleteUseCase = new MedicationAutocompleteUseCase();
 
-  // GET /v1/medications/autocomplete - Public medication search/autocomplete
+  // GET /v1/medications/autocomplete - Authenticated medication search/autocomplete
+  // Note: Authentication is enforced globally by registerAuthContext plugin
   fastify.get(
     '/v1/medications/autocomplete',
     {
@@ -78,6 +79,8 @@ export function registerPublicMedicationRoutes(fastify: FastifyInstance): void {
       },
     },
     async (request, reply) => {
+      // Authentication is enforced by registerAuthContext plugin
+      // request.requester is guaranteed to be set at this point
       const queryResult = autocompleteQuerySchema.safeParse(request.query);
 
       if (!queryResult.success) {
@@ -87,6 +90,9 @@ export function registerPublicMedicationRoutes(fastify: FastifyInstance): void {
           message: firstError?.message || 'Invalid query parameters',
         });
       }
+
+      // Log authenticated request
+      console.log(`[MedicationAutocomplete] User ${request.requester.userId} (${request.requester.email}) searching for "${queryResult.data.term}" (locale: ${queryResult.data.locale})`);
 
       try {
         const suggestions = await medicationAutocompleteUseCase.execute({
@@ -110,7 +116,7 @@ export function registerPublicMedicationRoutes(fastify: FastifyInstance): void {
         }
 
         // Other errors → 500
-        console.error('[MedicationRoutes] Autocomplete failed:', error);
+        console.error(`[MedicationRoutes] Autocomplete failed for user ${request.requester.userId}:`, error);
         return reply.status(500).send({
           status: 'error',
           message: 'Failed to fetch medication suggestions',
