@@ -8,7 +8,7 @@ export class ResendInvitationUseCase {
     householdId: string;
     invitationId: string;
     requester: AuthenticatedRequester;
-  }): Promise<{ newExpiresAt: string; deepLinkUrl: string; fallbackUrl: string | null }> {
+  }): Promise<{ newExpiresAt: string; acceptLinkUrl: string; deepLinkUrl: string; fallbackUrl: string | null }> {
     const result = await this.repository.resendInvitation({
       householdId: input.householdId,
       invitationId: input.invitationId,
@@ -18,6 +18,7 @@ export class ResendInvitationUseCase {
     // We don't return the token itself in the response, only the metadata
     return {
       newExpiresAt: result.newExpiresAt,
+      acceptLinkUrl: result.acceptLinkUrl,
       deepLinkUrl: result.deepLinkUrl,
       fallbackUrl: result.fallbackUrl,
     };

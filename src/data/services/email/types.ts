@@ -15,6 +15,7 @@ export interface InvitationEmailJob {
   inviteeEmail: string;
   inviteeFirstName: string;
   assignedRole: HouseholdRole;
-  deepLinkUrl: string;
-  fallbackUrl: string | null;
+  acceptLinkUrl: string; // Smart redirect URL (new primary link)
+  deepLinkUrl: string; // Legacy
+  fallbackUrl: string | null; // Legacy
 }

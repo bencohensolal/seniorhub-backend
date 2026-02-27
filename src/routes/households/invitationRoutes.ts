@@ -272,6 +272,7 @@ export const registerInvitationRoutes = (
             inviteeEmail: delivery.inviteeEmail,
             inviteeFirstName: sourceUser?.firstName ?? 'there',
             assignedRole: sourceUser?.role ?? 'senior',
+            acceptLinkUrl: delivery.acceptLinkUrl,
             deepLinkUrl: delivery.deepLinkUrl,
             fallbackUrl: delivery.fallbackUrl,
           };
@@ -623,6 +624,7 @@ export const registerInvitationRoutes = (
             inviteeEmail: invitation.inviteeEmail,
             inviteeFirstName: invitation.inviteeFirstName,
             assignedRole: invitation.assignedRole,
+            acceptLinkUrl: result.acceptLinkUrl,
             deepLinkUrl: result.deepLinkUrl,
             fallbackUrl: result.fallbackUrl,
           }]);

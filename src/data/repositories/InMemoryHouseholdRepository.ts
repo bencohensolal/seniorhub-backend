@@ -261,6 +261,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
         invitationId: invitation.id,
         inviteeEmail: email,
         status: 'sent',
+        acceptLinkUrl: links.acceptLinkUrl,
         deepLinkUrl: links.deepLinkUrl,
         fallbackUrl: links.fallbackUrl,
         reason: null,
@@ -438,7 +439,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     householdId: string;
     invitationId: string;
     requesterUserId: string;
-  }): Promise<{ newToken: string; newExpiresAt: string; deepLinkUrl: string; fallbackUrl: string | null }> {
+  }): Promise<{ newToken: string; newExpiresAt: string; acceptLinkUrl: string; deepLinkUrl: string; fallbackUrl: string | null }> {
     const requester = await this.findActiveMemberByUserInHousehold(input.requesterUserId, input.householdId);
     if (!requester || requester.role !== 'caregiver') {
       throw new Error('Only caregivers can resend invitations.');
@@ -476,6 +477,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     return {
       newToken,
       newExpiresAt,
+      acceptLinkUrl: links.acceptLinkUrl,
       deepLinkUrl: links.deepLinkUrl,
       fallbackUrl: links.fallbackUrl,
     };

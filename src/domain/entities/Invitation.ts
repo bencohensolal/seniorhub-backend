@@ -22,8 +22,9 @@ export interface InvitationDeliveryResult {
   invitationId: string;
   inviteeEmail: string;
   status: 'sent' | 'failed';
-  deepLinkUrl: string;
-  fallbackUrl: string | null;
+  acceptLinkUrl: string; // Smart redirect URL (primary link)
+  deepLinkUrl: string; // Legacy
+  fallbackUrl: string | null; // Legacy
   reason: string | null;
 }
 

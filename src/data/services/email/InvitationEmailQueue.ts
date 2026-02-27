@@ -23,6 +23,7 @@ export class InvitationEmailQueue {
       const template = await buildInvitationEmailTemplate({
         firstName: job.inviteeFirstName,
         assignedRole: job.assignedRole,
+        acceptLinkUrl: job.acceptLinkUrl,
         deepLinkUrl: job.deepLinkUrl,
         fallbackUrl: job.fallbackUrl,
       });

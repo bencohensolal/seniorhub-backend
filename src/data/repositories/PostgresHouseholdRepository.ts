@@ -311,6 +311,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
         invitationId,
         inviteeEmail: email,
         status: 'sent',
+        acceptLinkUrl: links.acceptLinkUrl,
         deepLinkUrl: links.deepLinkUrl,
         fallbackUrl: links.fallbackUrl,
         reason: null,
@@ -608,7 +609,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     householdId: string;
     invitationId: string;
     requesterUserId: string;
-  }): Promise<{ newToken: string; newExpiresAt: string; deepLinkUrl: string; fallbackUrl: string | null }> {
+  }): Promise<{ newToken: string; newExpiresAt: string; acceptLinkUrl: string; deepLinkUrl: string; fallbackUrl: string | null }> {
     const client = await this.pool.connect();
     let transactionCommitted = false;
 
@@ -679,6 +680,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       return {
         newToken,
         newExpiresAt,
+        acceptLinkUrl: links.acceptLinkUrl,
         deepLinkUrl: links.deepLinkUrl,
         fallbackUrl: links.fallbackUrl,
       };
