@@ -211,7 +211,32 @@
 	- Response: `{ status: 'success', newExpiresAt: '...' }`
 	- App usage: "Resend Email" button in sent invitations list
 
-### 13) Medications management
+### 13) Household details endpoint
+
+- [x] **IMPLEMENTED:** `GET /v1/households/:householdId` - Get household details
+	- **Status:** Endpoint successfully implemented ✅
+	- **Authorization:** household members only
+	- **Response:** 
+		```json
+		{
+			"status": "success",
+			"data": {
+				"id": "uuid",
+				"name": "Smith Family",
+				"createdAt": "2026-02-26T...",
+				"createdByUserId": "uuid",
+				"memberCount": 3
+			}
+		}
+		```
+	- **Implementation:** Uses existing GetHouseholdOverviewUseCase, returns simplified format
+	- **App usage:** 
+		- Display household name in header
+		- Show creation date
+		- Show member count
+	- **Note:** `/overview` endpoint still available for more detailed stats
+
+### 14) Medications management
 
 - [x] **Data model & migrations**
 	- [x] Add `medications` table:

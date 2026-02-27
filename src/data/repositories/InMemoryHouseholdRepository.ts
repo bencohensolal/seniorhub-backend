@@ -251,6 +251,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
 
       const links = buildInvitationLinks({
         token,
+        backendBaseUrl: env.BACKEND_URL,
         ...(env.INVITATION_WEB_FALLBACK_URL
           ? { fallbackBaseUrl: env.INVITATION_WEB_FALLBACK_URL }
           : {}),
@@ -468,6 +469,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
 
     const links = buildInvitationLinks({
       token: newToken,
+      backendBaseUrl: env.BACKEND_URL,
       ...(env.INVITATION_WEB_FALLBACK_URL ? { fallbackBaseUrl: env.INVITATION_WEB_FALLBACK_URL } : {}),
     });
 

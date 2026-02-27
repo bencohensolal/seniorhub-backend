@@ -9,6 +9,7 @@ import type { ListHouseholdInvitationsUseCase } from '../../domain/usecases/List
 import type { ResolveInvitationUseCase } from '../../domain/usecases/ResolveInvitationUseCase.js';
 import type { ResendInvitationUseCase } from '../../domain/usecases/ResendInvitationUseCase.js';
 import { invitationEmailRuntime } from '../../data/services/email/invitationEmailRuntime.js';
+import { env } from '../../config/env.js';
 import {
   paramsSchema,
   bulkInvitationBodySchema,
@@ -18,6 +19,16 @@ import {
   errorResponseSchema,
 } from './schemas.js';
 import { checkInviteRateLimit, maskEmail, sanitizeInvitation } from './utils.js';
+
+/**
+ * Detects if the request is coming from a mobile device
+ */
+const isMobileDevice = (userAgent: string | undefined): boolean => {
+  if (!userAgent) return false;
+  
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return mobileRegex.test(userAgent);
+};
 
 export const registerInvitationRoutes = (
   fastify: FastifyInstance,
@@ -33,6 +44,100 @@ export const registerInvitationRoutes = (
     resendInvitationUseCase: ResendInvitationUseCase;
   },
 ) => {
+  // GET /v1/invitations/accept-link - Smart redirect for invitation acceptance
+  // This is a PUBLIC endpoint (no auth required) - used in email links
+  fastify.get(
+    '/v1/invitations/accept-link',
+    {
+      schema: {
+        tags: ['Invitations'],
+        querystring: {
+          type: 'object',
+          properties: { token: { type: 'string' } },
+          required: ['token'],
+        },
+        response: {
+          302: {
+            description: 'Redirect to mobile app or web frontend',
+            type: 'null',
+          },
+          400: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['error'] },
+              message: { type: 'string' },
+            },
+            required: ['status', 'message'],
+          },
+          404: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['error'] },
+              message: { type: 'string' },
+            },
+            required: ['status', 'message'],
+          },
+        },
+      },
+      // Override onRequest hook to make this endpoint public (no auth check)
+      onRequest: async (_request, _reply) => {
+        // Skip authentication - this is a public endpoint
+      },
+    },
+    async (request, reply) => {
+      const queryResult = resolveQuerySchema.safeParse(request.query);
+      if (!queryResult.success) {
+        return reply.status(400).send({ 
+          status: 'error', 
+          message: 'Token manquant ou invalide.' 
+        });
+      }
+
+      const token = queryResult.data.token;
+
+      try {
+        // Validate that the invitation exists and is still valid
+        await useCases.resolveInvitationUseCase.execute({ token });
+
+        // Detect if user is on mobile device
+        const userAgent = request.headers['user-agent'];
+        const isMobile = isMobileDevice(userAgent);
+
+        console.info('[Invitations] Smart redirect for invitation acceptance:', {
+          token: token.substring(0, 8) + '...',
+          userAgent,
+          isMobile,
+        });
+
+        let redirectUrl: string;
+
+        if (isMobile) {
+          // Redirect to mobile app deep link
+          redirectUrl = `seniorhub://invite?type=household-invite&token=${encodeURIComponent(token)}`;
+          console.info('[Invitations] Redirecting to mobile app:', redirectUrl);
+        } else {
+          // Redirect to web frontend
+          const frontendUrl = env.FRONTEND_URL;
+          redirectUrl = `${frontendUrl}/accept-invitation?token=${encodeURIComponent(token)}`;
+          console.info('[Invitations] Redirecting to web frontend:', redirectUrl);
+        }
+
+        return reply.redirect(redirectUrl, 302);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Erreur inattendue.';
+        console.error('[Invitations] Failed to resolve invitation for redirect:', {
+          error: message,
+          token: token.substring(0, 8) + '...',
+        });
+
+        return reply.status(404).send({ 
+          status: 'error', 
+          message: 'Invitation introuvable ou expirée.' 
+        });
+      }
+    },
+  );
+
   // POST /v1/households/:householdId/invitations/bulk - Create bulk invitations
   fastify.post(
     '/v1/households/:householdId/invitations/bulk',

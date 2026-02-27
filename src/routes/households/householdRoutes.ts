@@ -120,6 +120,80 @@ export const registerHouseholdRoutes = (
     },
   );
 
+  // GET /v1/households/:householdId - Get household details
+  fastify.get(
+    '/v1/households/:householdId',
+    {
+      schema: {
+        tags: ['Households'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  createdByUserId: { type: 'string' },
+                  memberCount: { type: 'number' },
+                },
+                required: ['id', 'name', 'createdAt', 'createdByUserId', 'memberCount'],
+              },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const overview = await useCases.getHouseholdOverviewUseCase.execute({
+          householdId: paramsResult.data.householdId,
+          requesterUserId: request.requester.userId,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: {
+            id: overview.household.id,
+            name: overview.household.name,
+            createdAt: overview.household.createdAt,
+            createdByUserId: overview.household.createdByUserId,
+            memberCount: overview.membersCount,
+          },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected error.';
+        const statusCode = message === 'Access denied to this household.' ? 403 : 404;
+
+        return reply.status(statusCode).send({
+          status: 'error',
+          message,
+        });
+      }
+    },
+  );
+
   // GET /v1/households/:householdId/overview - Get household overview
   fastify.get(
     '/v1/households/:householdId/overview',
