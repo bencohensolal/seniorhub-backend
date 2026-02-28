@@ -114,11 +114,15 @@ export const registerInvitationRoutes = (
         let redirectUrl: string;
 
         if (isMobile) {
-          // Redirect to mobile app deep link
-          redirectUrl = `seniorhub://invite?type=household-invite&token=${encodeURIComponent(token)}`;
-          console.info('[Invitations] Redirecting to mobile app:', redirectUrl);
+          // Redirect to mobile app deep link with token
+          // App should call POST /v1/households/invitations/accept with this token + auth headers
+          redirectUrl = `seniorhub://invitation/accept?token=${encodeURIComponent(token)}`;
+          console.info('[Invitations] Redirecting to mobile app with token:', {
+            redirectUrl: redirectUrl.substring(0, 50) + '...',
+            tokenPreview: token.substring(0, 8) + '...',
+          });
         } else {
-          // Redirect to web frontend
+          // Redirect to web frontend with token
           const frontendUrl = env.FRONTEND_URL;
           redirectUrl = `${frontendUrl}/accept-invitation?token=${encodeURIComponent(token)}`;
           console.info('[Invitations] Redirecting to web frontend:', redirectUrl);
