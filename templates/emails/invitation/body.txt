@@ -2,14 +2,11 @@ Hello {{firstName}},
 
 You have been invited to join a Senior Hub household as {{role}}.
 
-Open this invitation in the app:
-{{deepLinkUrl}}
+To accept this invitation, click the following link:
+{{acceptLinkUrl}}
 
-{{#if fallbackUrl}}
-If the app is not installed yet, open this secure link:
-{{fallbackUrl}}
+This link will automatically open the invitation in the Senior Hub app if installed, or in your web browser otherwise.
 
-{{/if}}
-This invitation is single-use and expires automatically for safety.
+This invitation is single-use and expires automatically after 72 hours for your safety.
 
-If you were not expecting this email, you can ignore it.
+If you were not expecting this email, you can safely ignore it.

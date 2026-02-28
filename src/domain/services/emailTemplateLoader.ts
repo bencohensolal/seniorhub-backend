@@ -21,17 +21,24 @@ export async function loadEmailTemplate(
 ): Promise<{ subject: string; body: string }> {
   const templatePath = join(TEMPLATES_DIR, templateName);
 
+  // Loading email template files
+
   // Load template files (prefer HTML over plain text)
   const subject = await readFile(join(templatePath, 'subject.txt'), 'utf-8');
   
   let body: string;
+  let bodyFormat: 'html' | 'text';
   try {
     // Try to load HTML template first
     body = await readFile(join(templatePath, 'body.html'), 'utf-8');
+    bodyFormat = 'html';
   } catch {
     // Fall back to plain text template
     body = await readFile(join(templatePath, 'body.txt'), 'utf-8');
+    bodyFormat = 'text';
   }
+
+  // Template files loaded successfully
 
   // Simple template engine: replace {{variable}} with values
   const render = (content: string): string => {

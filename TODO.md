@@ -211,35 +211,48 @@
 	- Response: `{ status: 'success', newExpiresAt: '...' }`
 	- App usage: "Resend Email" button in sent invitations list
 
-### 13) 🐛 CRITICAL BUG: 403 Access denied after invitation acceptance
+### 13) ✅ RESOLVED: Auto-accept endpoint for seamless onboarding
 
-- [ ] **URGENT:** User gets 403 "Access denied to this household" after accepting invitation
-	- **Symptom:** User successfully accepts invitation but cannot access household
-	- **Household ID:** 3617e173-d359-492b-94b7-4c32622e7526
-	- **Invitation ID:** 22db9a60-6852-4b6c-a5a9-49d216f5b89e
-	- **Errors:**
-		- GET /v1/households/:id → 403 "Access denied to this household"
-		- GET /v1/households/:id/members → 403 "Access denied to this household"
+- [x] **IMPLEMENTED:** POST /v1/households/invitations/auto-accept endpoint
+	- **Solution:** Automatically accept all pending invitations for authenticated user
+	- **Endpoint:** POST /v1/households/invitations/auto-accept
+	- **Response:** `{ acceptedCount, households: [{householdId, role}, ...] }`
+	- **Authentication:** Required (uses authenticated user's email)
 	
-	**Root Cause Investigation:**
-	1. Check `POST /households/invitations/accept` - does it create membership?
-	2. Verify membership has status='active' after acceptance
-	3. Check user_id matches authenticated user in membership
-	4. Query household_members table after invitation acceptance
-	5. Check authorization guard queries for status='active'
+	**Root Cause Analysis:**
+	- App was NOT calling POST /households/invitations/accept
+	- User clicked link → redirected to app → authenticated
+	- App tried to access household WITHOUT accepting invitation first
+	- Result: 403 "Access denied" because user not a member yet
 	
-	**Expected Flow:**
-	- User accepts invitation (by invitationId)
-	- Membership created: {user_id, household_id, role, status='active'}
-	- User can immediately access household resources
+	**Solution Implemented:**
+	- Created AutoAcceptPendingInvitationsUseCase
+	- Finds ALL pending invitations matching user's email
+	- Automatically accepts each one, creating memberships
+	- Returns list of households user just joined
+	- Comprehensive logging for debugging
 	
-	**Current Broken Flow:**
-	- User accepts invitation ✅
-	- Household ID saved in app ✅
-	- Membership NOT created or NOT active ❌
-	- 403 on all household endpoints ❌
+	**New User Flow:**
+	1. User clicks invitation link → app opens
+	2. User signs in/signs up → authenticated
+	3. App calls POST /auto-accept → all invitations accepted automatically
+	4. User navigates to household → full access ✅
 	
-	**Impact:** CRITICAL - Users cannot use household after accepting invitation
+	**Benefits:**
+	- Seamless onboarding - no manual "accept" step
+	- Works for multiple pending invitations at once
+	- No userId mismatch issues
+	- User immediately becomes household member
+	
+	**App Integration Required:**
+	After user authentication, call:
+	```typescript
+	const result = await api.post('/v1/households/invitations/auto-accept', null, {
+		headers: authHeaders
+	});
+	// result.data = { acceptedCount: 1, households: [{householdId, role}] }
+	// Navigate to household
+	```
 
 ### 14) Household details endpoint
 

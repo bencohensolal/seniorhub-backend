@@ -14,13 +14,19 @@ export async function buildInvitationEmailTemplate(input: {
   deepLinkUrl: string; // Legacy support
   fallbackUrl: string | null; // Legacy support
 }): Promise<{ subject: string; body: string }> {
+  // Building email template with provided parameters
+
   const greetingName = input.firstName.trim() || 'there';
 
-  return loadEmailTemplate('invitation', {
+  const result = await loadEmailTemplate('invitation', {
     firstName: greetingName,
     role: roleLabel(input.assignedRole),
     acceptLinkUrl: input.acceptLinkUrl,
     deepLinkUrl: input.deepLinkUrl,
     fallbackUrl: input.fallbackUrl,
   });
+
+  // Template built and validated successfully
+
+  return result;
 }
