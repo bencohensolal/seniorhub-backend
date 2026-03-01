@@ -48,3 +48,4 @@ The format is inspired by Keep a Changelog.
 - Railway deployment Docker cache mount conflict ("Device or resource busy" errors) by removing custom buildCommand.
 - Service deployment stability by letting Nixpacks manage build phases natively through nixpacks.toml.
 - Gmail SMTP now successfully sending invitation emails in production (500 emails/day free tier).
+- Medication creation error with Google OAuth user IDs by changing `medications.created_by_user_id` column type from UUID to TEXT (migration 005).
