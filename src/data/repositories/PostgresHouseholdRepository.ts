@@ -5,6 +5,7 @@ import type { AuthenticatedRequester, Household, HouseholdOverview } from '../..
 import type { AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
 import type { CreateMedicationInput, Medication, MedicationForm, UpdateMedicationInput } from '../../domain/entities/Medication.js';
+import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../../domain/entities/MedicationReminder.js';
 import { isInvitationTokenValid, signInvitationToken } from '../../domain/security/invitationToken.js';
 import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
 import type {
@@ -22,6 +23,7 @@ import {
   mapMember,
   mapInvitation,
   mapMedication,
+  mapReminder,
 } from './postgres/helpers.js';
 
 const INVITATION_TTL_HOURS = 72;
@@ -1115,6 +1117,146 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
     if (result.rowCount === 0) {
       throw new Error('Medication not found.');
+    }
+  }
+
+  // Medication Reminders
+
+  async listMedicationReminders(medicationId: string, householdId: string): Promise<MedicationReminder[]> {
+    const result = await this.pool.query<{
+      id: string;
+      medication_id: string;
+      time: string;
+      days_of_week: number[];
+      enabled: boolean;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT r.id, r.medication_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at
+       FROM medication_reminders r
+       JOIN medications m ON m.id = r.medication_id
+       WHERE r.medication_id = $1 AND m.household_id = $2
+       ORDER BY r.time ASC`,
+      [medicationId, householdId],
+    );
+
+    return result.rows.map(mapReminder);
+  }
+
+  async getReminderById(reminderId: string, medicationId: string, householdId: string): Promise<MedicationReminder | null> {
+    const result = await this.pool.query<{
+      id: string;
+      medication_id: string;
+      time: string;
+      days_of_week: number[];
+      enabled: boolean;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT r.id, r.medication_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at
+       FROM medication_reminders r
+       JOIN medications m ON m.id = r.medication_id
+       WHERE r.id = $1 AND r.medication_id = $2 AND m.household_id = $3
+       LIMIT 1`,
+      [reminderId, medicationId, householdId],
+    );
+
+    const row = result.rows[0];
+    return row ? mapReminder(row) : null;
+  }
+
+  async createReminder(input: CreateReminderInput): Promise<MedicationReminder> {
+    const id = randomUUID();
+    const now = nowIso();
+    const enabled = input.enabled ?? true;
+
+    const result = await this.pool.query<{
+      id: string;
+      medication_id: string;
+      time: string;
+      days_of_week: number[];
+      enabled: boolean;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `INSERT INTO medication_reminders (id, medication_id, time, days_of_week, enabled, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $6)
+       RETURNING id, medication_id, time, days_of_week, enabled, created_at, updated_at`,
+      [id, input.medicationId, input.time, input.daysOfWeek, enabled, now],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Failed to create reminder.');
+    }
+
+    return mapReminder(row);
+  }
+
+  async updateReminder(reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (input.time !== undefined) {
+      updates.push(`time = $${paramIndex++}`);
+      values.push(input.time);
+    }
+    if (input.daysOfWeek !== undefined) {
+      updates.push(`days_of_week = $${paramIndex++}`);
+      values.push(input.daysOfWeek);
+    }
+    if (input.enabled !== undefined) {
+      updates.push(`enabled = $${paramIndex++}`);
+      values.push(input.enabled);
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No fields to update.');
+    }
+
+    const now = nowIso();
+    updates.push(`updated_at = $${paramIndex++}`);
+    values.push(now);
+
+    values.push(reminderId);
+    values.push(medicationId);
+
+    const result = await this.pool.query<{
+      id: string;
+      medication_id: string;
+      time: string;
+      days_of_week: number[];
+      enabled: boolean;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `UPDATE medication_reminders r
+       SET ${updates.join(', ')}
+       FROM medications m
+       WHERE r.id = $${paramIndex++} AND r.medication_id = $${paramIndex++} AND m.id = r.medication_id AND m.household_id = $${paramIndex++}
+       RETURNING r.id, r.medication_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at`,
+      [...values, householdId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Reminder not found.');
+    }
+
+    return mapReminder(row);
+  }
+
+  async deleteReminder(reminderId: string, medicationId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `DELETE FROM medication_reminders r
+       USING medications m
+       WHERE r.id = $1 AND r.medication_id = $2 AND m.id = r.medication_id AND m.household_id = $3`,
+      [reminderId, medicationId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('Reminder not found.');
     }
   }
 }

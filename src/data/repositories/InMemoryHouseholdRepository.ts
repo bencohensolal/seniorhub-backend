@@ -536,4 +536,25 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteMedication(_medicationId: string, _householdId: string): Promise<void> {
     throw new Error('Medication operations not implemented in InMemoryRepository');
   }
+
+  // Medication Reminder methods - stub implementations for test compatibility
+  async listMedicationReminders(_medicationId: string, _householdId: string): Promise<any[]> {
+    return [];
+  }
+
+  async getReminderById(_reminderId: string, _medicationId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createReminder(_input: any): Promise<any> {
+    throw new Error('Reminder operations not implemented in InMemoryRepository');
+  }
+
+  async updateReminder(_reminderId: string, _medicationId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Reminder operations not implemented in InMemoryRepository');
+  }
+
+  async deleteReminder(_reminderId: string, _medicationId: string, _householdId: string): Promise<void> {
+    throw new Error('Reminder operations not implemented in InMemoryRepository');
+  }
 }

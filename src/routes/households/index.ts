@@ -20,10 +20,15 @@ import { registerHouseholdRoutes } from './householdRoutes.js';
 import { registerInvitationRoutes } from './invitationRoutes.js';
 import { registerObservabilityRoutes } from './observabilityRoutes.js';
 import { registerMedicationRoutes } from './medicationRoutes.js';
+import { registerReminderRoutes } from './reminderRoutes.js';
 import { ListHouseholdMedicationsUseCase } from '../../domain/usecases/ListHouseholdMedicationsUseCase.js';
 import { CreateMedicationUseCase } from '../../domain/usecases/CreateMedicationUseCase.js';
 import { UpdateMedicationUseCase } from '../../domain/usecases/UpdateMedicationUseCase.js';
 import { DeleteMedicationUseCase } from '../../domain/usecases/DeleteMedicationUseCase.js';
+import { ListMedicationRemindersUseCase } from '../../domain/usecases/ListMedicationRemindersUseCase.js';
+import { CreateReminderUseCase } from '../../domain/usecases/CreateReminderUseCase.js';
+import { UpdateReminderUseCase } from '../../domain/usecases/UpdateReminderUseCase.js';
+import { DeleteReminderUseCase } from '../../domain/usecases/DeleteReminderUseCase.js';
 
 /**
  * Households plugin
@@ -59,6 +64,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createMedicationUseCase: new CreateMedicationUseCase(repository),
     updateMedicationUseCase: new UpdateMedicationUseCase(repository),
     deleteMedicationUseCase: new DeleteMedicationUseCase(repository),
+    listMedicationRemindersUseCase: new ListMedicationRemindersUseCase(repository),
+    createReminderUseCase: new CreateReminderUseCase(repository),
+    updateReminderUseCase: new UpdateReminderUseCase(repository),
+    deleteReminderUseCase: new DeleteReminderUseCase(repository),
   };
 
   // Register route modules
@@ -91,5 +100,12 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createMedicationUseCase: useCases.createMedicationUseCase,
     updateMedicationUseCase: useCases.updateMedicationUseCase,
     deleteMedicationUseCase: useCases.deleteMedicationUseCase,
+  });
+
+  registerReminderRoutes(fastify, {
+    listMedicationRemindersUseCase: useCases.listMedicationRemindersUseCase,
+    createReminderUseCase: useCases.createReminderUseCase,
+    updateReminderUseCase: useCases.updateReminderUseCase,
+    deleteReminderUseCase: useCases.deleteReminderUseCase,
   });
 };

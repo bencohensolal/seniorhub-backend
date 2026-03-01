@@ -4,6 +4,7 @@ import type { Household, AuthenticatedRequester } from '../entities/Household.js
 import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
 import type { HouseholdRole } from '../entities/Member.js';
 import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../entities/Medication.js';
+import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../entities/MedicationReminder.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -68,4 +69,11 @@ export interface HouseholdRepository {
   createMedication(input: CreateMedicationInput): Promise<Medication>;
   updateMedication(medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication>;
   deleteMedication(medicationId: string, householdId: string): Promise<void>;
+
+  // Medication Reminders
+  listMedicationReminders(medicationId: string, householdId: string): Promise<MedicationReminder[]>;
+  getReminderById(reminderId: string, medicationId: string, householdId: string): Promise<MedicationReminder | null>;
+  createReminder(input: CreateReminderInput): Promise<MedicationReminder>;
+  updateReminder(reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder>;
+  deleteReminder(reminderId: string, medicationId: string, householdId: string): Promise<void>;
 }

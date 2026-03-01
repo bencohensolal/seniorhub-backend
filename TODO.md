@@ -55,37 +55,28 @@
 
 ### Advanced Medication Reminders System
 
-**Status:** 🔮 Planned (not started)
+**Status:** ✅ Implemented (migration pending)
 
-**Objective:** Replace simple `schedule: string[]` with flexible reminder rules
+- [x] Create `medication_reminders` table (migration 006)
+- [x] Domain entities and repository methods
+- [x] Use cases (List, Create, Update, Delete)
+- [x] Zod validation schemas
+- [x] API endpoints (4 routes)
+- [ ] Apply migration 006 to production database
+- [ ] Test endpoints in production
+- [ ] Mobile app integration
 
-**Requirements:**
-- [ ] Support day-of-week selection (e.g., "Monday-Friday at 8am")
-- [ ] Allow multiple reminders per medication with different rules
-- [ ] Enable/disable individual reminders
+**Endpoints Available:**
+- GET `/v1/households/:householdId/medications/:medicationId/reminders`
+- POST `/v1/households/:householdId/medications/:medicationId/reminders`
+- PUT `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId`
+- DELETE `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId`
 
-**Database Design:**
-- [ ] Create `medication_reminders` table with:
-  - `id`, `medication_id`, `time`, `days_of_week[]`, `enabled`
-  - Foreign key cascade delete on medication deletion
-  - Index on `medication_id`
-
-**API Endpoints to Create:**
-- [ ] POST `/v1/households/:householdId/medications/:medicationId/reminders` - Create reminder
-- [ ] GET `/v1/households/:householdId/medications/:medicationId/reminders` - List reminders
-- [ ] PUT `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId` - Update reminder
-- [ ] DELETE `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId` - Delete reminder
-
-**Migration Strategy:**
-- [ ] Create new `medication_reminders` table (migration 006)
-- [ ] Migrate existing `medications.schedule` data to new table
-- [ ] Keep `medications.schedule` for backward compatibility during transition
-- [ ] Deprecate and eventually remove `medications.schedule` after app migration
-
-**Example Configurations:**
-- Daily at 8am: `{time: '08:00', days_of_week: [0,1,2,3,4,5,6]}`
-- Weekdays at 8am: `{time: '08:00', days_of_week: [1,2,3,4,5]}`
-- Mon/Wed/Fri at 8am & 8pm: Two reminders with `days_of_week: [1,3,5]`
+**Features:**
+- Day-of-week selection (0=Sunday to 6=Saturday)
+- Multiple reminders per medication
+- Enable/disable individual reminders
+- Time in HH:MM format (00:00 to 23:59)
 
 ---
 

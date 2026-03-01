@@ -51,3 +51,21 @@ The format is inspired by Keep a Changelog.
 - Medication creation error with Google OAuth user IDs by changing `medications.created_by_user_id` column type from UUID to TEXT (migration 005).
 - Medication deletion endpoint response serialization error by changing to REST-compliant 204 No Content status.
 - Fastify JSON parser rejecting DELETE requests with empty body by implementing custom parser that allows empty bodies for DELETE method.
+
+## [2026-01-03] - Advanced Medication Reminders
+
+### Added
+- `medication_reminders` table (migration 006) with day-of-week scheduling support.
+- MedicationReminder domain entity with TypeScript type definitions.
+- Repository methods for reminder CRUD operations in HouseholdRepository interface.
+- Complete PostgreSQL implementation of reminder methods in PostgresHouseholdRepository.
+- Four new use cases: ListMedicationRemindersUseCase, CreateReminderUseCase, UpdateReminderUseCase, DeleteReminderUseCase.
+- Zod validation schemas for reminder creation and updates with time format (HH:MM) and days-of-week validation.
+- Four REST API endpoints for medication reminders:
+  - GET `/v1/households/:householdId/medications/:medicationId/reminders` - List all reminders
+  - POST `/v1/households/:householdId/medications/:medicationId/reminders` - Create reminder
+  - PUT `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId` - Update reminder
+  - DELETE `/v1/households/:householdId/medications/:medicationId/reminders/:reminderId` - Delete reminder
+- Flexible reminder configuration: multiple reminders per medication, day-of-week selection (0=Sunday to 6=Saturday), enable/disable toggle.
+- Proper access control: all members can view reminders, only caregivers can create/update/delete.
+- Database constraints ensuring at least one day selected and unique day values in arrays.

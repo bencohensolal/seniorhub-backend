@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
 import type { Medication, MedicationForm } from '../../../domain/entities/Medication.js';
+import type { MedicationReminder } from '../../../domain/entities/MedicationReminder.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -106,6 +107,24 @@ export const mapMedication = (row: {
   endDate: row.end_date ? toIso(row.end_date) : null,
   instructions: row.instructions,
   createdByUserId: row.created_by_user_id,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+});
+
+export const mapReminder = (row: {
+  id: string;
+  medication_id: string;
+  time: string;
+  days_of_week: number[] | string; // May come as array or string representation
+  enabled: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): MedicationReminder => ({
+  id: row.id,
+  medicationId: row.medication_id,
+  time: row.time,
+  daysOfWeek: typeof row.days_of_week === 'string' ? JSON.parse(row.days_of_week) : row.days_of_week,
+  enabled: row.enabled,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
 });
