@@ -9,6 +9,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { MedicationAutocompleteUseCase } from '../domain/usecases/MedicationAutocompleteUseCase.js';
+import { handleDomainError } from './errorHandler.js';
 
 // Validation schemas
 const autocompleteQuerySchema = z.object({
@@ -103,22 +104,8 @@ export function registerPublicMedicationRoutes(fastify: FastifyInstance): void {
           data: suggestions,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error';
-        
-        // Validation errors (term length) → 400
-        if (message.includes('characters')) {
-          return reply.status(400).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        // Other errors → 500
         console.error(`[MedicationRoutes] Autocomplete failed:`, error);
-        return reply.status(500).send({
-          status: 'error',
-          message: 'Failed to fetch medication suggestions',
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
