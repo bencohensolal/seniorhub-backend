@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 // Zod schemas for request validation
 export const paramsSchema = z.object({
-  householdId: z.string().min(1),
+  householdId: z.string().uuid('Invalid household ID format'),
 });
 
 export const cancelInvitationParamsSchema = z.object({
-  householdId: z.string().min(1),
-  invitationId: z.string().min(1),
+  householdId: z.string().uuid('Invalid household ID format'),
+  invitationId: z.string().uuid('Invalid invitation ID format'),
 });
 
 export const createHouseholdBodySchema = z.object({

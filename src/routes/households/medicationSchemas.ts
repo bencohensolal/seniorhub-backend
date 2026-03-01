@@ -20,7 +20,7 @@ export const medicationFormSchema = z.enum([
 
 // Schema for creating a new medication
 export const createMedicationBodySchema = z.object({
-  seniorId: z.string().min(1, 'Senior ID is required'), // REQUIRED: medication must be assigned to a senior
+  seniorId: z.string().uuid('Invalid senior ID format'), // REQUIRED: medication must be assigned to a senior
   name: z.string().min(1).max(200),
   dosage: z.string().min(1).max(100),
   form: medicationFormSchema,
@@ -54,15 +54,15 @@ export const updateMedicationBodySchema = z.object({
 
 // Schema for medication URL parameters
 export const medicationParamsSchema = z.object({
-  householdId: z.string().min(1),
-  medicationId: z.string().min(1),
+  householdId: z.string().uuid('Invalid household ID format'),
+  medicationId: z.string().uuid('Invalid medication ID format'),
 });
 
 // Schema for medication reminder URL parameters
 export const reminderParamsSchema = z.object({
-  householdId: z.string().min(1),
-  medicationId: z.string().min(1),
-  reminderId: z.string().min(1),
+  householdId: z.string().uuid('Invalid household ID format'),
+  medicationId: z.string().uuid('Invalid medication ID format'),
+  reminderId: z.string().uuid('Invalid reminder ID format'),
 });
 
 // Schema for creating a medication reminder
