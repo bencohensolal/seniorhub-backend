@@ -48,7 +48,7 @@ export const updateMedicationBodySchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().nullable().optional(),
   instructions: z.string().max(1000).nullable().optional(),
-  seniorId: z.string().optional(), // Sent by mobile app for UI purposes, not stored
+  // NOTE: seniorId cannot be changed after medication creation
 });
 
 // Schema for medication URL parameters
