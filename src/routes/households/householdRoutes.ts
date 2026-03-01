@@ -302,9 +302,14 @@ export const registerHouseholdRoutes = (
     async (request, reply) => {
       const paramsResult = paramsSchema.safeParse(request.params);
       if (!paramsResult.success) {
+        const errorMessage = paramsResult.error.issues[0]?.message || 'Invalid household ID format';
+        fastify.log.warn({ 
+          error: paramsResult.error, 
+          params: request.params 
+        }, `[GET /members] Validation failed: ${errorMessage}`);
         return reply.status(400).send({
           status: 'error',
-          message: 'Invalid request payload.',
+          message: errorMessage,
         });
       }
 
