@@ -1,29 +1,38 @@
 import type { AuthenticatedRequester } from '../entities/Household.js';
 import type { MedicationReminder, CreateReminderInput } from '../entities/MedicationReminder.js';
 import type { HouseholdRepository } from '../repositories/HouseholdRepository.js';
+import { HouseholdAccessValidator } from './shared/index.js';
+import { NotFoundError } from '../errors/index.js';
 
+/**
+ * Creates a new medication reminder in a household.
+ * Only caregivers can create reminders.
+ */
 export class CreateReminderUseCase {
-  constructor(private readonly repository: HouseholdRepository) {}
+  private readonly accessValidator: HouseholdAccessValidator;
 
+  constructor(private readonly repository: HouseholdRepository) {
+    this.accessValidator = new HouseholdAccessValidator(repository);
+  }
+
+  /**
+   * @param input - Reminder creation data with requester info
+   * @returns The created reminder
+   * @throws {ForbiddenError} If requester is not a caregiver
+   * @throws {NotFoundError} If medication doesn't exist
+   */
   async execute(input: Omit<CreateReminderInput, 'medicationId'> & {
     medicationId: string;
     householdId: string;
     requester: AuthenticatedRequester;
   }): Promise<MedicationReminder> {
-    // Only caregivers can create reminders
-    const member = await this.repository.findActiveMemberByUserInHousehold(
-      input.requester.userId,
-      input.householdId,
-    );
-
-    if (!member || member.role !== 'caregiver') {
-      throw new Error('Only caregivers can create medication reminders.');
-    }
+    // Validate caregiver access
+    await this.accessValidator.ensureCaregiver(input.requester.userId, input.householdId);
 
     // Verify medication belongs to household
     const medication = await this.repository.getMedicationById(input.medicationId, input.householdId);
     if (!medication) {
-      throw new Error('Medication not found.');
+      throw new NotFoundError('Medication not found.');
     }
 
     const reminderInput: CreateReminderInput = {

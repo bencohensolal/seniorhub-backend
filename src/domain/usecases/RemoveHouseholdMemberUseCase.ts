@@ -1,5 +1,7 @@
 import type { HouseholdRepository } from '../repositories/HouseholdRepository.js';
 import type { AuthenticatedRequester } from '../entities/Household.js';
+import { HouseholdAccessValidator } from './shared/index.js';
+import { NotFoundError, ConflictError, BusinessRuleError } from '../errors/index.js';
 
 export interface RemoveHouseholdMemberInput {
   householdId: string;
@@ -7,40 +9,44 @@ export interface RemoveHouseholdMemberInput {
   requester: AuthenticatedRequester;
 }
 
+/**
+ * Removes a member from a household.
+ * Only caregivers can remove members.
+ * Business rules: Cannot remove self, cannot remove last member.
+ */
 export class RemoveHouseholdMemberUseCase {
-  constructor(private readonly repository: HouseholdRepository) {}
+  private readonly accessValidator: HouseholdAccessValidator;
 
+  constructor(private readonly repository: HouseholdRepository) {
+    this.accessValidator = new HouseholdAccessValidator(repository);
+  }
+
+  /**
+   * @param input - Member removal data with requester info
+   * @throws {ForbiddenError} If requester is not a caregiver
+   * @throws {NotFoundError} If target member doesn't exist
+   * @throws {ConflictError} If trying to remove self
+   * @throws {BusinessRuleError} If trying to remove last member
+   */
   async execute(input: RemoveHouseholdMemberInput): Promise<void> {
-    // Verify requester has access to household
-    const requesterMembership = await this.repository.findActiveMemberByUserInHousehold(
-      input.requester.userId,
-      input.householdId,
-    );
+    // Validate caregiver access
+    await this.accessValidator.ensureCaregiver(input.requester.userId, input.householdId);
 
-    if (!requesterMembership) {
-      throw new Error('Access denied to this household.');
-    }
-
-    // Only caregivers can remove members
-    if (requesterMembership.role !== 'caregiver') {
-      throw new Error('Only caregivers can remove household members.');
-    }
-
-    // Verify target member exists
+    // Verify target member exists in household
     const targetMember = await this.repository.findMemberById(input.memberId);
     if (!targetMember || targetMember.householdId !== input.householdId) {
-      throw new Error('Member not found in this household.');
+      throw new NotFoundError('Member not found in this household.');
     }
 
     // Cannot remove self using this endpoint
     if (targetMember.userId === input.requester.userId) {
-      throw new Error('Cannot remove yourself using this endpoint. Use leave household instead.');
+      throw new ConflictError('Cannot remove yourself using this endpoint. Use leave household instead.');
     }
 
     // Check if target is the last member
     const allMembers = await this.repository.listHouseholdMembers(input.householdId);
     if (allMembers.length <= 1) {
-      throw new Error('Cannot remove the last member of the household.');
+      throw new BusinessRuleError('Cannot remove the last member of the household.');
     }
 
     // Remove the member
