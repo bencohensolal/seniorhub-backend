@@ -678,10 +678,6 @@ export const registerInvitationRoutes = (
             deepLinkUrl: result.deepLinkUrl,
             fallbackUrl: result.fallbackUrl,
           }]);
-        } else {
-          console.warn('[Invitations] Cannot resend email - invitation not found:', {
-            invitationId: paramsResult.data.invitationId,
-          });
         }
 
         await repository.logAuditEvent({

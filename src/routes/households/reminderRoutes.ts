@@ -10,6 +10,7 @@ import {
   createReminderBodySchema,
   updateReminderBodySchema,
 } from './medicationSchemas.js';
+import { handleDomainError } from '../errorHandler.js';
 
 export function registerReminderRoutes(
   fastify: FastifyInstance,
@@ -71,26 +72,7 @@ export function registerReminderRoutes(
           data: reminders,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Access denied')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -160,26 +142,7 @@ export function registerReminderRoutes(
           data: reminder,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Only caregivers')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -255,26 +218,7 @@ export function registerReminderRoutes(
           data: reminder,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Only caregivers')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -325,26 +269,7 @@ export function registerReminderRoutes(
 
         return reply.status(204).send();
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Only caregivers')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );

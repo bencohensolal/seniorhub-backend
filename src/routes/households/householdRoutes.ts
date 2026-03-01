@@ -7,6 +7,7 @@ import type { ListUserHouseholdsUseCase } from '../../domain/usecases/ListUserHo
 import type { RemoveHouseholdMemberUseCase } from '../../domain/usecases/RemoveHouseholdMemberUseCase.js';
 import type { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/UpdateHouseholdMemberRoleUseCase.js';
 import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './schemas.js';
+import { handleDomainError } from '../errorHandler.js';
 
 export const registerHouseholdRoutes = (
   fastify: FastifyInstance,
@@ -183,13 +184,7 @@ export const registerHouseholdRoutes = (
           },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode = message === 'Access denied to this household.' ? 403 : 404;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -260,13 +255,7 @@ export const registerHouseholdRoutes = (
           data: overview,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode = message === 'Access denied to this household.' ? 403 : 404;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -336,12 +325,7 @@ export const registerHouseholdRoutes = (
           })),
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-
-        return reply.status(403).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -391,19 +375,7 @@ export const registerHouseholdRoutes = (
           message: 'Member removed successfully.',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        let statusCode: 400 | 403 | 404 = 400;
-
-        if (message.includes('Access denied') || message.includes('Only caregivers')) {
-          statusCode = 403;
-        } else if (message.includes('not found') || message.includes('does not exist')) {
-          statusCode = 404;
-        }
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -475,19 +447,7 @@ export const registerHouseholdRoutes = (
           data: updatedMember,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        let statusCode: 400 | 403 | 404 = 400;
-
-        if (message.includes('Access denied') || message.includes('Only caregivers') || message.includes('cannot demote')) {
-          statusCode = 403;
-        } else if (message.includes('not found') || message.includes('does not exist')) {
-          statusCode = 404;
-        }
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -533,19 +493,7 @@ export const registerHouseholdRoutes = (
           message: 'Successfully left the household.',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        let statusCode: 400 | 403 | 404 = 400;
-
-        if (message.includes('Access denied') || message.includes('cannot leave') || message.includes('last caregiver')) {
-          statusCode = 403;
-        } else if (message.includes('not found') || message.includes('not a member')) {
-          statusCode = 404;
-        }
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );

@@ -9,6 +9,7 @@ import {
   updateMedicationBodySchema,
   medicationParamsSchema,
 } from './medicationSchemas.js';
+import { handleDomainError } from '../errorHandler.js';
 
 export function registerMedicationRoutes(
   fastify: FastifyInstance,
@@ -65,13 +66,7 @@ export function registerMedicationRoutes(
           data: medications,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode = message.includes('Access denied') ? 403 : 500;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -126,11 +121,6 @@ export function registerMedicationRoutes(
       const bodyResult = createMedicationBodySchema.safeParse(request.body);
 
       if (!paramsResult.success || !bodyResult.success) {
-        console.error('[CreateMedication] Validation failed:', {
-          paramsError: paramsResult.success ? null : paramsResult.error.format(),
-          bodyError: bodyResult.success ? null : bodyResult.error.format(),
-          receivedBody: request.body,
-        });
         return reply.status(400).send({
           status: 'error',
           message: 'Invalid request payload.',
@@ -163,13 +153,7 @@ export function registerMedicationRoutes(
           data: medication,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode = message.includes('Access denied') || message.includes('only caregivers') ? 403 : 500;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -260,26 +244,7 @@ export function registerMedicationRoutes(
           data: medication,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Access denied') || message.includes('only caregivers')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -328,26 +293,7 @@ export function registerMedicationRoutes(
 
         return reply.status(204).send();
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        
-        if (message.includes('Access denied') || message.includes('only caregivers')) {
-          return reply.status(403).send({
-            status: 'error',
-            message,
-          });
-        }
-        
-        if (message.includes('not found')) {
-          return reply.status(404).send({
-            status: 'error',
-            message,
-          });
-        }
-
-        return reply.status(500).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
