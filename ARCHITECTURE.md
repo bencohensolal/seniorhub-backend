@@ -164,3 +164,74 @@ api/src/data/repositories/
 - Database row mappers (`mapMember`, `mapInvitation`)
 
 This structure reduces code duplication and centralizes data transformation logic.
+
+## 15. Domain error handling (typed errors)
+
+The domain layer uses typed errors for explicit, type-safe error handling:
+
+```
+api/src/domain/errors/
+├── DomainErrors.ts           # Typed error classes
+└── index.ts                  # Public exports
+```
+
+**Error types:**
+- `NotFoundError`: Resource not found (404)
+- `ForbiddenError`: Access denied (403)
+- `ConflictError`: Resource conflict (409)
+- `ValidationError`: Invalid input (400)
+- `BusinessRuleError`: Business rule violation (422)
+
+**Benefits:**
+- Type-safe error handling in use cases
+- Explicit error contracts
+- Centralized error-to-HTTP mapping in routes via `handleDomainError()`
+- No implicit `throw new Error()` in domain layer
+
+## 16. UseCase organization (domain-based structure)
+
+UseCases are organized into domain-specific subdirectories for better discoverability:
+
+```
+api/src/domain/usecases/
+├── households/               # Household management (10 files)
+│   ├── CreateHouseholdUseCase.ts
+│   ├── GetHouseholdOverviewUseCase.ts
+│   ├── ListUserHouseholdsUseCase.ts
+│   ├── EnsureHouseholdRoleUseCase.ts
+│   ├── ListHouseholdMembersUseCase.ts
+│   ├── RemoveHouseholdMemberUseCase.ts
+│   ├── UpdateHouseholdMemberRoleUseCase.ts
+│   ├── LeaveHouseholdUseCase.ts
+│   └── ...tests
+├── invitations/              # Invitation lifecycle (10 files)
+│   ├── AcceptInvitationUseCase.ts
+│   ├── AutoAcceptPendingInvitationsUseCase.ts
+│   ├── CancelInvitationUseCase.ts
+│   ├── CreateBulkInvitationsUseCase.ts
+│   ├── ListHouseholdInvitationsUseCase.ts
+│   ├── ListPendingInvitationsUseCase.ts
+│   ├── ResendInvitationUseCase.ts
+│   ├── ResolveInvitationUseCase.ts
+│   └── ...tests
+├── medications/              # Medication management (5 files)
+│   ├── CreateMedicationUseCase.ts
+│   ├── UpdateMedicationUseCase.ts
+│   ├── DeleteMedicationUseCase.ts
+│   ├── ListHouseholdMedicationsUseCase.ts
+│   └── MedicationAutocompleteUseCase.ts
+├── reminders/                # Medication reminders (4 files)
+│   ├── CreateReminderUseCase.ts
+│   ├── UpdateReminderUseCase.ts
+│   ├── DeleteReminderUseCase.ts
+│   └── ListMedicationRemindersUseCase.ts
+└── shared/                   # Shared utilities
+    ├── HouseholdAccessValidator.ts
+    └── index.ts
+```
+
+**Benefits:**
+- Clear domain boundaries
+- Better code discoverability (max 10 files per folder vs 29 flat)
+- Easier navigation and maintenance
+- Scalable pattern for future domains

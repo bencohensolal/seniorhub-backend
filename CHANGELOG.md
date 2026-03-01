@@ -69,3 +69,36 @@ The format is inspired by Keep a Changelog.
 - Flexible reminder configuration: multiple reminders per medication, day-of-week selection (0=Sunday to 6=Saturday), enable/disable toggle.
 - Proper access control: all members can view reminders, only caregivers can create/update/delete.
 - Database constraints ensuring at least one day selected and unique day values in arrays.
+
+## [2026-01-03] - Code Quality & Architecture Improvements
+
+### Added
+- Typed domain errors system (`src/domain/errors/DomainErrors.ts`) with 5 error classes:
+  - `NotFoundError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `BusinessRuleError`
+- Centralized error handler (`src/routes/errorHandler.ts`) with `handleDomainError()` function
+- Shared access validator (`src/domain/usecases/shared/HouseholdAccessValidator.ts`) reducing code duplication
+- Domain-based UseCase organization with subdirectories:
+  - `usecases/households/` (10 files) - Household management
+  - `usecases/invitations/` (10 files) - Invitation lifecycle
+  - `usecases/medications/` (5 files) - Medication management
+  - `usecases/reminders/` (4 files) - Medication reminders
+  - `usecases/shared/` (2 files) - Shared utilities
+
+### Changed
+- Migrated 20/20 UseCases from `throw new Error()` to typed domain errors (100% coverage)
+- Migrated 23/24 API routes to use centralized `handleDomainError()` (96% coverage)
+- Reorganized 29 UseCase files from flat structure into domain-based subdirectories
+- Updated all import paths across routes and UseCases to reflect new structure
+- Improved error handling consistency across all layers
+
+### Removed
+- 4 obsolete documentation files (~1,400 lines): `REFACTORING_*.md` files
+- Duplicate error handling code from individual routes
+- Temporary debug logs from validation flows
+
+### Impact
+- **Maintainability:** Clearer code organization with max 10 files per domain folder
+- **Type Safety:** Explicit error contracts with type checking
+- **Code Quality:** -1,600 lines of duplicate/obsolete code removed
+- **Architecture:** Clean separation between domain logic and transport layer
+- **Developer Experience:** Better code discoverability and navigation
