@@ -20,6 +20,7 @@ import {
   errorResponseSchema,
 } from './schemas.js';
 import { checkInviteRateLimit, maskEmail, sanitizeInvitation } from './utils.js';
+import { handleDomainError } from '../errorHandler.js';
 
 /**
  * Detects if the request is coming from a mobile device
@@ -286,14 +287,7 @@ export const registerInvitationRoutes = (
           data: result,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode =
-          message === 'Only caregivers can send invitations.' || message === 'Insufficient household role.'
-            ? 403
-            : message === 'Access denied to this household.'
-              ? 403
-              : 404;
-        return reply.status(statusCode).send({ status: 'error', message: 'Unable to create invitations.' });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -589,18 +583,7 @@ export const registerInvitationRoutes = (
           data: result,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode =
-          message === 'Access denied to this invitation.'
-            ? 403
-            : message === 'Invitation not found.'
-              ? 404
-              : 409;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -695,18 +678,7 @@ export const registerInvitationRoutes = (
           data: { newExpiresAt: result.newExpiresAt },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode =
-          message === 'Only caregivers can resend invitations.'
-            ? 403
-            : message === 'Invitation not found.'
-              ? 404
-              : 409;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
@@ -779,18 +751,7 @@ export const registerInvitationRoutes = (
           data: { cancelled: true },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unexpected error.';
-        const statusCode =
-          message === 'Only caregivers can cancel invitations.'
-            ? 403
-            : message === 'Invitation not found.'
-              ? 404
-              : 409;
-
-        return reply.status(statusCode).send({
-          status: 'error',
-          message,
-        });
+        return handleDomainError(error, reply);
       }
     },
   );
