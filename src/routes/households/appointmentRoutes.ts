@@ -148,11 +148,32 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        const appointment = await useCases.createAppointmentUseCase.execute({
+        const body = bodyResult.data;
+        const inputData: any = {
           householdId: paramsResult.data.householdId,
           requester: request.requester,
-          ...bodyResult.data,
-        });
+          title: body.title,
+          type: body.type,
+          date: body.date,
+          time: body.time,
+          seniorIds: body.seniorIds,
+        };
+
+        if (body.duration !== undefined) inputData.duration = body.duration;
+        if (body.caregiverId !== undefined) inputData.caregiverId = body.caregiverId;
+        if (body.address !== undefined) inputData.address = body.address;
+        if (body.locationName !== undefined) inputData.locationName = body.locationName;
+        if (body.phoneNumber !== undefined) inputData.phoneNumber = body.phoneNumber;
+        if (body.description !== undefined) inputData.description = body.description;
+        if (body.professionalName !== undefined) inputData.professionalName = body.professionalName;
+        if (body.preparation !== undefined) inputData.preparation = body.preparation;
+        if (body.documentsToTake !== undefined) inputData.documentsToTake = body.documentsToTake;
+        if (body.transportArrangement !== undefined) inputData.transportArrangement = body.transportArrangement;
+        if (body.recurrence !== undefined) inputData.recurrence = body.recurrence;
+        if (body.status !== undefined) inputData.status = body.status;
+        if (body.notes !== undefined) inputData.notes = body.notes;
+
+        const appointment = await useCases.createAppointmentUseCase.execute(inputData);
 
         return reply.status(201).send({
           status: 'success',
@@ -235,11 +256,33 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        const updateData: any = {};
+        const body = bodyResult.data;
+
+        if (body.title !== undefined) updateData.title = body.title;
+        if (body.type !== undefined) updateData.type = body.type;
+        if (body.date !== undefined) updateData.date = body.date;
+        if (body.time !== undefined) updateData.time = body.time;
+        if (body.duration !== undefined) updateData.duration = body.duration;
+        if (body.seniorIds !== undefined) updateData.seniorIds = body.seniorIds;
+        if (body.caregiverId !== undefined) updateData.caregiverId = body.caregiverId;
+        if (body.address !== undefined) updateData.address = body.address;
+        if (body.locationName !== undefined) updateData.locationName = body.locationName;
+        if (body.phoneNumber !== undefined) updateData.phoneNumber = body.phoneNumber;
+        if (body.description !== undefined) updateData.description = body.description;
+        if (body.professionalName !== undefined) updateData.professionalName = body.professionalName;
+        if (body.preparation !== undefined) updateData.preparation = body.preparation;
+        if (body.documentsToTake !== undefined) updateData.documentsToTake = body.documentsToTake;
+        if (body.transportArrangement !== undefined) updateData.transportArrangement = body.transportArrangement;
+        if (body.recurrence !== undefined) updateData.recurrence = body.recurrence;
+        if (body.status !== undefined) updateData.status = body.status;
+        if (body.notes !== undefined) updateData.notes = body.notes;
+
         const appointment = await useCases.updateAppointmentUseCase.execute({
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
           requester: request.requester,
-          data: bodyResult.data,
+          data: updateData,
         });
 
         return reply.status(200).send({
@@ -351,12 +394,18 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        const reminder = await useCases.createAppointmentReminderUseCase.execute({
+        const body = bodyResult.data;
+        const inputData: any = {
           householdId: paramsResult.data.householdId,
           appointmentId: paramsResult.data.appointmentId,
           requester: request.requester,
-          ...bodyResult.data,
-        });
+          triggerBefore: body.triggerBefore,
+          enabled: body.enabled,
+        };
+
+        if (body.customMessage !== undefined) inputData.customMessage = body.customMessage;
+
+        const reminder = await useCases.createAppointmentReminderUseCase.execute(inputData);
 
         return reply.status(201).send({
           status: 'success',
@@ -419,12 +468,19 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        const updateData: any = {};
+        const body = bodyResult.data;
+
+        if (body.triggerBefore !== undefined) updateData.triggerBefore = body.triggerBefore;
+        if (body.customMessage !== undefined) updateData.customMessage = body.customMessage;
+        if (body.enabled !== undefined) updateData.enabled = body.enabled;
+
         const reminder = await useCases.updateAppointmentReminderUseCase.execute({
           reminderId: paramsResult.data.reminderId,
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
           requester: request.requester,
-          data: bodyResult.data,
+          data: updateData,
         });
 
         return reply.status(200).send({

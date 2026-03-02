@@ -557,4 +557,46 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteReminder(_reminderId: string, _medicationId: string, _householdId: string): Promise<void> {
     throw new Error('Reminder operations not implemented in InMemoryRepository');
   }
+
+  // Appointment methods - stub implementations for test compatibility
+  async listHouseholdAppointments(_householdId: string): Promise<any[]> {
+    return [];
+  }
+
+  async getAppointmentById(_appointmentId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createAppointment(_input: any): Promise<any> {
+    throw new Error('Appointment operations not implemented in InMemoryRepository');
+  }
+
+  async updateAppointment(_appointmentId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Appointment operations not implemented in InMemoryRepository');
+  }
+
+  async deleteAppointment(_appointmentId: string, _householdId: string): Promise<void> {
+    throw new Error('Appointment operations not implemented in InMemoryRepository');
+  }
+
+  // Appointment Reminder methods - stub implementations for test compatibility
+  async listAppointmentReminders(_appointmentId: string, _householdId: string): Promise<any[]> {
+    return [];
+  }
+
+  async getAppointmentReminderById(_reminderId: string, _appointmentId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createAppointmentReminder(_input: any): Promise<any> {
+    throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
+  }
+
+  async updateAppointmentReminder(_reminderId: string, _appointmentId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
+  }
+
+  async deleteAppointmentReminder(_reminderId: string, _appointmentId: string, _householdId: string): Promise<void> {
+    throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
+  }
 }
