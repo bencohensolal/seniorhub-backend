@@ -3,6 +3,8 @@ import type { HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
 import type { Medication, MedicationForm } from '../../../domain/entities/Medication.js';
 import type { MedicationReminder } from '../../../domain/entities/MedicationReminder.js';
+import type { Appointment, AppointmentType, AppointmentStatus, Recurrence } from '../../../domain/entities/Appointment.js';
+import type { AppointmentReminder } from '../../../domain/entities/AppointmentReminder.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -124,6 +126,72 @@ export const mapReminder = (row: {
   medicationId: row.medication_id,
   time: row.time,
   daysOfWeek: typeof row.days_of_week === 'string' ? JSON.parse(row.days_of_week) : row.days_of_week,
+  enabled: row.enabled,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+});
+
+export const mapAppointment = (row: {
+  id: string;
+  household_id: string;
+  title: string;
+  type: AppointmentType;
+  date: string | Date;
+  time: string;
+  duration: number | null;
+  senior_ids: string[] | string; // May come as array or JSON string
+  caregiver_id: string | null;
+  address: string | null;
+  location_name: string | null;
+  phone_number: string | null;
+  description: string | null;
+  professional_name: string | null;
+  preparation: string | null;
+  documents_to_take: string | null;
+  transport_arrangement: string | null;
+  recurrence: Recurrence | string | null; // May come as object or JSON string
+  status: AppointmentStatus;
+  notes: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): Appointment => ({
+  id: row.id,
+  householdId: row.household_id,
+  title: row.title,
+  type: row.type,
+  date: toIso(row.date).split('T')[0] || toIso(row.date), // Extract YYYY-MM-DD from ISO string
+  time: row.time,
+  duration: row.duration,
+  seniorIds: typeof row.senior_ids === 'string' ? JSON.parse(row.senior_ids) : row.senior_ids,
+  caregiverId: row.caregiver_id,
+  address: row.address,
+  locationName: row.location_name,
+  phoneNumber: row.phone_number,
+  description: row.description,
+  professionalName: row.professional_name,
+  preparation: row.preparation,
+  documentsToTake: row.documents_to_take,
+  transportArrangement: row.transport_arrangement,
+  recurrence: row.recurrence ? (typeof row.recurrence === 'string' ? JSON.parse(row.recurrence) : row.recurrence) : null,
+  status: row.status,
+  notes: row.notes,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+});
+
+export const mapAppointmentReminder = (row: {
+  id: string;
+  appointment_id: string;
+  trigger_before: number;
+  custom_message: string | null;
+  enabled: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): AppointmentReminder => ({
+  id: row.id,
+  appointmentId: row.appointment_id,
+  triggerBefore: row.trigger_before,
+  customMessage: row.custom_message,
   enabled: row.enabled,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),

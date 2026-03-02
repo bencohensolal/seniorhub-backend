@@ -5,6 +5,8 @@ import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } f
 import type { HouseholdRole } from '../entities/Member.js';
 import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../entities/Medication.js';
 import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../entities/MedicationReminder.js';
+import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
+import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -76,4 +78,18 @@ export interface HouseholdRepository {
   createReminder(input: CreateReminderInput): Promise<MedicationReminder>;
   updateReminder(reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder>;
   deleteReminder(reminderId: string, medicationId: string, householdId: string): Promise<void>;
+
+  // Appointments
+  listHouseholdAppointments(householdId: string): Promise<AppointmentWithReminders[]>;
+  getAppointmentById(appointmentId: string, householdId: string): Promise<AppointmentWithReminders | null>;
+  createAppointment(input: CreateAppointmentInput): Promise<Appointment>;
+  updateAppointment(appointmentId: string, householdId: string, input: UpdateAppointmentInput): Promise<Appointment>;
+  deleteAppointment(appointmentId: string, householdId: string): Promise<void>;
+
+  // Appointment Reminders
+  listAppointmentReminders(appointmentId: string, householdId: string): Promise<AppointmentReminder[]>;
+  getAppointmentReminderById(reminderId: string, appointmentId: string, householdId: string): Promise<AppointmentReminder | null>;
+  createAppointmentReminder(input: CreateAppointmentReminderInput): Promise<AppointmentReminder>;
+  updateAppointmentReminder(reminderId: string, appointmentId: string, householdId: string, input: UpdateAppointmentReminderInput): Promise<AppointmentReminder>;
+  deleteAppointmentReminder(reminderId: string, appointmentId: string, householdId: string): Promise<void>;
 }
