@@ -18,7 +18,6 @@ export interface Medication {
   dosage: string;
   form: MedicationForm;
   frequency: string;
-  schedule: string[]; // Array of time strings (e.g., ["08:00", "20:00"])
   prescribedBy: string | null;
   prescriptionDate: string | null; // ISO date string
   startDate: string; // ISO date string
@@ -36,7 +35,6 @@ export interface CreateMedicationInput {
   dosage: string;
   form: MedicationForm;
   frequency: string;
-  schedule: string[];
   prescribedBy?: string;
   prescriptionDate?: string;
   startDate: string;
@@ -50,7 +48,6 @@ export interface UpdateMedicationInput {
   dosage?: string;
   form?: MedicationForm;
   frequency?: string;
-  schedule?: string[];
   prescribedBy?: string | null;
   prescriptionDate?: string | null;
   startDate?: string;

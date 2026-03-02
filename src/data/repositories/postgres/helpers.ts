@@ -85,7 +85,6 @@ export const mapMedication = (row: {
   dosage: string;
   form: MedicationForm;
   frequency: string;
-  schedule: string | string[]; // May come as JSONB string or parsed array
   prescribed_by: string | null;
   prescription_date: string | Date | null;
   start_date: string | Date;
@@ -102,7 +101,6 @@ export const mapMedication = (row: {
   dosage: row.dosage,
   form: row.form,
   frequency: row.frequency,
-  schedule: typeof row.schedule === 'string' ? JSON.parse(row.schedule) : row.schedule,
   prescribedBy: row.prescribed_by,
   prescriptionDate: row.prescription_date ? toIso(row.prescription_date) : null,
   startDate: toIso(row.start_date),

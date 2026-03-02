@@ -25,9 +25,6 @@ export const createMedicationBodySchema = z.object({
   dosage: z.string().min(1).max(100),
   form: medicationFormSchema,
   frequency: z.string().min(1).max(200),
-  schedule: z.array(
-    z.string().regex(TIME_REGEX, 'Time must be in HH:MM format (00:00 to 23:59)')
-  ).min(1, 'At least one scheduled time is required'),
   prescribedBy: z.string().max(200).optional(),
   prescriptionDate: z.string().datetime().optional(), // ISO date string
   startDate: z.string().datetime(),
@@ -41,9 +38,6 @@ export const updateMedicationBodySchema = z.object({
   dosage: z.string().min(1).max(100).optional(),
   form: medicationFormSchema.optional(),
   frequency: z.string().min(1).max(200).optional(),
-  schedule: z.array(
-    z.string().regex(TIME_REGEX, 'Time must be in HH:MM format (00:00 to 23:59)')
-  ).min(1, 'At least one scheduled time is required').optional(),
   prescribedBy: z.string().max(200).nullable().optional(),
   prescriptionDate: z.string().datetime().nullable().optional(),
   startDate: z.string().datetime().optional(),

@@ -855,7 +855,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       dosage: string;
       form: MedicationForm;
       frequency: string;
-      schedule: string | string[];
       prescribed_by: string | null;
       prescription_date: string | Date | null;
       start_date: string | Date;
@@ -865,7 +864,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, household_id, senior_id, name, dosage, form, frequency, schedule,
+      `SELECT id, household_id, senior_id, name, dosage, form, frequency,
               prescribed_by, prescription_date, start_date, end_date, instructions,
               created_by_user_id, created_at, updated_at
        FROM medications
@@ -886,7 +885,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       dosage: string;
       form: MedicationForm;
       frequency: string;
-      schedule: string | string[];
       prescribed_by: string | null;
       prescription_date: string | Date | null;
       start_date: string | Date;
@@ -896,7 +894,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, household_id, senior_id, name, dosage, form, frequency, schedule,
+      `SELECT id, household_id, senior_id, name, dosage, form, frequency,
               prescribed_by, prescription_date, start_date, end_date, instructions,
               created_by_user_id, created_at, updated_at
        FROM medications
@@ -921,7 +919,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       dosage: string;
       form: MedicationForm;
       frequency: string;
-      schedule: string | string[];
       prescribed_by: string | null;
       prescription_date: string | Date | null;
       start_date: string | Date;
@@ -932,12 +929,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       updated_at: string | Date;
     }>(
       `INSERT INTO medications (
-         id, household_id, senior_id, name, dosage, form, frequency, schedule,
+         id, household_id, senior_id, name, dosage, form, frequency,
          prescribed_by, prescription_date, start_date, end_date, instructions,
          created_by_user_id, created_at, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $15)
-       RETURNING id, household_id, senior_id, name, dosage, form, frequency, schedule,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14)
+       RETURNING id, household_id, senior_id, name, dosage, form, frequency,
                  prescribed_by, prescription_date, start_date, end_date, instructions,
                  created_by_user_id, created_at, updated_at`,
       [
@@ -948,7 +945,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
         input.dosage,
         input.form,
         input.frequency,
-        JSON.stringify(input.schedule),
         input.prescribedBy ?? null,
         input.prescriptionDate ?? null,
         input.startDate,
@@ -987,10 +983,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     if (input.frequency !== undefined) {
       updates.push(`frequency = $${paramIndex++}`);
       values.push(input.frequency);
-    }
-    if (input.schedule !== undefined) {
-      updates.push(`schedule = $${paramIndex++}::jsonb`);
-      values.push(JSON.stringify(input.schedule));
     }
     if (input.prescribedBy !== undefined) {
       updates.push(`prescribed_by = $${paramIndex++}`);
@@ -1032,7 +1024,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       dosage: string;
       form: MedicationForm;
       frequency: string;
-      schedule: string | string[];
       prescribed_by: string | null;
       prescription_date: string | Date | null;
       start_date: string | Date;
@@ -1045,7 +1036,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       `UPDATE medications
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
-       RETURNING id, household_id, senior_id, name, dosage, form, frequency, schedule,
+       RETURNING id, household_id, senior_id, name, dosage, form, frequency,
                  prescribed_by, prescription_date, start_date, end_date, instructions,
                  created_by_user_id, created_at, updated_at`,
       values,

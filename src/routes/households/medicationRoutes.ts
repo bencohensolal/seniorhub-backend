@@ -84,7 +84,7 @@ export function registerMedicationRoutes(
         },
         body: {
           type: 'object',
-          required: ['name', 'dosage', 'form', 'frequency', 'schedule', 'startDate'],
+          required: ['name', 'dosage', 'form', 'frequency', 'startDate'],
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
             dosage: { type: 'string', minLength: 1, maxLength: 100 },
@@ -93,7 +93,6 @@ export function registerMedicationRoutes(
               enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other'] 
             },
             frequency: { type: 'string', minLength: 1, maxLength: 200 },
-            schedule: { type: 'array', items: { type: 'string' }, minItems: 1 },
             prescribedBy: { type: 'string', maxLength: 200 },
             prescriptionDate: { type: 'string' },
             startDate: { type: 'string' },
@@ -137,7 +136,6 @@ export function registerMedicationRoutes(
           dosage: bodyResult.data.dosage,
           form: bodyResult.data.form,
           frequency: bodyResult.data.frequency,
-          schedule: bodyResult.data.schedule,
           startDate: bodyResult.data.startDate,
         };
 
@@ -182,7 +180,6 @@ export function registerMedicationRoutes(
               enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other'] 
             },
             frequency: { type: 'string', minLength: 1, maxLength: 200 },
-            schedule: { type: 'array', items: { type: 'string' }, minItems: 1 },
             prescribedBy: { type: ['string', 'null'], maxLength: 200 },
             prescriptionDate: { type: ['string', 'null'] },
             startDate: { type: 'string' },
@@ -225,7 +222,6 @@ export function registerMedicationRoutes(
         if (body.dosage !== undefined) updateData.dosage = body.dosage;
         if (body.form !== undefined) updateData.form = body.form;
         if (body.frequency !== undefined) updateData.frequency = body.frequency;
-        if (body.schedule !== undefined) updateData.schedule = body.schedule;
         if (body.prescribedBy !== undefined) updateData.prescribedBy = body.prescribedBy;
         if (body.prescriptionDate !== undefined) updateData.prescriptionDate = body.prescriptionDate;
         if (body.startDate !== undefined) updateData.startDate = body.startDate;
