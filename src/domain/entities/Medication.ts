@@ -1,3 +1,5 @@
+import type { MedicationReminder } from './MedicationReminder.js';
+
 export type MedicationForm =
   | 'tablet'
   | 'capsule'
@@ -26,6 +28,10 @@ export interface Medication {
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface MedicationWithReminders extends Medication {
+  reminders: MedicationReminder[];
 }
 
 export interface CreateMedicationInput {
