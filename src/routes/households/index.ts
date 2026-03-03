@@ -40,7 +40,16 @@ import { ListAppointmentOccurrencesUseCase } from '../../domain/usecases/appoint
 import { ModifyOccurrenceUseCase } from '../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
 import { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
 import { registerAppointmentRoutes } from './appointmentRoutes.js';
+import { registerTaskRoutes } from './taskRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
+import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
+import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
+import { UpdateTaskUseCase } from '../../domain/usecases/tasks/UpdateTaskUseCase.js';
+import { DeleteTaskUseCase } from '../../domain/usecases/tasks/DeleteTaskUseCase.js';
+import { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTaskUseCase.js';
+import { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
+import { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
+import { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
 
 /**
  * Households plugin
@@ -93,6 +102,14 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     listAppointmentOccurrencesUseCase: new ListAppointmentOccurrencesUseCase(repository, accessValidator),
     modifyOccurrenceUseCase: new ModifyOccurrenceUseCase(repository, accessValidator),
     cancelOccurrenceUseCase: new CancelOccurrenceUseCase(repository, accessValidator),
+    listHouseholdTasksUseCase: new ListHouseholdTasksUseCase(repository),
+    createTaskUseCase: new CreateTaskUseCase(repository),
+    updateTaskUseCase: new UpdateTaskUseCase(repository),
+    deleteTaskUseCase: new DeleteTaskUseCase(repository),
+    completeTaskUseCase: new CompleteTaskUseCase(repository),
+    createTaskReminderUseCase: new CreateTaskReminderUseCase(repository),
+    updateTaskReminderUseCase: new UpdateTaskReminderUseCase(repository),
+    deleteTaskReminderUseCase: new DeleteTaskReminderUseCase(repository),
   };
 
   // Register route modules
@@ -145,5 +162,16 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
     modifyOccurrenceUseCase: useCases.modifyOccurrenceUseCase,
     cancelOccurrenceUseCase: useCases.cancelOccurrenceUseCase,
+  });
+
+  registerTaskRoutes(fastify, {
+    listHouseholdTasksUseCase: useCases.listHouseholdTasksUseCase,
+    createTaskUseCase: useCases.createTaskUseCase,
+    updateTaskUseCase: useCases.updateTaskUseCase,
+    deleteTaskUseCase: useCases.deleteTaskUseCase,
+    completeTaskUseCase: useCases.completeTaskUseCase,
+    createTaskReminderUseCase: useCases.createTaskReminderUseCase,
+    updateTaskReminderUseCase: useCases.updateTaskReminderUseCase,
+    deleteTaskReminderUseCase: useCases.deleteTaskReminderUseCase,
   });
 };
