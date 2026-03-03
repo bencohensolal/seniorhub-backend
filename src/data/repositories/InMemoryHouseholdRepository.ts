@@ -624,4 +624,50 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteOccurrence(_occurrenceId: string, _householdId: string): Promise<void> {
     throw new Error('Occurrence operations not implemented in InMemoryRepository');
   }
+
+  // Task methods - stub implementations for test compatibility
+  async listHouseholdTasks(_householdId: string, _filters?: any): Promise<any[]> {
+    return [];
+  }
+
+  async getTaskById(_taskId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createTask(_input: any): Promise<any> {
+    throw new Error('Task operations not implemented in InMemoryRepository');
+  }
+
+  async updateTask(_taskId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Task operations not implemented in InMemoryRepository');
+  }
+
+  async deleteTask(_taskId: string, _householdId: string): Promise<void> {
+    throw new Error('Task operations not implemented in InMemoryRepository');
+  }
+
+  async completeTask(_taskId: string, _householdId: string, _input: any, _completedBy: string): Promise<any> {
+    throw new Error('Task operations not implemented in InMemoryRepository');
+  }
+
+  // Task Reminder methods - stub implementations for test compatibility
+  async listTaskReminders(_taskId: string, _householdId: string): Promise<any[]> {
+    return [];
+  }
+
+  async getTaskReminderById(_reminderId: string, _taskId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createTaskReminder(_input: any): Promise<any> {
+    throw new Error('Task reminder operations not implemented in InMemoryRepository');
+  }
+
+  async updateTaskReminder(_reminderId: string, _taskId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Task reminder operations not implemented in InMemoryRepository');
+  }
+
+  async deleteTaskReminder(_reminderId: string, _taskId: string, _householdId: string): Promise<void> {
+    throw new Error('Task reminder operations not implemented in InMemoryRepository');
+  }
 }
