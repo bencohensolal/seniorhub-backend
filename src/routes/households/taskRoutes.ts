@@ -128,11 +128,12 @@ export function registerTaskRoutes(
             description: { type: 'string', maxLength: 1000 },
             category: { 
               type: 'string', 
-              enum: ['hydration', 'meals', 'medication', 'hygiene', 'mobility', 'social', 'medical', 'household', 'other'] 
+              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other'] 
             },
             priority: { type: 'string', enum: ['low', 'normal', 'high'] },
             dueDate: { type: 'string' },
             dueTime: { type: 'string' },
+            duration: { type: 'integer', minimum: 1, maximum: 1440 },
             caregiverId: { type: 'string' },
             recurrence: { type: 'object' },
           },
@@ -177,6 +178,7 @@ export function registerTaskRoutes(
         if (body.priority !== undefined) inputData.priority = body.priority;
         if (body.dueDate !== undefined) inputData.dueDate = body.dueDate;
         if (body.dueTime !== undefined) inputData.dueTime = body.dueTime;
+        if (body.duration !== undefined) inputData.duration = body.duration;
         if (body.caregiverId !== undefined) inputData.caregiverId = body.caregiverId;
         if (body.recurrence !== undefined) inputData.recurrence = body.recurrence;
 
@@ -213,12 +215,13 @@ export function registerTaskRoutes(
             description: { type: ['string', 'null'], maxLength: 1000 },
             category: { 
               type: 'string', 
-              enum: ['hydration', 'meals', 'medication', 'hygiene', 'mobility', 'social', 'medical', 'household', 'other'] 
+              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other'] 
             },
             priority: { type: 'string', enum: ['low', 'normal', 'high'] },
             status: { type: 'string', enum: ['pending', 'completed', 'cancelled'] },
             dueDate: { type: ['string', 'null'] },
             dueTime: { type: ['string', 'null'] },
+            duration: { type: ['integer', 'null'], minimum: 1, maximum: 1440 },
             recurrence: { type: ['object', 'null'] },
             caregiverId: { type: ['string', 'null'] },
           },
@@ -261,6 +264,7 @@ export function registerTaskRoutes(
         if (body.status !== undefined) updateData.status = body.status;
         if (body.dueDate !== undefined) updateData.dueDate = body.dueDate;
         if (body.dueTime !== undefined) updateData.dueTime = body.dueTime;
+        if (body.duration !== undefined) updateData.duration = body.duration;
         if (body.recurrence !== undefined) updateData.recurrence = body.recurrence;
         if (body.caregiverId !== undefined) updateData.caregiverId = body.caregiverId;
 
@@ -454,10 +458,13 @@ export function registerTaskRoutes(
           householdId: paramsResult.data.householdId,
           taskId: paramsResult.data.taskId,
           requester: request.requester,
-          time: body.time,
-          daysOfWeek: body.daysOfWeek,
-          enabled: body.enabled ?? true,
         };
+
+        if (body.time !== undefined) inputData.time = body.time;
+        if (body.daysOfWeek !== undefined) inputData.daysOfWeek = body.daysOfWeek;
+        if (body.triggerBefore !== undefined) inputData.triggerBefore = body.triggerBefore;
+        if (body.customMessage !== undefined) inputData.customMessage = body.customMessage;
+        inputData.enabled = body.enabled ?? true;
 
         const reminder = await useCases.createTaskReminderUseCase.execute(inputData);
 
@@ -527,6 +534,8 @@ export function registerTaskRoutes(
 
         if (body.time !== undefined) updateData.time = body.time;
         if (body.daysOfWeek !== undefined) updateData.daysOfWeek = body.daysOfWeek;
+        if (body.triggerBefore !== undefined) updateData.triggerBefore = body.triggerBefore;
+        if (body.customMessage !== undefined) updateData.customMessage = body.customMessage;
         if (body.enabled !== undefined) updateData.enabled = body.enabled;
 
         const reminder = await useCases.updateTaskReminderUseCase.execute({
