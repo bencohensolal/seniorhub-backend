@@ -21,13 +21,46 @@
 
 ---
 
-## 🔄 FEATURE REQUEST - Appointment Recurrence with Individual Occurrence Management
+## 🔄 IN PROGRESS - Appointment Recurrence with Individual Occurrence Management
+
+**Status:** Fondations complétées - En attente de l'implémentation finale
 
 ### Overview
 Ajouter la gestion complète de la récurrence des rendez-vous avec possibilité de modifier/annuler des occurrences individuelles sans affecter les autres occurrences de la série.
 
-### Use Cases
-1. **Créer un rendez-vous récurrent** (ex: "Kiné tous les lundis à 10h")
+### ✅ Completed (2026-03-03)
+1. **Migration 010** - Table `appointment_occurrences` créée
+2. **Entity** - `AppointmentOccurrence` avec types complets
+3. **Service** - `occurrenceGenerator.ts` pour générer les occurrences depuis les règles de récurrence
+
+### 🚧 Remaining Work
+
+#### Repository Methods (HouseholdRepository interface + PostgresHouseholdRepository)
+1. `getOccurrence(occurrenceId, householdId)` - Get a specific occurrence
+2. `getOccurrenceByDate(appointmentId, occurrenceDate, householdId)` - Get occurrence for a date
+3. `createOccurrence(input)` - Create/update occurrence (for modifications/cancellations)
+4. `updateOccurrence(occurrenceId, householdId, data)` - Update occurrence
+5. `deleteOccurrence(occurrenceId, householdId)` - Delete occurrence
+6. `listOccurrences(appointmentId, householdId, fromDate, toDate)` - List occurrences for date range
+
+#### Use Cases
+1. `GenerateOccurrencesUseCase` - Generate occurrences for a recurring appointment (uses occurrenceGenerator)
+2. `ModifyOccurrenceUseCase` - Modify a specific occurrence
+3. `CancelOccurrenceUseCase` - Cancel a specific occurrence
+4. `ListUpcomingAppointmentsUseCase` - List all upcoming (recurring occurrences + one-time appointments)
+
+#### API Endpoints
+1. `GET /v1/households/:householdId/appointments/upcoming?from=YYYY-MM-DD&to=YYYY-MM-DD`
+2. `GET /v1/households/:householdId/appointments/:appointmentId/occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD`
+3. `PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate`
+4. `DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate`
+
+#### Helper/Mapper Functions
+1. `mapOccurrence()` in helpers.ts - Map DB row to AppointmentOccurrence entity
+2. `mergeOccurrenceWithAppointment()` - Merge recurring appointment + occurrence overrides
+
+### Use Cases (Detailed)
+1. **Créer un rendez-vous récurrent** (ex: "Kiné tous les lundis et mercredi à 10h")
 2. **Annuler une occurrence spécifique** (ex: "Pas de kiné le 15 mars car férié")
 3. **Modifier une occurrence spécifique** (ex: "Le 22 mars, kiné à 14h au lieu de 10h")
 4. **Voir toutes les occurrences futures** (avec indication des occurrences modifiées/annulées)
