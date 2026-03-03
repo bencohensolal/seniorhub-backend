@@ -24,8 +24,10 @@ export class CreateTaskReminderUseCase {
   async execute(input: {
     taskId: string;
     householdId: string;
-    time: string;
-    daysOfWeek: number[];
+    time?: string;
+    daysOfWeek?: number[];
+    triggerBefore?: number;
+    customMessage?: string;
     enabled?: boolean;
     requester: AuthenticatedRequester;
   }): Promise<TaskReminder> {
@@ -40,8 +42,10 @@ export class CreateTaskReminderUseCase {
 
     const createInput: CreateTaskReminderInput = {
       taskId: input.taskId,
-      time: input.time,
-      daysOfWeek: input.daysOfWeek,
+      ...(input.time !== undefined && { time: input.time }),
+      ...(input.daysOfWeek !== undefined && { daysOfWeek: input.daysOfWeek }),
+      ...(input.triggerBefore !== undefined && { triggerBefore: input.triggerBefore }),
+      ...(input.customMessage !== undefined && { customMessage: input.customMessage }),
       ...(input.enabled !== undefined && { enabled: input.enabled }),
     };
 
