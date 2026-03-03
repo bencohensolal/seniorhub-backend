@@ -2158,6 +2158,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     if (input.status !== undefined) {
       updates.push(`status = $${paramIndex++}`);
       values.push(input.status);
+      
+      // Auto-set completedAt if status becomes 'completed' and completedAt not explicitly provided
+      if (input.status === 'completed' && input.completedAt === undefined) {
+        updates.push(`completed_at = $${paramIndex++}`);
+        values.push(nowIso());
+      }
     }
     if (input.dueDate !== undefined) {
       updates.push(`due_date = $${paramIndex++}`);
