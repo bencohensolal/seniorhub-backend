@@ -36,7 +36,11 @@ import { DeleteAppointmentUseCase } from '../../domain/usecases/appointments/Del
 import { CreateAppointmentReminderUseCase } from '../../domain/usecases/appointments/CreateAppointmentReminderUseCase.js';
 import { UpdateAppointmentReminderUseCase } from '../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
 import { DeleteAppointmentReminderUseCase } from '../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
+import { ListAppointmentOccurrencesUseCase } from '../../domain/usecases/appointments/ListAppointmentOccurrencesUseCase.js';
+import { ModifyOccurrenceUseCase } from '../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
+import { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
 import { registerAppointmentRoutes } from './appointmentRoutes.js';
+import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 
 /**
  * Households plugin
@@ -49,6 +53,9 @@ import { registerAppointmentRoutes } from './appointmentRoutes.js';
 export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize repository
   const repository = createHouseholdRepository();
+
+  // Initialize shared services
+  const accessValidator = new HouseholdAccessValidator(repository);
 
   // Initialize use cases
   const useCases = {
@@ -83,6 +90,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createAppointmentReminderUseCase: new CreateAppointmentReminderUseCase(repository),
     updateAppointmentReminderUseCase: new UpdateAppointmentReminderUseCase(repository),
     deleteAppointmentReminderUseCase: new DeleteAppointmentReminderUseCase(repository),
+    listAppointmentOccurrencesUseCase: new ListAppointmentOccurrencesUseCase(repository, accessValidator),
+    modifyOccurrenceUseCase: new ModifyOccurrenceUseCase(repository, accessValidator),
+    cancelOccurrenceUseCase: new CancelOccurrenceUseCase(repository, accessValidator),
   };
 
   // Register route modules
@@ -132,5 +142,8 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createAppointmentReminderUseCase: useCases.createAppointmentReminderUseCase,
     updateAppointmentReminderUseCase: useCases.updateAppointmentReminderUseCase,
     deleteAppointmentReminderUseCase: useCases.deleteAppointmentReminderUseCase,
+    listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
+    modifyOccurrenceUseCase: useCases.modifyOccurrenceUseCase,
+    cancelOccurrenceUseCase: useCases.cancelOccurrenceUseCase,
   });
 };

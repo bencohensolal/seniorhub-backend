@@ -114,3 +114,34 @@ export const updateAppointmentReminderBodySchema = z.object({
   customMessage: z.string().max(500).nullable().optional(),
   enabled: z.boolean().optional(),
 });
+
+// Schema for occurrence URL parameters
+export const occurrenceParamsSchema = z.object({
+  householdId: z.string().uuid('Invalid household ID format'),
+  appointmentId: z.string().uuid('Invalid appointment ID format'),
+  occurrenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+});
+
+// Schema for occurrence query parameters (list occurrences)
+export const occurrenceQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'From date must be in YYYY-MM-DD format'),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'To date must be in YYYY-MM-DD format'),
+});
+
+// Schema for modifying an occurrence (overrides)
+export const modifyOccurrenceBodySchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  time: z.string().regex(TIME_REGEX, 'Time must be in HH:MM format (00:00 to 23:59)').optional(),
+  duration: z.number().int().positive().optional(),
+  locationName: z.string().max(255).optional(),
+  address: z.string().max(500).optional(),
+  phoneNumber: z.string().max(50).optional(),
+  professionalName: z.string().max(255).optional(),
+  description: z.string().max(1000).optional(),
+  preparation: z.string().max(1000).optional(),
+  documentsToTake: z.string().max(500).optional(),
+  transportArrangement: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
+}).refine(data => Object.keys(data).length > 0, {
+  message: 'At least one field must be provided to modify the occurrence',
+});
