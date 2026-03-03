@@ -7,6 +7,7 @@ import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '.
 import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../entities/MedicationReminder.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
+import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -92,4 +93,12 @@ export interface HouseholdRepository {
   createAppointmentReminder(input: CreateAppointmentReminderInput): Promise<AppointmentReminder>;
   updateAppointmentReminder(reminderId: string, appointmentId: string, householdId: string, input: UpdateAppointmentReminderInput): Promise<AppointmentReminder>;
   deleteAppointmentReminder(reminderId: string, appointmentId: string, householdId: string): Promise<void>;
+
+  // Appointment Occurrences
+  getOccurrenceById(occurrenceId: string, householdId: string): Promise<AppointmentOccurrence | null>;
+  getOccurrenceByDate(appointmentId: string, occurrenceDate: string, householdId: string): Promise<AppointmentOccurrence | null>;
+  listOccurrences(appointmentId: string, householdId: string, fromDate?: string, toDate?: string): Promise<AppointmentOccurrence[]>;
+  createOccurrence(input: CreateOccurrenceInput): Promise<AppointmentOccurrence>;
+  updateOccurrence(occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence>;
+  deleteOccurrence(occurrenceId: string, householdId: string): Promise<void>;
 }

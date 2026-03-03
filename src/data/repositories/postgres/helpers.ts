@@ -5,6 +5,7 @@ import type { Medication, MedicationForm } from '../../../domain/entities/Medica
 import type { MedicationReminder } from '../../../domain/entities/MedicationReminder.js';
 import type { Appointment, AppointmentType, AppointmentStatus, Recurrence } from '../../../domain/entities/Appointment.js';
 import type { AppointmentReminder } from '../../../domain/entities/AppointmentReminder.js';
+import type { AppointmentOccurrence, OccurrenceStatus, OccurrenceOverrides } from '../../../domain/entities/AppointmentOccurrence.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -193,6 +194,28 @@ export const mapAppointmentReminder = (row: {
   triggerBefore: row.trigger_before,
   customMessage: row.custom_message,
   enabled: row.enabled,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+});
+
+export const mapOccurrence = (row: {
+  id: string;
+  recurring_appointment_id: string;
+  household_id: string;
+  occurrence_date: string | Date;
+  occurrence_time: string;
+  status: OccurrenceStatus;
+  overrides: OccurrenceOverrides | string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): AppointmentOccurrence => ({
+  id: row.id,
+  recurringAppointmentId: row.recurring_appointment_id,
+  householdId: row.household_id,
+  occurrenceDate: toIso(row.occurrence_date).split('T')[0] || toIso(row.occurrence_date),
+  occurrenceTime: row.occurrence_time,
+  status: row.status,
+  overrides: row.overrides ? (typeof row.overrides === 'string' ? JSON.parse(row.overrides) : row.overrides) : null,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
 });

@@ -8,6 +8,7 @@ import type { CreateMedicationInput, Medication, MedicationForm, UpdateMedicatio
 import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../../domain/entities/MedicationReminder.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput, AppointmentType, AppointmentStatus } from '../../domain/entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../domain/entities/AppointmentReminder.js';
+import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../../domain/entities/AppointmentOccurrence.js';
 import { isInvitationTokenValid, signInvitationToken } from '../../domain/security/invitationToken.js';
 import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
 import type {
@@ -34,6 +35,7 @@ import {
   mapReminder,
   mapAppointment,
   mapAppointmentReminder,
+  mapOccurrence,
 } from './postgres/helpers.js';
 
 const INVITATION_TTL_HOURS = 72;
@@ -1703,6 +1705,200 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
     if (result.rowCount === 0) {
       throw new NotFoundError('Appointment reminder not found.');
+    }
+  }
+
+  // Appointment Occurrences
+
+  async getOccurrenceById(occurrenceId: string, householdId: string): Promise<AppointmentOccurrence | null> {
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT id, recurring_appointment_id, household_id, occurrence_date, occurrence_time, 
+              status, overrides::text, created_at, updated_at
+       FROM appointment_occurrences
+       WHERE id = $1 AND household_id = $2
+       LIMIT 1`,
+      [occurrenceId, householdId],
+    );
+
+    const row = result.rows[0];
+    return row ? mapOccurrence(row) : null;
+  }
+
+  async getOccurrenceByDate(appointmentId: string, occurrenceDate: string, householdId: string): Promise<AppointmentOccurrence | null> {
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT id, recurring_appointment_id, household_id, occurrence_date, occurrence_time, 
+              status, overrides::text, created_at, updated_at
+       FROM appointment_occurrences
+       WHERE recurring_appointment_id = $1 AND occurrence_date = $2 AND household_id = $3
+       LIMIT 1`,
+      [appointmentId, occurrenceDate, householdId],
+    );
+
+    const row = result.rows[0];
+    return row ? mapOccurrence(row) : null;
+  }
+
+  async listOccurrences(appointmentId: string, householdId: string, fromDate?: string, toDate?: string): Promise<AppointmentOccurrence[]> {
+    let query = `
+      SELECT id, recurring_appointment_id, household_id, occurrence_date, occurrence_time, 
+             status, overrides::text, created_at, updated_at
+      FROM appointment_occurrences
+      WHERE recurring_appointment_id = $1 AND household_id = $2
+    `;
+    
+    const params: any[] = [appointmentId, householdId];
+    let paramIndex = 3;
+
+    if (fromDate) {
+      query += ` AND occurrence_date >= $${paramIndex++}`;
+      params.push(fromDate);
+    }
+
+    if (toDate) {
+      query += ` AND occurrence_date <= $${paramIndex++}`;
+      params.push(toDate);
+    }
+
+    query += ` ORDER BY occurrence_date ASC, occurrence_time ASC`;
+
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(query, params);
+
+    return result.rows.map(mapOccurrence);
+  }
+
+  async createOccurrence(input: CreateOccurrenceInput): Promise<AppointmentOccurrence> {
+    const id = randomUUID();
+    const now = nowIso();
+
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `INSERT INTO appointment_occurrences (
+         id, recurring_appointment_id, household_id, occurrence_date, occurrence_time,
+         status, overrides, created_at, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+       RETURNING id, recurring_appointment_id, household_id, occurrence_date, occurrence_time,
+                 status, overrides::text, created_at, updated_at`,
+      [
+        id,
+        input.recurringAppointmentId,
+        input.householdId,
+        input.occurrenceDate,
+        input.occurrenceTime,
+        input.status,
+        input.overrides ? JSON.stringify(input.overrides) : null,
+        now,
+      ],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Failed to create occurrence.');
+    }
+
+    return mapOccurrence(row);
+  }
+
+  async updateOccurrence(occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (input.status !== undefined) {
+      updates.push(`status = $${paramIndex++}`);
+      values.push(input.status);
+    }
+    if (input.overrides !== undefined) {
+      updates.push(`overrides = $${paramIndex++}`);
+      values.push(input.overrides ? JSON.stringify(input.overrides) : null);
+    }
+
+    if (updates.length === 0) {
+      throw new ValidationError('No fields to update.');
+    }
+
+    const now = nowIso();
+    updates.push(`updated_at = $${paramIndex++}`);
+    values.push(now);
+
+    values.push(occurrenceId);
+    values.push(householdId);
+
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `UPDATE appointment_occurrences
+       SET ${updates.join(', ')}
+       WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
+       RETURNING id, recurring_appointment_id, household_id, occurrence_date, occurrence_time,
+                 status, overrides::text, created_at, updated_at`,
+      values,
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Occurrence not found.');
+    }
+
+    return mapOccurrence(row);
+  }
+
+  async deleteOccurrence(occurrenceId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `DELETE FROM appointment_occurrences
+       WHERE id = $1 AND household_id = $2`,
+      [occurrenceId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Occurrence not found.');
     }
   }
 }

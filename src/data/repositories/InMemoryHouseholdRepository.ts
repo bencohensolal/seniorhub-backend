@@ -599,4 +599,29 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteAppointmentReminder(_reminderId: string, _appointmentId: string, _householdId: string): Promise<void> {
     throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
   }
+
+  // Appointment Occurrence methods - stub implementations for test compatibility
+  async getOccurrenceById(_occurrenceId: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async getOccurrenceByDate(_appointmentId: string, _occurrenceDate: string, _householdId: string): Promise<any | null> {
+    return null;
+  }
+
+  async listOccurrences(_appointmentId: string, _householdId: string, _fromDate?: string, _toDate?: string): Promise<any[]> {
+    return [];
+  }
+
+  async createOccurrence(_input: any): Promise<any> {
+    throw new Error('Occurrence operations not implemented in InMemoryRepository');
+  }
+
+  async updateOccurrence(_occurrenceId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Occurrence operations not implemented in InMemoryRepository');
+  }
+
+  async deleteOccurrence(_occurrenceId: string, _householdId: string): Promise<void> {
+    throw new Error('Occurrence operations not implemented in InMemoryRepository');
+  }
 }
