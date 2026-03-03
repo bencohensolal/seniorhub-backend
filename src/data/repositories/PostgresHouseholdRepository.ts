@@ -1917,7 +1917,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   }): Promise<TaskWithReminders[]> {
     let query = `
       SELECT id, household_id, senior_id, caregiver_id, title, description,
-             category, priority, status, due_date, due_time, recurrence::text,
+             category, priority, status, due_date, due_time, duration, recurrence::text,
              completed_at, completed_by, created_at, updated_at, created_by
       FROM tasks
       WHERE household_id = $1
@@ -1965,6 +1965,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: TaskStatus;
       due_date: string | Date | null;
       due_time: string | null;
+      duration: number | null;
       recurrence: string | null;
       completed_at: string | Date | null;
       completed_by: string | null;
@@ -1981,16 +1982,18 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       const remindersResult = await this.pool.query<{
         id: string;
         task_id: string;
-        time: string;
-        days_of_week: number[];
+        time: string | null;
+        days_of_week: number[] | null;
+        trigger_before: number | null;
+        custom_message: string | null;
         enabled: boolean;
         created_at: string | Date;
         updated_at: string | Date;
       }>(
-        `SELECT id, task_id, time, days_of_week, enabled, created_at, updated_at
+        `SELECT id, task_id, time, days_of_week, trigger_before, custom_message, enabled, created_at, updated_at
          FROM task_reminders
          WHERE task_id = ANY($1)
-         ORDER BY time ASC`,
+         ORDER BY time ASC NULLS LAST, trigger_before DESC NULLS LAST`,
         [taskIds],
       );
 
@@ -2024,6 +2027,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: TaskStatus;
       due_date: string | Date | null;
       due_time: string | null;
+      duration: number | null;
       recurrence: string | null;
       completed_at: string | Date | null;
       completed_by: string | null;
@@ -2032,7 +2036,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       created_by: string;
     }>(
       `SELECT id, household_id, senior_id, caregiver_id, title, description,
-              category, priority, status, due_date, due_time, recurrence::text,
+              category, priority, status, due_date, due_time, duration, recurrence::text,
               completed_at, completed_by, created_at, updated_at, created_by
        FROM tasks
        WHERE id = $1 AND household_id = $2
@@ -2049,16 +2053,18 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const remindersResult = await this.pool.query<{
       id: string;
       task_id: string;
-      time: string;
-      days_of_week: number[];
+      time: string | null;
+      days_of_week: number[] | null;
+      trigger_before: number | null;
+      custom_message: string | null;
       enabled: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, task_id, time, days_of_week, enabled, created_at, updated_at
+      `SELECT id, task_id, time, days_of_week, trigger_before, custom_message, enabled, created_at, updated_at
        FROM task_reminders
        WHERE task_id = $1
-       ORDER BY time ASC`,
+       ORDER BY time ASC NULLS LAST, trigger_before DESC NULLS LAST`,
       [taskId],
     );
 
@@ -2085,6 +2091,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: TaskStatus;
       due_date: string | Date | null;
       due_time: string | null;
+      duration: number | null;
       recurrence: string | null;
       completed_at: string | Date | null;
       completed_by: string | null;
@@ -2094,12 +2101,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     }>(
       `INSERT INTO tasks (
          id, household_id, senior_id, caregiver_id, title, description,
-         category, priority, status, due_date, due_time, recurrence,
+         category, priority, status, due_date, due_time, duration, recurrence,
          created_at, updated_at, created_by
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $12, $13)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $13, $14)
        RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, recurrence::text,
+                 category, priority, status, due_date, due_time, duration, recurrence::text,
                  completed_at, completed_by, created_at, updated_at, created_by`,
       [
         id,
@@ -2112,6 +2119,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
         priority,
         input.dueDate ?? null,
         input.dueTime ?? null,
+        input.duration ?? null,
         input.recurrence ? JSON.stringify(input.recurrence) : null,
         now,
         input.createdBy,
@@ -2159,6 +2167,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       updates.push(`due_time = $${paramIndex++}`);
       values.push(input.dueTime);
     }
+    if (input.duration !== undefined) {
+      updates.push(`duration = $${paramIndex++}`);
+      values.push(input.duration);
+    }
     if (input.recurrence !== undefined) {
       updates.push(`recurrence = $${paramIndex++}`);
       values.push(input.recurrence ? JSON.stringify(input.recurrence) : null);
@@ -2191,6 +2203,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: TaskStatus;
       due_date: string | Date | null;
       due_time: string | null;
+      duration: number | null;
       recurrence: string | null;
       completed_at: string | Date | null;
       completed_by: string | null;
@@ -2202,7 +2215,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
        RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, recurrence::text,
+                 category, priority, status, due_date, due_time, duration, recurrence::text,
                  completed_at, completed_by, created_at, updated_at, created_by`,
       values,
     );
@@ -2243,6 +2256,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: TaskStatus;
       due_date: string | Date | null;
       due_time: string | null;
+      duration: number | null;
       recurrence: string | null;
       completed_at: string | Date | null;
       completed_by: string | null;
@@ -2254,7 +2268,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
        SET status = 'completed', completed_at = $3, completed_by = $4, updated_at = $5
        WHERE id = $1 AND household_id = $2
        RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, recurrence::text,
+                 category, priority, status, due_date, due_time, duration, recurrence::text,
                  completed_at, completed_by, created_at, updated_at, created_by`,
       [taskId, householdId, completedAt, completedBy, now],
     );
@@ -2273,17 +2287,19 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const result = await this.pool.query<{
       id: string;
       task_id: string;
-      time: string;
-      days_of_week: number[];
+      time: string | null;
+      days_of_week: number[] | null;
+      trigger_before: number | null;
+      custom_message: string | null;
       enabled: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT r.id, r.task_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at
+      `SELECT r.id, r.task_id, r.time, r.days_of_week, r.trigger_before, r.custom_message, r.enabled, r.created_at, r.updated_at
        FROM task_reminders r
        JOIN tasks t ON t.id = r.task_id
        WHERE r.task_id = $1 AND t.household_id = $2
-       ORDER BY r.time ASC`,
+       ORDER BY r.time ASC NULLS LAST, r.trigger_before DESC NULLS LAST`,
       [taskId, householdId],
     );
 
@@ -2294,13 +2310,15 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const result = await this.pool.query<{
       id: string;
       task_id: string;
-      time: string;
-      days_of_week: number[];
+      time: string | null;
+      days_of_week: number[] | null;
+      trigger_before: number | null;
+      custom_message: string | null;
       enabled: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT r.id, r.task_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at
+      `SELECT r.id, r.task_id, r.time, r.days_of_week, r.trigger_before, r.custom_message, r.enabled, r.created_at, r.updated_at
        FROM task_reminders r
        JOIN tasks t ON t.id = r.task_id
        WHERE r.id = $1 AND r.task_id = $2 AND t.household_id = $3
@@ -2320,16 +2338,18 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const result = await this.pool.query<{
       id: string;
       task_id: string;
-      time: string;
-      days_of_week: number[];
+      time: string | null;
+      days_of_week: number[] | null;
+      trigger_before: number | null;
+      custom_message: string | null;
       enabled: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `INSERT INTO task_reminders (id, task_id, time, days_of_week, enabled, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $6)
-       RETURNING id, task_id, time, days_of_week, enabled, created_at, updated_at`,
-      [id, input.taskId, input.time, input.daysOfWeek, enabled, now],
+      `INSERT INTO task_reminders (id, task_id, time, days_of_week, trigger_before, custom_message, enabled, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+       RETURNING id, task_id, time, days_of_week, trigger_before, custom_message, enabled, created_at, updated_at`,
+      [id, input.taskId, input.time ?? null, input.daysOfWeek ?? null, input.triggerBefore ?? null, input.customMessage ?? null, enabled, now],
     );
 
     const row = result.rows[0];
@@ -2353,6 +2373,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       updates.push(`days_of_week = $${paramIndex++}`);
       values.push(input.daysOfWeek);
     }
+    if (input.triggerBefore !== undefined) {
+      updates.push(`trigger_before = $${paramIndex++}`);
+      values.push(input.triggerBefore);
+    }
+    if (input.customMessage !== undefined) {
+      updates.push(`custom_message = $${paramIndex++}`);
+      values.push(input.customMessage);
+    }
     if (input.enabled !== undefined) {
       updates.push(`enabled = $${paramIndex++}`);
       values.push(input.enabled);
@@ -2372,8 +2400,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const result = await this.pool.query<{
       id: string;
       task_id: string;
-      time: string;
-      days_of_week: number[];
+      time: string | null;
+      days_of_week: number[] | null;
+      trigger_before: number | null;
+      custom_message: string | null;
       enabled: boolean;
       created_at: string | Date;
       updated_at: string | Date;
@@ -2382,7 +2412,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
        SET ${updates.join(', ')}
        FROM tasks t
        WHERE r.id = $${paramIndex++} AND r.task_id = $${paramIndex++} AND t.id = r.task_id AND t.household_id = $${paramIndex++}
-       RETURNING r.id, r.task_id, r.time, r.days_of_week, r.enabled, r.created_at, r.updated_at`,
+       RETURNING r.id, r.task_id, r.time, r.days_of_week, r.trigger_before, r.custom_message, r.enabled, r.created_at, r.updated_at`,
       [...values, householdId],
     );
 
