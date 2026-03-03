@@ -1,5 +1,28 @@
 # Backend TODO
 
+## ✅ FIXED - Appointment Reminder Creation Bug
+
+**Status:** FIXED on 2026-03-03
+
+**Description:**
+L'app mobile recevait une erreur "Invalid request payload" lors de la création de reminders pour les rendez-vous quand le champ `enabled` n'était pas envoyé.
+
+**Root Cause:**
+Dans `appointmentRoutes.ts`, ligne 427, le code assignait toujours `enabled: body.enabled` sans gérer le cas où ce champ est `undefined`. Même si le schéma Zod avait `.optional().default(true)`, la valeur par défaut n'était pas correctement appliquée dans la route.
+
+**Solution:**
+Utilisation de l'opérateur de coalescence nulle (`??`) pour garantir que `enabled` vaut `true` par défaut:
+```typescript
+enabled: body.enabled ?? true, // Default to true if not provided
+```
+
+**File Fixed:**
+- ✅ `src/routes/households/appointmentRoutes.ts` (ligne 427)
+
+**Priority:** HIGH - Bloquait la création de rendez-vous avec reminders
+
+---
+
 ## ✅ FIXED - URGENT BUG - GET /v1/households/:householdId/members
 
 **Status:** FIXED on 2026-01-03
@@ -21,43 +44,52 @@
 
 ---
 
-## 🔄 IN PROGRESS - Appointment Recurrence with Individual Occurrence Management
+## ✅ COMPLETED - Appointment Recurrence with Individual Occurrence Management
 
-**Status:** Fondations complétées - En attente de l'implémentation finale
+**Status:** Backend implementation completed on 2026-03-03
 
 ### Overview
-Ajouter la gestion complète de la récurrence des rendez-vous avec possibilité de modifier/annuler des occurrences individuelles sans affecter les autres occurrences de la série.
+Gestion complète de la récurrence des rendez-vous avec possibilité de modifier/annuler des occurrences individuelles sans affecter les autres occurrences de la série.
 
 ### ✅ Completed (2026-03-03)
+
+#### Foundation
 1. **Migration 010** - Table `appointment_occurrences` créée
-2. **Entity** - `AppointmentOccurrence` avec types complets
+2. **Entity** - `AppointmentOccurrence` avec types complets (status, overrides, etc.)
 3. **Service** - `occurrenceGenerator.ts` pour générer les occurrences depuis les règles de récurrence
-
-### 🚧 Remaining Work
-
-#### Repository Methods (HouseholdRepository interface + PostgresHouseholdRepository)
-1. `getOccurrence(occurrenceId, householdId)` - Get a specific occurrence
-2. `getOccurrenceByDate(appointmentId, occurrenceDate, householdId)` - Get occurrence for a date
-3. `createOccurrence(input)` - Create/update occurrence (for modifications/cancellations)
-4. `updateOccurrence(occurrenceId, householdId, data)` - Update occurrence
-5. `deleteOccurrence(occurrenceId, householdId)` - Delete occurrence
-6. `listOccurrences(appointmentId, householdId, fromDate, toDate)` - List occurrences for date range
+4. **Repository Interface** - Méthodes ajoutées à `HouseholdRepository` pour les occurrences:
+   - `getOccurrenceById(occurrenceId, householdId)`
+   - `getOccurrenceByDate(appointmentId, occurrenceDate, householdId)`
+   - `listOccurrences(appointmentId, householdId, fromDate?, toDate?)`
+   - `createOccurrence(input)`
+   - `updateOccurrence(occurrenceId, householdId, data)`
+   - `deleteOccurrence(occurrenceId, householdId)`
+5. **Mapper** - `mapOccurrence()` ajouté dans `helpers.ts`
+6. **PostgresHouseholdRepository** - Toutes les méthodes d'occurrences implémentées avec gestion JSONB
+7. **InMemoryHouseholdRepository** - Méthodes stub ajoutées pour compatibilité des tests
 
 #### Use Cases
-1. `GenerateOccurrencesUseCase` - Generate occurrences for a recurring appointment (uses occurrenceGenerator)
-2. `ModifyOccurrenceUseCase` - Modify a specific occurrence
-3. `CancelOccurrenceUseCase` - Cancel a specific occurrence
-4. `ListUpcomingAppointmentsUseCase` - List all upcoming (recurring occurrences + one-time appointments)
+1. ✅ `ListAppointmentOccurrencesUseCase` - Liste les occurrences d'un rendez-vous récurrent avec merge des overrides
+2. ✅ `ModifyOccurrenceUseCase` - Modifie une occurrence spécifique (crée ou met à jour un override)
+3. ✅ `CancelOccurrenceUseCase` - Annule une occurrence spécifique (status=cancelled)
 
-#### API Endpoints
-1. `GET /v1/households/:householdId/appointments/upcoming?from=YYYY-MM-DD&to=YYYY-MM-DD`
-2. `GET /v1/households/:householdId/appointments/:appointmentId/occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD`
-3. `PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate`
-4. `DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate`
+#### API Endpoints  
+1. ✅ `GET /v1/households/:householdId/appointments/:appointmentId/occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD` - Liste les occurrences avec overrides fusionnés
+2. ✅ `PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate` - Modifie une occurrence
+3. ✅ `DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate` - Annule une occurrence
 
-#### Helper/Mapper Functions
-1. `mapOccurrence()` in helpers.ts - Map DB row to AppointmentOccurrence entity
-2. `mergeOccurrenceWithAppointment()` - Merge recurring appointment + occurrence overrides
+#### Validation Schemas
+1. ✅ `occurrenceParamsSchema` - Validation des paramètres URL (householdId, appointmentId, occurrenceDate)
+2. ✅ `occurrenceQuerySchema` - Validation des query params (from, to dates)
+3. ✅ `modifyOccurrenceBodySchema` - Validation des champs modifiables d'une occurrence
+
+### 🚧 Remaining Work (Optional Enhancements)
+
+#### Future Enhancements
+1. `ListUpcomingAppointmentsUseCase` - Endpoint unifié listant tous les rendez-vous à venir (récurrents + uniques) dans l'ordre chronologique
+   - `GET /v1/households/:householdId/appointments/upcoming?from=YYYY-MM-DD&to=YYYY-MM-DD`
+2. Batch operations pour modifier/annuler plusieurs occurrences d'un coup
+3. Restauration d'occurrences annulées
 
 ### Use Cases (Detailed)
 1. **Créer un rendez-vous récurrent** (ex: "Kiné tous les lundis et mercredi à 10h")
