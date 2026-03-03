@@ -6,6 +6,9 @@ import type { DeleteAppointmentUseCase } from '../../domain/usecases/appointment
 import type { CreateAppointmentReminderUseCase } from '../../domain/usecases/appointments/CreateAppointmentReminderUseCase.js';
 import type { UpdateAppointmentReminderUseCase } from '../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
 import type { DeleteAppointmentReminderUseCase } from '../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
+import type { ListAppointmentOccurrencesUseCase } from '../../domain/usecases/appointments/ListAppointmentOccurrencesUseCase.js';
+import type { ModifyOccurrenceUseCase } from '../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
+import type { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
 import { paramsSchema, errorResponseSchema } from './schemas.js';
 import {
   createAppointmentBodySchema,
@@ -14,6 +17,9 @@ import {
   appointmentReminderParamsSchema,
   createAppointmentReminderBodySchema,
   updateAppointmentReminderBodySchema,
+  occurrenceParamsSchema,
+  occurrenceQuerySchema,
+  modifyOccurrenceBodySchema,
 } from './appointmentSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
 
@@ -27,6 +33,9 @@ export function registerAppointmentRoutes(
     createAppointmentReminderUseCase: CreateAppointmentReminderUseCase;
     updateAppointmentReminderUseCase: UpdateAppointmentReminderUseCase;
     deleteAppointmentReminderUseCase: DeleteAppointmentReminderUseCase;
+    listAppointmentOccurrencesUseCase: ListAppointmentOccurrencesUseCase;
+    modifyOccurrenceUseCase: ModifyOccurrenceUseCase;
+    cancelOccurrenceUseCase: CancelOccurrenceUseCase;
   },
 ): void {
   // GET /v1/households/:householdId/appointments - List household appointments
@@ -400,7 +409,7 @@ export function registerAppointmentRoutes(
           appointmentId: paramsResult.data.appointmentId,
           requester: request.requester,
           triggerBefore: body.triggerBefore,
-          enabled: body.enabled,
+          enabled: body.enabled ?? true, // Default to true if not provided
         };
 
         if (body.customMessage !== undefined) inputData.customMessage = body.customMessage;
@@ -538,6 +547,211 @@ export function registerAppointmentRoutes(
         });
 
         return reply.status(204).send();
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // GET /v1/households/:householdId/appointments/:appointmentId/occurrences - List appointment occurrences
+  fastify.get(
+    '/v1/households/:householdId/appointments/:appointmentId/occurrences',
+    {
+      schema: {
+        tags: ['Appointment Occurrences'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            appointmentId: { type: 'string' },
+          },
+          required: ['householdId', 'appointmentId'],
+        },
+        querystring: {
+          type: 'object',
+          required: ['from', 'to'],
+          properties: {
+            from: { type: 'string' },
+            to: { type: 'string' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'array' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = appointmentParamsSchema.safeParse(request.params);
+      const queryResult = occurrenceQuerySchema.safeParse(request.query);
+
+      if (!paramsResult.success || !queryResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const occurrences = await useCases.listAppointmentOccurrencesUseCase.execute({
+          userId: request.requester.userId,
+          householdId: paramsResult.data.householdId,
+          appointmentId: paramsResult.data.appointmentId,
+          fromDate: queryResult.data.from,
+          toDate: queryResult.data.to,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: occurrences,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Modify occurrence
+  fastify.patch(
+    '/v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate',
+    {
+      schema: {
+        tags: ['Appointment Occurrences'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            appointmentId: { type: 'string' },
+            occurrenceDate: { type: 'string' },
+          },
+          required: ['householdId', 'appointmentId', 'occurrenceDate'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', minLength: 1, maxLength: 200 },
+            time: { type: 'string' },
+            duration: { type: 'number' },
+            locationName: { type: 'string', maxLength: 255 },
+            address: { type: 'string', maxLength: 500 },
+            phoneNumber: { type: 'string', maxLength: 50 },
+            professionalName: { type: 'string', maxLength: 255 },
+            description: { type: 'string', maxLength: 1000 },
+            preparation: { type: 'string', maxLength: 1000 },
+            documentsToTake: { type: 'string', maxLength: 500 },
+            transportArrangement: { type: 'string', maxLength: 500 },
+            notes: { type: 'string', maxLength: 1000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = occurrenceParamsSchema.safeParse(request.params);
+      const bodyResult = modifyOccurrenceBodySchema.safeParse(request.body);
+
+      if (!paramsResult.success || !bodyResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const occurrence = await useCases.modifyOccurrenceUseCase.execute({
+          userId: request.requester.userId,
+          householdId: paramsResult.data.householdId,
+          appointmentId: paramsResult.data.appointmentId,
+          occurrenceDate: paramsResult.data.occurrenceDate,
+          overrides: bodyResult.data as any,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: occurrence,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Cancel occurrence
+  fastify.delete(
+    '/v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate',
+    {
+      schema: {
+        tags: ['Appointment Occurrences'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            appointmentId: { type: 'string' },
+            occurrenceDate: { type: 'string' },
+          },
+          required: ['householdId', 'appointmentId', 'occurrenceDate'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = occurrenceParamsSchema.safeParse(request.params);
+
+      if (!paramsResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const occurrence = await useCases.cancelOccurrenceUseCase.execute({
+          userId: request.requester.userId,
+          householdId: paramsResult.data.householdId,
+          appointmentId: paramsResult.data.appointmentId,
+          occurrenceDate: paramsResult.data.occurrenceDate,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: occurrence,
+        });
       } catch (error) {
         return handleDomainError(error, reply);
       }
