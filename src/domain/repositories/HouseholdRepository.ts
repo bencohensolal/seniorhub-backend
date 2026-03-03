@@ -8,6 +8,8 @@ import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } fro
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
+import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, CompleteTaskInput } from '../entities/Task.js';
+import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../entities/TaskReminder.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -101,4 +103,25 @@ export interface HouseholdRepository {
   createOccurrence(input: CreateOccurrenceInput): Promise<AppointmentOccurrence>;
   updateOccurrence(occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence>;
   deleteOccurrence(occurrenceId: string, householdId: string): Promise<void>;
+
+  // Tasks
+  listHouseholdTasks(householdId: string, filters?: {
+    status?: string;
+    seniorId?: string;
+    category?: string;
+    fromDate?: string;
+    toDate?: string;
+  }): Promise<TaskWithReminders[]>;
+  getTaskById(taskId: string, householdId: string): Promise<TaskWithReminders | null>;
+  createTask(input: CreateTaskInput): Promise<Task>;
+  updateTask(taskId: string, householdId: string, input: UpdateTaskInput): Promise<Task>;
+  deleteTask(taskId: string, householdId: string): Promise<void>;
+  completeTask(taskId: string, householdId: string, input: CompleteTaskInput, completedBy: string): Promise<Task>;
+
+  // Task Reminders
+  listTaskReminders(taskId: string, householdId: string): Promise<TaskReminder[]>;
+  getTaskReminderById(reminderId: string, taskId: string, householdId: string): Promise<TaskReminder | null>;
+  createTaskReminder(input: CreateTaskReminderInput): Promise<TaskReminder>;
+  updateTaskReminder(reminderId: string, taskId: string, householdId: string, input: UpdateTaskReminderInput): Promise<TaskReminder>;
+  deleteTaskReminder(reminderId: string, taskId: string, householdId: string): Promise<void>;
 }

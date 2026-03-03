@@ -6,6 +6,8 @@ import type { MedicationReminder } from '../../../domain/entities/MedicationRemi
 import type { Appointment, AppointmentType, AppointmentStatus, Recurrence } from '../../../domain/entities/Appointment.js';
 import type { AppointmentReminder } from '../../../domain/entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, OccurrenceStatus, OccurrenceOverrides } from '../../../domain/entities/AppointmentOccurrence.js';
+import type { Task, TaskCategory, TaskPriority, TaskStatus, TaskRecurrence } from '../../../domain/entities/Task.js';
+import type { TaskReminder } from '../../../domain/entities/TaskReminder.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -216,6 +218,62 @@ export const mapOccurrence = (row: {
   occurrenceTime: row.occurrence_time,
   status: row.status,
   overrides: row.overrides ? (typeof row.overrides === 'string' ? JSON.parse(row.overrides) : row.overrides) : null,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+});
+
+export const mapTask = (row: {
+  id: string;
+  household_id: string;
+  senior_id: string;
+  caregiver_id: string | null;
+  title: string;
+  description: string | null;
+  category: TaskCategory;
+  priority: TaskPriority;
+  status: TaskStatus;
+  due_date: string | Date | null;
+  due_time: string | null;
+  recurrence: TaskRecurrence | string | null;
+  completed_at: string | Date | null;
+  completed_by: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+  created_by: string;
+}): Task => ({
+  id: row.id,
+  householdId: row.household_id,
+  seniorId: row.senior_id,
+  caregiverId: row.caregiver_id,
+  title: row.title,
+  description: row.description,
+  category: row.category,
+  priority: row.priority,
+  status: row.status,
+  dueDate: row.due_date ? (toIso(row.due_date).split('T')[0] || null) : null,
+  dueTime: row.due_time,
+  recurrence: row.recurrence ? (typeof row.recurrence === 'string' ? JSON.parse(row.recurrence) : row.recurrence) : null,
+  completedAt: row.completed_at ? toIso(row.completed_at) : null,
+  completedBy: row.completed_by,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+  createdBy: row.created_by,
+});
+
+export const mapTaskReminder = (row: {
+  id: string;
+  task_id: string;
+  time: string;
+  days_of_week: number[] | string;
+  enabled: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
+}): TaskReminder => ({
+  id: row.id,
+  taskId: row.task_id,
+  time: row.time,
+  daysOfWeek: typeof row.days_of_week === 'string' ? JSON.parse(row.days_of_week) : row.days_of_week,
+  enabled: row.enabled,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
 });
