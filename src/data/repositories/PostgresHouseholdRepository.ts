@@ -2349,6 +2349,18 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const now = nowIso();
     const enabled = input.enabled ?? true;
 
+    console.log('[PostgresHouseholdRepository] createTaskReminder input:', JSON.stringify(input, null, 2));
+    console.log('[PostgresHouseholdRepository] Values to insert:', {
+      id,
+      taskId: input.taskId,
+      time: input.time ?? null,
+      daysOfWeek: input.daysOfWeek ?? null,
+      triggerBefore: input.triggerBefore ?? null,
+      customMessage: input.customMessage ?? null,
+      enabled,
+      now
+    });
+
     const result = await this.pool.query<{
       id: string;
       task_id: string;
