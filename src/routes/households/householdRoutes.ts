@@ -8,6 +8,7 @@ import type { RemoveHouseholdMemberUseCase } from '../../domain/usecases/househo
 import type { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/households/UpdateHouseholdMemberRoleUseCase.js';
 import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './schemas.js';
 import { handleDomainError } from '../errorHandler.js';
+import { getRequesterContext } from './utils.js';
 
 export const registerHouseholdRoutes = (
   fastify: FastifyInstance,
@@ -67,7 +68,7 @@ export const registerHouseholdRoutes = (
 
       const household = await useCases.createHouseholdUseCase.execute({
         name: payloadResult.data.name,
-        requester: request.requester,
+        requester: getRequesterContext(request),
       });
 
       return reply.status(201).send({
@@ -111,7 +112,7 @@ export const registerHouseholdRoutes = (
     },
     async (request, reply) => {
       const households = await useCases.listUserHouseholdsUseCase.execute({
-        requester: request.requester,
+        requester: getRequesterContext(request),
       });
 
       return reply.status(200).send({
@@ -170,7 +171,7 @@ export const registerHouseholdRoutes = (
       try {
         const overview = await useCases.getHouseholdOverviewUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({
@@ -247,7 +248,7 @@ export const registerHouseholdRoutes = (
       try {
         const overview = await useCases.getHouseholdOverviewUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({
@@ -316,7 +317,7 @@ export const registerHouseholdRoutes = (
       try {
         const members = await useCases.listHouseholdMembersUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -372,7 +373,7 @@ export const registerHouseholdRoutes = (
         await useCases.removeHouseholdMemberUseCase.execute({
           householdId: params.householdId,
           memberId: params.memberId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -444,7 +445,7 @@ export const registerHouseholdRoutes = (
           householdId: params.householdId,
           memberId: params.memberId,
           newRole: body.role,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -490,7 +491,7 @@ export const registerHouseholdRoutes = (
       try {
         await useCases.leaveHouseholdUseCase.execute({
           householdId: params.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({

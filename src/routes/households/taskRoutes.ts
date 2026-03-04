@@ -19,6 +19,7 @@ import {
   updateTaskReminderBodySchema,
 } from './taskSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
+import { getRequesterContext } from './utils.js';
 
 export function registerTaskRoutes(
   fastify: FastifyInstance,
@@ -94,7 +95,7 @@ export function registerTaskRoutes(
 
         const tasks = await useCases.listHouseholdTasksUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           filters: taskFilters,
         });
 
@@ -168,7 +169,7 @@ export function registerTaskRoutes(
         const body = bodyResult.data;
         const inputData: any = {
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           title: body.title,
           seniorId: body.seniorId,
           category: body.category,
@@ -271,7 +272,7 @@ export function registerTaskRoutes(
         const task = await useCases.updateTaskUseCase.execute({
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           updates: updateData,
         });
 
@@ -337,7 +338,7 @@ export function registerTaskRoutes(
         const inputData: any = {
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         };
         
         if (body.completedAt) inputData.completedAt = body.completedAt;
@@ -393,7 +394,7 @@ export function registerTaskRoutes(
         await useCases.deleteTaskUseCase.execute({
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();
@@ -458,7 +459,7 @@ export function registerTaskRoutes(
         const inputData: any = {
           householdId: paramsResult.data.householdId,
           taskId: paramsResult.data.taskId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         };
 
         if (body.time !== undefined) inputData.time = body.time;
@@ -545,7 +546,7 @@ export function registerTaskRoutes(
           reminderId: paramsResult.data.reminderId,
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           updates: updateData,
         });
 
@@ -600,7 +601,7 @@ export function registerTaskRoutes(
           reminderId: paramsResult.data.reminderId,
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();

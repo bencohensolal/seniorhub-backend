@@ -9,6 +9,7 @@ import { DeleteDisplayTabletUseCase } from '../../domain/usecases/displayTablets
 import { RegenerateDisplayTabletTokenUseCase } from '../../domain/usecases/displayTablets/RegenerateDisplayTabletTokenUseCase.js';
 import { AuthenticateDisplayTabletUseCase } from '../../domain/usecases/displayTablets/AuthenticateDisplayTabletUseCase.js';
 import { handleDomainError } from '../errorHandler.js';
+import { requireUserAuth } from '../../plugins/authContext.js';
 
 // Schemas
 const householdParamsSchema = z.object({
@@ -43,6 +44,7 @@ export const registerDisplayTabletRoutes = (
   fastify.get(
     '/v1/households/:householdId/display-tablets',
     {
+      preHandler: requireUserAuth,
       schema: {
         tags: ['Display Tablets'],
         params: {
@@ -85,7 +87,7 @@ export const registerDisplayTabletRoutes = (
 
         const tablets = await useCase.execute({
           householdId: params.householdId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         // Remove tokenHash from response
@@ -105,6 +107,7 @@ export const registerDisplayTabletRoutes = (
   fastify.post(
     '/v1/households/:householdId/display-tablets',
     {
+      preHandler: requireUserAuth,
       schema: {
         tags: ['Display Tablets'],
         params: {
@@ -156,7 +159,7 @@ export const registerDisplayTabletRoutes = (
           householdId: params.householdId,
           name: body.name,
           ...(body.description !== undefined && { description: body.description }),
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(201).send({
@@ -226,7 +229,7 @@ export const registerDisplayTabletRoutes = (
           tabletId: params.tabletId,
           ...(body.name !== undefined && { name: body.name }),
           ...(body.description !== undefined && { description: body.description }),
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         // Remove tokenHash from response
@@ -275,7 +278,7 @@ export const registerDisplayTabletRoutes = (
         await useCase.execute({
           householdId: params.householdId,
           tabletId: params.tabletId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({
@@ -321,7 +324,7 @@ export const registerDisplayTabletRoutes = (
         await useCase.execute({
           householdId: params.householdId,
           tabletId: params.tabletId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({
@@ -382,7 +385,7 @@ export const registerDisplayTabletRoutes = (
         const tablet = await useCase.execute({
           householdId: params.householdId,
           tabletId: params.tabletId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({

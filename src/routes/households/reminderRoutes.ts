@@ -11,6 +11,7 @@ import {
   updateReminderBodySchema,
 } from './medicationSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
+import { getRequesterContext } from './utils.js';
 
 export function registerReminderRoutes(
   fastify: FastifyInstance,
@@ -64,7 +65,7 @@ export function registerReminderRoutes(
         const reminders = await useCases.listMedicationRemindersUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -131,7 +132,7 @@ export function registerReminderRoutes(
         const reminder = await useCases.createReminderUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           time: bodyResult.data.time,
           daysOfWeek: bodyResult.data.daysOfWeek,
           enabled: bodyResult.data.enabled,
@@ -209,7 +210,7 @@ export function registerReminderRoutes(
           reminderId: paramsResult.data.reminderId,
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           data: updateData,
         });
 
@@ -264,7 +265,7 @@ export function registerReminderRoutes(
           reminderId: paramsResult.data.reminderId,
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();

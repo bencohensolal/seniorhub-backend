@@ -22,6 +22,7 @@ import {
 } from './schemas.js';
 import { checkInviteRateLimit, maskEmail, sanitizeInvitation } from './utils.js';
 import { handleDomainError } from '../errorHandler.js';
+import { getRequesterContext } from './utils.js';
 
 /**
  * Detects if the request is coming from a mobile device
@@ -229,7 +230,7 @@ export const registerInvitationRoutes = (
         });
       }
 
-      if (!checkInviteRateLimit(request.requester.userId)) {
+      if (!checkInviteRateLimit(request.requester!.userId)) {
         return reply.status(429).send({
           status: 'error',
           message: 'Invitation rate limit reached. Please try again later.',
@@ -239,13 +240,13 @@ export const registerInvitationRoutes = (
       try {
         await useCases.ensureHouseholdRoleUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
           allowedRoles: ['caregiver'],
         });
 
         const result = await useCases.createBulkInvitationsUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           users: payloadResult.data.users,
         });
 
@@ -275,7 +276,7 @@ export const registerInvitationRoutes = (
         for (const delivery of result.deliveries) {
           await repository.logAuditEvent({
             householdId: paramsResult.data.householdId,
-            actorUserId: request.requester.userId,
+            actorUserId: request.requester!.userId,
             action: 'invitation_created',
             targetId: delivery.invitationId,
             metadata: {
@@ -332,7 +333,7 @@ export const registerInvitationRoutes = (
       try {
         const invitations = await useCases.listHouseholdInvitationsUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requesterUserId: request.requester.userId,
+          requesterUserId: request.requester!.userId,
         });
 
         return reply.status(200).send({
@@ -384,7 +385,7 @@ export const registerInvitationRoutes = (
     },
     async (request, reply) => {
       const result = await useCases.autoAcceptPendingInvitationsUseCase.execute({
-        requester: request.requester,
+        requester: getRequesterContext(request),
       });
 
       return reply.status(200).send({
@@ -638,7 +639,7 @@ export const registerInvitationRoutes = (
         const result = await useCases.resendInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,
           invitationId: paramsResult.data.invitationId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         // Get the invitation to extract invitee details for email
@@ -665,11 +666,11 @@ export const registerInvitationRoutes = (
 
         await repository.logAuditEvent({
           householdId: paramsResult.data.householdId,
-          actorUserId: request.requester.userId,
+          actorUserId: request.requester!.userId,
           action: 'invitation_resent',
           targetId: paramsResult.data.invitationId,
           metadata: {
-            requesterEmailMasked: maskEmail(request.requester.email),
+            requesterEmailMasked: maskEmail(request.requester!.email),
           },
         });
 
@@ -740,7 +741,7 @@ export const registerInvitationRoutes = (
         const result = await useCases.reactivateInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,
           invitationId: paramsResult.data.invitationId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         // Queue the email with the new token
@@ -761,11 +762,11 @@ export const registerInvitationRoutes = (
 
         await repository.logAuditEvent({
           householdId: paramsResult.data.householdId,
-          actorUserId: request.requester.userId,
+          actorUserId: request.requester!.userId,
           action: 'invitation_reactivated',
           targetId: paramsResult.data.invitationId,
           metadata: {
-            requesterEmailMasked: maskEmail(request.requester.email),
+            requesterEmailMasked: maskEmail(request.requester!.email),
           },
         });
 
@@ -829,16 +830,16 @@ export const registerInvitationRoutes = (
         await useCases.cancelInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,
           invitationId: paramsResult.data.invitationId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         await repository.logAuditEvent({
           householdId: paramsResult.data.householdId,
-          actorUserId: request.requester.userId,
+          actorUserId: request.requester!.userId,
           action: 'invitation_cancelled',
           targetId: paramsResult.data.invitationId,
           metadata: {
-            requesterEmailMasked: maskEmail(request.requester.email),
+            requesterEmailMasked: maskEmail(request.requester!.email),
           },
         });
 

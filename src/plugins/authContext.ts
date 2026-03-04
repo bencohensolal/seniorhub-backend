@@ -161,3 +161,16 @@ export const requireWritePermission = async (request: any, reply: any): Promise<
     });
   }
 };
+
+/**
+ * Middleware to require user authentication (blocks tablets)
+ * Use this for routes that should only be accessible to authenticated users, not tablets
+ */
+export const requireUserAuth = async (request: any, reply: any): Promise<void> => {
+  if (!request.requester) {
+    return reply.status(401).send({
+      status: 'error',
+      message: 'This operation requires user authentication.',
+    });
+  }
+};

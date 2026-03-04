@@ -1,42 +1,5 @@
-feat(display-tablets): add JWT session tokens for tablet authentication (Phase 3)
+docs(agents): add guidance for writing large commit messages
 
-Implémentation du système de sessions JWT sécurisées pour les tablettes d'affichage.
-Après authentification avec leur token permanent, les tablettes reçoivent maintenant
-un JWT de session valide 8 heures qui sera utilisé pour les requêtes ultérieures.
+Added clarification that large commit messages should be written incrementally in batches (e.g., 300 characters at a time) to avoid overwhelming the editor or tool.
 
-Nouveaux fichiers:
-- src/domain/security/displayTabletSession.ts: Génération et validation des JWT sessions
-  * generateTabletSessionToken(): Crée des JWT signés HMAC-SHA256 (256 bits)
-  * verifyTabletSessionToken(): Vérifie signature + expiration + payload
-  * Tokens valides 8 heures avec permissions read-only
-
-Types et interfaces:
-- src/types/fastify.d.ts: Ajout du contexte tabletSession dans FastifyRequest
-- src/domain/entities/DisplayTablet.ts:
-  * DisplayTabletAuthInfo: Résultat de base du repository (sans session)
-  * DisplayTabletAuthResult: Résultat complet avec sessionToken + expiresAt
-
-Use case mis à jour:
-- AuthenticateDisplayTabletUseCase génère maintenant un JWT après validation du token
-- L'endpoint POST /v1/display-tablets/authenticate retourne:
-  * sessionToken: JWT signé valide 8h
-  * expiresAt: Date d'expiration ISO 8601
-  * householdId, householdName, permissions
-
-Repository adapté:
-- HouseholdRepository.authenticateDisplayTablet() retourne DisplayTabletAuthInfo
-- PostgresHouseholdRepository: Implémentation complète
-- InMemoryHouseholdRepository: Stub retournant null
-
-Sécurité:
-- Sessions limitées à 8 heures pour forcer ré-authentification régulière
-- Tokens signés avec TOKEN_SIGNING_SECRET (HMAC-SHA256)
-- Payload inclut: tabletId, householdId, permissions: ['read'], exp
-- Validation stricte: signature, expiration, structure du payload
-
-Prochaines étapes Phase 3:
-- Modifier authContext pour accepter les sessions tablettes
-- Créer middleware de permissions read-only
-- Documenter les restrictions d'accès
-
-Refs: Phase 3 - Middleware de permissions lecture seule
+This complements the existing rule that commit messages must always be written in a file using an editor, never directly on the command line with `-m`.
