@@ -11,6 +11,10 @@ import { AuthenticateDisplayTabletUseCase } from '../../domain/usecases/displayT
 import { handleDomainError } from '../errorHandler.js';
 
 // Schemas
+const householdParamsSchema = z.object({
+  householdId: z.string().uuid(),
+});
+
 const householdTabletParamsSchema = z.object({
   householdId: z.string().uuid(),
   tabletId: z.string().uuid(),
@@ -76,7 +80,7 @@ export const registerDisplayTabletRoutes = (
     },
     async (request, reply) => {
       try {
-        const params = householdTabletParamsSchema.parse(request.params);
+        const params = householdParamsSchema.parse(request.params);
         const useCase = new ListHouseholdDisplayTabletsUseCase(repository);
 
         const tablets = await useCase.execute({
@@ -144,7 +148,7 @@ export const registerDisplayTabletRoutes = (
     },
     async (request, reply) => {
       try {
-        const params = householdTabletParamsSchema.parse(request.params);
+        const params = householdParamsSchema.parse(request.params);
         const body = createTabletBodySchema.parse(request.body);
         const useCase = new CreateDisplayTabletUseCase(repository);
 

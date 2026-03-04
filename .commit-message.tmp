@@ -1,6 +1,9 @@
-fix(migration): use Clerk user IDs instead of users table references
+fix(display-tablets): correct parameter validation schemas
 
-Migration 016 incorrectly referenced a `users` table that doesn't exist
-in this project (uses Clerk for authentication). Changed `created_by` and
-`revoked_by` columns from UUID foreign keys to VARCHAR(255) to store
-Clerk user IDs directly.
+Fixed validation schemas for GET and POST endpoints that were incorrectly
+expecting both householdId and tabletId parameters when they should only
+expect householdId.
+
+- GET /v1/households/:householdId/display-tablets now uses householdParamsSchema
+- POST /v1/households/:householdId/display-tablets now uses householdParamsSchema
+- Other endpoints correctly use householdTabletParamsSchema when both IDs needed
