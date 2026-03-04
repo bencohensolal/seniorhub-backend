@@ -1,0 +1,13 @@
+fix(invitations): add invitation_reactivated to audit_events constraint
+
+Update migration 014 to include invitation_reactivated action in the audit_events CHECK constraint.
+
+**Issue:**
+The reactivation endpoint was failing with a 500 error because the audit event logging attempted to insert 'invitation_reactivated' action which was not allowed by the audit_events_action_check constraint.
+
+**Fix:**
+- Add DROP/ADD constraint statements to migration 014
+- Include 'invitation_reactivated' in the allowed actions list
+- Ensures audit logging works correctly for invitation reactivations
+
+This fixes the database constraint violation when logging reactivation audit events.
