@@ -1,0 +1,5 @@
+refactor(types): replace any with unknown in repository stubs
+
+Replace remaining `any` types with `unknown` in InMemoryHouseholdRepository
+stub methods and PostgresHouseholdRepository update methods for better type
+safety. Fix import statements to use `import type` where appropriate.

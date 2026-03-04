@@ -8,7 +8,7 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { AppointmentWithReminders } from '../../entities/Appointment.js';
 import type { GeneratedOccurrence } from '../../entities/AppointmentOccurrence.js';
-import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
+import type { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
 import { NotFoundError } from '../../errors/index.js';
 import { generateOccurrences } from '../../services/occurrenceGenerator.js';
 

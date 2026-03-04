@@ -607,19 +607,19 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Medication Reminder methods - stub implementations for test compatibility
-  async listMedicationReminders(_medicationId: string, _householdId: string): Promise<any[]> {
+  async listMedicationReminders(_medicationId: string, _householdId: string): Promise<never[]> {
     return [];
   }
 
-  async getReminderById(_reminderId: string, _medicationId: string, _householdId: string): Promise<any | null> {
+  async getReminderById(_reminderId: string, _medicationId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async createReminder(_input: any): Promise<any> {
+  async createReminder(_input: unknown): Promise<never> {
     throw new Error('Reminder operations not implemented in InMemoryRepository');
   }
 
-  async updateReminder(_reminderId: string, _medicationId: string, _householdId: string, _input: any): Promise<any> {
+  async updateReminder(_reminderId: string, _medicationId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Reminder operations not implemented in InMemoryRepository');
   }
 
@@ -628,19 +628,19 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Appointment methods - stub implementations for test compatibility
-  async listHouseholdAppointments(_householdId: string): Promise<any[]> {
+  async listHouseholdAppointments(_householdId: string): Promise<never[]> {
     return [];
   }
 
-  async getAppointmentById(_appointmentId: string, _householdId: string): Promise<any | null> {
+  async getAppointmentById(_appointmentId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async createAppointment(_input: any): Promise<any> {
+  async createAppointment(_input: unknown): Promise<never> {
     throw new Error('Appointment operations not implemented in InMemoryRepository');
   }
 
-  async updateAppointment(_appointmentId: string, _householdId: string, _input: any): Promise<any> {
+  async updateAppointment(_appointmentId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Appointment operations not implemented in InMemoryRepository');
   }
 
@@ -649,19 +649,19 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Appointment Reminder methods - stub implementations for test compatibility
-  async listAppointmentReminders(_appointmentId: string, _householdId: string): Promise<any[]> {
+  async listAppointmentReminders(_appointmentId: string, _householdId: string): Promise<never[]> {
     return [];
   }
 
-  async getAppointmentReminderById(_reminderId: string, _appointmentId: string, _householdId: string): Promise<any | null> {
+  async getAppointmentReminderById(_reminderId: string, _appointmentId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async createAppointmentReminder(_input: any): Promise<any> {
+  async createAppointmentReminder(_input: unknown): Promise<never> {
     throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
   }
 
-  async updateAppointmentReminder(_reminderId: string, _appointmentId: string, _householdId: string, _input: any): Promise<any> {
+  async updateAppointmentReminder(_reminderId: string, _appointmentId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Appointment reminder operations not implemented in InMemoryRepository');
   }
 
@@ -670,23 +670,23 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Appointment Occurrence methods - stub implementations for test compatibility
-  async getOccurrenceById(_occurrenceId: string, _householdId: string): Promise<any | null> {
+  async getOccurrenceById(_occurrenceId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async getOccurrenceByDate(_appointmentId: string, _occurrenceDate: string, _householdId: string): Promise<any | null> {
+  async getOccurrenceByDate(_appointmentId: string, _occurrenceDate: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async listOccurrences(_appointmentId: string, _householdId: string, _fromDate?: string, _toDate?: string): Promise<any[]> {
+  async listOccurrences(_appointmentId: string, _householdId: string, _fromDate?: string, _toDate?: string): Promise<never[]> {
     return [];
   }
 
-  async createOccurrence(_input: any): Promise<any> {
+  async createOccurrence(_input: unknown): Promise<never> {
     throw new Error('Occurrence operations not implemented in InMemoryRepository');
   }
 
-  async updateOccurrence(_occurrenceId: string, _householdId: string, _input: any): Promise<any> {
+  async updateOccurrence(_occurrenceId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Occurrence operations not implemented in InMemoryRepository');
   }
 
@@ -695,19 +695,19 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Task methods - stub implementations for test compatibility
-  async listHouseholdTasks(_householdId: string, _filters?: any): Promise<any[]> {
+  async listHouseholdTasks(_householdId: string, _filters?: unknown): Promise<never[]> {
     return [];
   }
 
-  async getTaskById(_taskId: string, _householdId: string): Promise<any | null> {
+  async getTaskById(_taskId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async createTask(_input: any): Promise<any> {
+  async createTask(_input: unknown): Promise<never> {
     throw new Error('Task operations not implemented in InMemoryRepository');
   }
 
-  async updateTask(_taskId: string, _householdId: string, _input: any): Promise<any> {
+  async updateTask(_taskId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Task operations not implemented in InMemoryRepository');
   }
 
@@ -715,24 +715,24 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     throw new Error('Task operations not implemented in InMemoryRepository');
   }
 
-  async completeTask(_taskId: string, _householdId: string, _input: any, _completedBy: string): Promise<any> {
+  async completeTask(_taskId: string, _householdId: string, _input: unknown, _completedBy: string): Promise<never> {
     throw new Error('Task operations not implemented in InMemoryRepository');
   }
 
   // Task Reminder methods - stub implementations for test compatibility
-  async listTaskReminders(_taskId: string, _householdId: string): Promise<any[]> {
+  async listTaskReminders(_taskId: string, _householdId: string): Promise<never[]> {
     return [];
   }
 
-  async getTaskReminderById(_reminderId: string, _taskId: string, _householdId: string): Promise<any | null> {
+  async getTaskReminderById(_reminderId: string, _taskId: string, _householdId: string): Promise<null> {
     return null;
   }
 
-  async createTaskReminder(_input: any): Promise<any> {
+  async createTaskReminder(_input: unknown): Promise<never> {
     throw new Error('Task reminder operations not implemented in InMemoryRepository');
   }
 
-  async updateTaskReminder(_reminderId: string, _taskId: string, _householdId: string, _input: any): Promise<any> {
+  async updateTaskReminder(_reminderId: string, _taskId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Task reminder operations not implemented in InMemoryRepository');
   }
 
@@ -741,19 +741,19 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   // Display Tablet methods - stub implementations for test compatibility
-  async listHouseholdDisplayTablets(_householdId: string): Promise<any[]> {
+  async listHouseholdDisplayTablets(_householdId: string): Promise<never[]> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async getDisplayTabletById(_tabletId: string, _householdId: string): Promise<any | null> {
+  async getDisplayTabletById(_tabletId: string, _householdId: string): Promise<never> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async createDisplayTablet(_input: any): Promise<any> {
+  async createDisplayTablet(_input: unknown): Promise<never> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async updateDisplayTablet(_tabletId: string, _householdId: string, _input: any): Promise<any> {
+  async updateDisplayTablet(_tabletId: string, _householdId: string, _input: unknown): Promise<never> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
@@ -765,11 +765,11 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async regenerateDisplayTabletToken(_tabletId: string, _householdId: string): Promise<any> {
+  async regenerateDisplayTabletToken(_tabletId: string, _householdId: string): Promise<never> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async authenticateDisplayTablet(_tabletId: string, _token: string): Promise<any> {
+  async authenticateDisplayTablet(_tabletId: string, _token: string): Promise<never> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 

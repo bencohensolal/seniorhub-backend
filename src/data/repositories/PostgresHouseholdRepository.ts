@@ -1089,7 +1089,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateMedication(medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
     let paramIndex = 1;
 
     if (input.name !== undefined) {
@@ -1261,7 +1261,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateReminder(reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.time !== undefined) {
@@ -1544,7 +1544,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateAppointment(appointmentId: string, householdId: string, input: UpdateAppointmentInput): Promise<Appointment> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.title !== undefined) {
@@ -1761,7 +1761,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateAppointmentReminder(reminderId: string, appointmentId: string, householdId: string, input: UpdateAppointmentReminderInput): Promise<AppointmentReminder> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.triggerBefore !== undefined) {
@@ -1958,7 +1958,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateOccurrence(occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.status !== undefined) {
@@ -2250,7 +2250,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateTask(taskId: string, householdId: string, input: UpdateTaskInput): Promise<Task> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.title !== undefined) {
@@ -2490,7 +2490,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateTaskReminder(reminderId: string, taskId: string, householdId: string, input: UpdateTaskReminderInput): Promise<TaskReminder> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.time !== undefined) {
@@ -2654,7 +2654,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const tablet = mapDisplayTablet(row);
     
     // Return tablet with token (omit tokenHash)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { tokenHash: _, ...tabletWithoutHash } = tablet;
     return {
       ...tabletWithoutHash,
@@ -2664,7 +2664,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   async updateDisplayTablet(tabletId: string, householdId: string, input: UpdateDisplayTabletInput): Promise<DisplayTablet> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (input.name !== undefined) {
@@ -2772,7 +2772,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const tablet = mapDisplayTablet(row);
     
     // Return tablet with token (omit tokenHash)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { tokenHash: _, ...tabletWithoutHash } = tablet;
     return {
       ...tabletWithoutHash,

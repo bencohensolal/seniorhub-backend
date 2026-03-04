@@ -7,7 +7,7 @@
 
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { AppointmentOccurrence, OccurrenceOverrides } from '../../entities/AppointmentOccurrence.js';
-import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
+import type { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
 import { NotFoundError, ValidationError } from '../../errors/index.js';
 
 export interface ModifyOccurrenceInput {
