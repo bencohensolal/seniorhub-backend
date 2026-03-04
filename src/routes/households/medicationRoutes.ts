@@ -10,6 +10,8 @@ import {
   medicationParamsSchema,
 } from './medicationSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
+import { requireWritePermission } from '../../plugins/authContext.js';
+import { verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
 
 export function registerMedicationRoutes(
   fastify: FastifyInstance,
@@ -56,9 +58,12 @@ export function registerMedicationRoutes(
       }
 
       try {
+        // Verify tablet can only access its own household
+        verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
+
         const medications = await useCases.listHouseholdMedicationsUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -71,10 +76,11 @@ export function registerMedicationRoutes(
     },
   );
 
-  // POST /v1/households/:householdId/medications - Create medication
+  // POST /v1/households/:householdId/medications - Create medication (WRITE - tablets blocked)
   fastify.post(
     '/v1/households/:householdId/medications',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Medications'],
         params: {
@@ -130,7 +136,7 @@ export function registerMedicationRoutes(
       try {
         const inputData: any = {
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           seniorId: bodyResult.data.seniorId,
           name: bodyResult.data.name,
           dosage: bodyResult.data.dosage,
@@ -156,10 +162,11 @@ export function registerMedicationRoutes(
     },
   );
 
-  // PATCH /v1/households/:householdId/medications/:medicationId - Update medication
+  // PATCH /v1/households/:householdId/medications/:medicationId - Update medication (WRITE - tablets blocked)
   fastify.patch(
     '/v1/households/:householdId/medications/:medicationId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Medications'],
         params: {
@@ -231,7 +238,7 @@ export function registerMedicationRoutes(
         const medication = await useCases.updateMedicationUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           data: updateData,
         });
 
@@ -245,10 +252,11 @@ export function registerMedicationRoutes(
     },
   );
 
-  // DELETE /v1/households/:householdId/medications/:medicationId - Delete medication
+  // DELETE /v1/households/:householdId/medications/:medicationId - Delete medication (WRITE - tablets blocked)
   fastify.delete(
     '/v1/households/:householdId/medications/:medicationId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Medications'],
         params: {
@@ -284,7 +292,7 @@ export function registerMedicationRoutes(
         await useCases.deleteMedicationUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();

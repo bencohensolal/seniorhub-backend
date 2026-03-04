@@ -22,6 +22,8 @@ import {
   modifyOccurrenceBodySchema,
 } from './appointmentSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
+import { requireWritePermission } from '../../plugins/authContext.js';
+import { verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
 
 export function registerAppointmentRoutes(
   fastify: FastifyInstance,
@@ -38,7 +40,7 @@ export function registerAppointmentRoutes(
     cancelOccurrenceUseCase: CancelOccurrenceUseCase;
   },
 ): void {
-  // GET /v1/households/:householdId/appointments - List household appointments
+  // GET /v1/households/:householdId/appointments - List household appointments (READ - tablets allowed)
   fastify.get(
     '/v1/households/:householdId/appointments',
     {
@@ -74,9 +76,12 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        // Verify tablet can only access its own household
+        verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
+
         const appointments = await useCases.listHouseholdAppointmentsUseCase.execute({
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(200).send({
@@ -89,10 +94,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // POST /v1/households/:householdId/appointments - Create appointment
+  // POST /v1/households/:householdId/appointments - Create appointment (WRITE - tablets blocked)
   fastify.post(
     '/v1/households/:householdId/appointments',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointments'],
         params: {
@@ -160,7 +166,7 @@ export function registerAppointmentRoutes(
         const body = bodyResult.data;
         const inputData: any = {
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           title: body.title,
           type: body.type,
           date: body.date,
@@ -194,10 +200,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // PATCH /v1/households/:householdId/appointments/:appointmentId - Update appointment
+  // PATCH /v1/households/:householdId/appointments/:appointmentId - Update appointment (WRITE - tablets blocked)
   fastify.patch(
     '/v1/households/:householdId/appointments/:appointmentId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointments'],
         params: {
@@ -290,7 +297,7 @@ export function registerAppointmentRoutes(
         const appointment = await useCases.updateAppointmentUseCase.execute({
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           data: updateData,
         });
 
@@ -304,10 +311,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // DELETE /v1/households/:householdId/appointments/:appointmentId - Delete appointment
+  // DELETE /v1/households/:householdId/appointments/:appointmentId - Delete appointment (WRITE - tablets blocked)
   fastify.delete(
     '/v1/households/:householdId/appointments/:appointmentId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointments'],
         params: {
@@ -343,7 +351,7 @@ export function registerAppointmentRoutes(
         await useCases.deleteAppointmentUseCase.execute({
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();
@@ -353,10 +361,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // POST /v1/households/:householdId/appointments/:appointmentId/reminders - Create appointment reminder
+  // POST /v1/households/:householdId/appointments/:appointmentId/reminders - Create appointment reminder (WRITE - tablets blocked)
   fastify.post(
     '/v1/households/:householdId/appointments/:appointmentId/reminders',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointment Reminders'],
         params: {
@@ -407,7 +416,7 @@ export function registerAppointmentRoutes(
         const inputData: any = {
           householdId: paramsResult.data.householdId,
           appointmentId: paramsResult.data.appointmentId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           triggerBefore: body.triggerBefore,
           enabled: body.enabled ?? true, // Default to true if not provided
         };
@@ -426,10 +435,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // PATCH /v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId - Update reminder
+  // PATCH /v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId - Update reminder (WRITE - tablets blocked)
   fastify.patch(
     '/v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointment Reminders'],
         params: {
@@ -488,7 +498,7 @@ export function registerAppointmentRoutes(
           reminderId: paramsResult.data.reminderId,
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
           data: updateData,
         });
 
@@ -502,10 +512,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // DELETE /v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId - Delete reminder
+  // DELETE /v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId - Delete reminder (WRITE - tablets blocked)
   fastify.delete(
     '/v1/households/:householdId/appointments/:appointmentId/reminders/:reminderId',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointment Reminders'],
         params: {
@@ -543,7 +554,7 @@ export function registerAppointmentRoutes(
           reminderId: paramsResult.data.reminderId,
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
-          requester: request.requester,
+          requester: getRequesterContext(request),
         });
 
         return reply.status(204).send();
@@ -553,7 +564,7 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // GET /v1/households/:householdId/appointments/:appointmentId/occurrences - List appointment occurrences
+  // GET /v1/households/:householdId/appointments/:appointmentId/occurrences - List appointment occurrences (READ - tablets allowed)
   fastify.get(
     '/v1/households/:householdId/appointments/:appointmentId/occurrences',
     {
@@ -603,8 +614,12 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        // Verify tablet can only access its own household
+        verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
+
+        const requester = getRequesterContext(request);
         const occurrences = await useCases.listAppointmentOccurrencesUseCase.execute({
-          userId: request.requester.userId,
+          userId: requester.userId,
           householdId: paramsResult.data.householdId,
           appointmentId: paramsResult.data.appointmentId,
           fromDate: queryResult.data.from,
@@ -621,10 +636,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Modify occurrence
+  // PATCH /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Modify occurrence (WRITE - tablets blocked)
   fastify.patch(
     '/v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointment Occurrences'],
         params: {
@@ -681,8 +697,9 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        const requester = getRequesterContext(request);
         const occurrence = await useCases.modifyOccurrenceUseCase.execute({
-          userId: request.requester.userId,
+          userId: requester.userId,
           householdId: paramsResult.data.householdId,
           appointmentId: paramsResult.data.appointmentId,
           occurrenceDate: paramsResult.data.occurrenceDate,
@@ -699,10 +716,11 @@ export function registerAppointmentRoutes(
     },
   );
 
-  // DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Cancel occurrence
+  // DELETE /v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate - Cancel occurrence (WRITE - tablets blocked)
   fastify.delete(
     '/v1/households/:householdId/appointments/:appointmentId/occurrences/:occurrenceDate',
     {
+      preHandler: requireWritePermission,
       schema: {
         tags: ['Appointment Occurrences'],
         params: {
@@ -741,8 +759,9 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        const requester = getRequesterContext(request);
         const occurrence = await useCases.cancelOccurrenceUseCase.execute({
-          userId: request.requester.userId,
+          userId: requester.userId,
           householdId: paramsResult.data.householdId,
           appointmentId: paramsResult.data.appointmentId,
           occurrenceDate: paramsResult.data.occurrenceDate,

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { verifyTabletSessionToken } from '../domain/security/displayTabletSession.js';
 
 const normalize = (value: string | undefined): string => (value && value.trim().length > 0 ? value.trim() : '');
 
@@ -26,7 +27,9 @@ const decodeJWT = (token: string): any => {
 
 /**
  * Unified authentication middleware
- * Supports both Bearer token JWT and x-user-* headers
+ * Supports:
+ * 1. User authentication via Bearer token JWT or x-user-* headers
+ * 2. Tablet authentication via x-tablet-session-token
  */
 export const registerAuthContext = (fastify: FastifyInstance): void => {
   fastify.addHook('preHandler', async (request, reply) => {
@@ -44,6 +47,43 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       return;
     }
 
+    // Try tablet authentication first (via session token)
+    const tabletSessionToken = normalize(request.headers['x-tablet-session-token'] as string | undefined);
+    
+    if (tabletSessionToken) {
+      const tabletPayload = verifyTabletSessionToken(tabletSessionToken);
+      
+      if (tabletPayload) {
+        // Valid tablet session - set tablet context
+        request.tabletSession = {
+          tabletId: tabletPayload.tabletId,
+          householdId: tabletPayload.householdId,
+          permissions: tabletPayload.permissions,
+          isTablet: true,
+        };
+        
+        fastify.log.info({ 
+          tabletId: tabletPayload.tabletId,
+          householdId: tabletPayload.householdId,
+          path: request.url 
+        }, 'Tablet authenticated');
+        
+        return; // Tablet is authenticated
+      } else {
+        // Invalid tablet token
+        fastify.log.warn({ 
+          token: tabletSessionToken.substring(0, 20) + '...',
+          path: request.url 
+        }, 'Invalid tablet session token');
+        
+        return reply.status(401).send({
+          status: 'error',
+          message: 'Invalid or expired tablet session token.',
+        });
+      }
+    }
+
+    // Fall back to user authentication
     let userContext: {
       userId: string;
       email: string;
@@ -82,15 +122,15 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       }
     }
 
-    // Verify that we have a valid context
+    // Verify that we have a valid user context
     if (!userContext?.userId || !userContext?.email) {
       return reply.status(401).send({
         status: 'error',
-        message: 'Authentication required. Provide either Bearer token or x-user-* headers.',
+        message: 'Authentication required. Provide either Bearer token, x-user-* headers, or x-tablet-session-token.',
       });
     }
 
-    // Attach context to request
+    // Attach user context to request
     request.requester = {
       userId: userContext.userId,
       email: userContext.email,
@@ -98,4 +138,26 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       lastName: userContext.lastName || '',
     };
   });
+};
+
+/**
+ * Middleware to require write permission
+ * This will block tablet sessions from write operations
+ */
+export const requireWritePermission = async (request: any, reply: any): Promise<void> => {
+  // If this is a tablet session, deny write access
+  if (request.tabletSession) {
+    return reply.status(403).send({
+      status: 'error',
+      message: 'Tablets have read-only access. Write operations are not permitted.',
+    });
+  }
+  
+  // User sessions have write permission by default
+  if (!request.requester) {
+    return reply.status(401).send({
+      status: 'error',
+      message: 'Authentication required.',
+    });
+  }
 };

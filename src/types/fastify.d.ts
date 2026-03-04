@@ -2,7 +2,8 @@ import 'fastify';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    requester: {
+    // User session context (when authenticated as a user)
+    requester?: {
       userId: string;
       email: string;
       firstName: string;
