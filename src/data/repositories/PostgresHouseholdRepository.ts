@@ -40,7 +40,10 @@ import {
   mapOccurrence,
   mapTask,
   mapTaskReminder,
+  mapDisplayTablet,
 } from './postgres/helpers.js';
+import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthResult, DisplayTabletStatus } from '../../domain/entities/DisplayTablet.js';
+import { generateDisplayTabletToken, hashDisplayTabletToken } from '../../domain/security/displayTabletToken.js';
 
 const INVITATION_TTL_HOURS = 72;
 
@@ -2560,5 +2563,278 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     if (result.rowCount === 0) {
       throw new NotFoundError('Task reminder not found.');
     }
+  }
+
+  // Display Tablets
+
+  async listHouseholdDisplayTablets(householdId: string): Promise<DisplayTablet[]> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `SELECT id, household_id, name, description, token_hash, created_at, created_by,
+              last_active_at, revoked_at, revoked_by, status
+       FROM display_tablets
+       WHERE household_id = $1
+       ORDER BY created_at DESC`,
+      [householdId],
+    );
+
+    return result.rows.map(mapDisplayTablet);
+  }
+
+  async getDisplayTabletById(tabletId: string, householdId: string): Promise<DisplayTablet | null> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `SELECT id, household_id, name, description, token_hash, created_at, created_by,
+              last_active_at, revoked_at, revoked_by, status
+       FROM display_tablets
+       WHERE id = $1 AND household_id = $2
+       LIMIT 1`,
+      [tabletId, householdId],
+    );
+
+    const row = result.rows[0];
+    return row ? mapDisplayTablet(row) : null;
+  }
+
+  async createDisplayTablet(input: CreateDisplayTabletInput): Promise<DisplayTabletWithToken> {
+    const id = randomUUID();
+    const now = nowIso();
+    const token = generateDisplayTabletToken();
+    const tokenHash = hashDisplayTabletToken(token);
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `INSERT INTO display_tablets (
+         id, household_id, name, description, token_hash, created_at, created_by, status
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+                 last_active_at, revoked_at, revoked_by, status`,
+      [id, input.householdId, input.name, input.description ?? null, tokenHash, now, input.createdBy],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Failed to create display tablet.');
+    }
+
+    const tablet = mapDisplayTablet(row);
+    
+    // Return tablet with token (omit tokenHash)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { tokenHash: _, ...tabletWithoutHash } = tablet;
+    return {
+      ...tabletWithoutHash,
+      token,
+    };
+  }
+
+  async updateDisplayTablet(tabletId: string, householdId: string, input: UpdateDisplayTabletInput): Promise<DisplayTablet> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (input.name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(input.name);
+    }
+    if (input.description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(input.description);
+    }
+
+    if (updates.length === 0) {
+      throw new ValidationError('No fields to update.');
+    }
+
+    values.push(tabletId);
+    values.push(householdId);
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `UPDATE display_tablets
+       SET ${updates.join(', ')}
+       WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
+       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+                 last_active_at, revoked_at, revoked_by, status`,
+      values,
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Display tablet not found.');
+    }
+
+    return mapDisplayTablet(row);
+  }
+
+  async revokeDisplayTablet(tabletId: string, householdId: string, revokedBy: string): Promise<void> {
+    const now = nowIso();
+
+    const result = await this.pool.query(
+      `UPDATE display_tablets
+       SET status = 'revoked', revoked_at = $3, revoked_by = $4
+       WHERE id = $1 AND household_id = $2 AND status = 'active'`,
+      [tabletId, householdId, now, revokedBy],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Display tablet not found or already revoked.');
+    }
+  }
+
+  async deleteDisplayTablet(tabletId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `DELETE FROM display_tablets
+       WHERE id = $1 AND household_id = $2 AND status = 'revoked'`,
+      [tabletId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Display tablet not found or not revoked. Only revoked tablets can be deleted.');
+    }
+  }
+
+  async regenerateDisplayTabletToken(tabletId: string, householdId: string): Promise<DisplayTabletWithToken> {
+    const newToken = generateDisplayTabletToken();
+    const newTokenHash = hashDisplayTabletToken(newToken);
+
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `UPDATE display_tablets
+       SET token_hash = $3
+       WHERE id = $1 AND household_id = $2 AND status = 'active'
+       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+                 last_active_at, revoked_at, revoked_by, status`,
+      [tabletId, householdId, newTokenHash],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Display tablet not found or not active.');
+    }
+
+    const tablet = mapDisplayTablet(row);
+    
+    // Return tablet with token (omit tokenHash)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { tokenHash: _, ...tabletWithoutHash } = tablet;
+    return {
+      ...tabletWithoutHash,
+      token: newToken,
+    };
+  }
+
+  async authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthResult | null> {
+    const tokenHash = hashDisplayTabletToken(token);
+    const now = nowIso();
+
+    // Fetch tablet with household info in a single query
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      household_name: string;
+      status: DisplayTabletStatus;
+      token_hash: string;
+    }>(
+      `SELECT dt.id, dt.household_id, h.name AS household_name, dt.status, dt.token_hash
+       FROM display_tablets dt
+       JOIN households h ON h.id = dt.household_id
+       WHERE dt.id = $1 AND dt.token_hash = $2
+       LIMIT 1`,
+      [tabletId, tokenHash],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    // Verify tablet is active
+    if (row.status !== 'active') {
+      return null;
+    }
+
+    // Update last_active_at timestamp (fire and forget, don't wait for it)
+    this.pool.query(
+      `UPDATE display_tablets
+       SET last_active_at = $2
+       WHERE id = $1`,
+      [tabletId, now],
+    ).catch(err => {
+      console.error('Failed to update last_active_at for tablet:', err);
+    });
+
+    return {
+      householdId: row.household_id,
+      householdName: row.household_name,
+      permissions: ['read'],
+    };
+  }
+
+  async countActiveDisplayTablets(householdId: string): Promise<number> {
+    const result = await this.pool.query<{ count: string }>(
+      `SELECT COUNT(*) AS count
+       FROM display_tablets
+       WHERE household_id = $1 AND status = 'active'`,
+      [householdId],
+    );
+
+    return parseInt(result.rows[0]?.count || '0', 10);
   }
 }

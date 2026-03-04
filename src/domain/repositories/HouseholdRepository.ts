@@ -10,6 +10,7 @@ import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppoint
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
 import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, CompleteTaskInput } from '../entities/Task.js';
 import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../entities/TaskReminder.js';
+import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthResult } from '../entities/DisplayTablet.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -140,4 +141,15 @@ export interface HouseholdRepository {
   createTaskReminder(input: CreateTaskReminderInput): Promise<TaskReminder>;
   updateTaskReminder(reminderId: string, taskId: string, householdId: string, input: UpdateTaskReminderInput): Promise<TaskReminder>;
   deleteTaskReminder(reminderId: string, taskId: string, householdId: string): Promise<void>;
+
+  // Display Tablets
+  listHouseholdDisplayTablets(householdId: string): Promise<DisplayTablet[]>;
+  getDisplayTabletById(tabletId: string, householdId: string): Promise<DisplayTablet | null>;
+  createDisplayTablet(input: CreateDisplayTabletInput): Promise<DisplayTabletWithToken>;
+  updateDisplayTablet(tabletId: string, householdId: string, input: UpdateDisplayTabletInput): Promise<DisplayTablet>;
+  revokeDisplayTablet(tabletId: string, householdId: string, revokedBy: string): Promise<void>;
+  deleteDisplayTablet(tabletId: string, householdId: string): Promise<void>;
+  regenerateDisplayTabletToken(tabletId: string, householdId: string): Promise<DisplayTabletWithToken>;
+  authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthResult | null>;
+  countActiveDisplayTablets(householdId: string): Promise<number>;
 }

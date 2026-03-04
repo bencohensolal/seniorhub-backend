@@ -7,6 +7,27 @@ The format is inspired by Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Display Tablets feature** for read-only household monitoring:
+  - `display_tablets` table (migration 016) with secure token storage (SHA-256 hashing).
+  - DisplayTablet domain entity with token security infrastructure.
+  - 7 REST API endpoints for tablet management:
+    - GET `/v1/households/:householdId/display-tablets` - List tablets
+    - POST `/v1/households/:householdId/display-tablets` - Create tablet (returns token once)
+    - PATCH `/v1/households/:householdId/display-tablets/:tabletId` - Update tablet name/description
+    - POST `/v1/households/:householdId/display-tablets/:tabletId/revoke` - Revoke tablet access
+    - DELETE `/v1/households/:householdId/display-tablets/:tabletId` - Delete revoked tablet
+    - POST `/v1/households/:householdId/display-tablets/:tabletId/regenerate-token` - Generate new token
+    - POST `/v1/display-tablets/authenticate` - Authenticate tablet (no user auth required)
+  - Security features:
+    - 64-character hexadecimal tokens generated with crypto.randomBytes(32)
+    - SHA-256 token hashing for secure storage (plain token never stored)
+    - Token returned only once at creation/regeneration
+    - Immediate revocation support with status tracking
+    - Maximum 10 active tablets per household limit
+    - Role-based access: only caregivers and family can create/manage tablets (not seniors)
+  - Read-only access infrastructure ready for implementation
+  - Token format validation and authentication flow with last_active_at tracking
+- 
 - Comprehensive authentication documentation (`docs/AUTHENTICATION.md`) covering unified middleware architecture, JWT and header-based auth, security considerations, and migration guide.
 - Authentication test script (`test-auth-middleware.sh`) for validating both authentication methods.
 - Initial governance and architecture baseline.

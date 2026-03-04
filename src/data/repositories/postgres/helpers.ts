@@ -8,6 +8,7 @@ import type { AppointmentReminder } from '../../../domain/entities/AppointmentRe
 import type { AppointmentOccurrence, OccurrenceStatus, OccurrenceOverrides } from '../../../domain/entities/AppointmentOccurrence.js';
 import type { Task, TaskCategory, TaskPriority, TaskStatus, TaskRecurrence } from '../../../domain/entities/Task.js';
 import type { TaskReminder } from '../../../domain/entities/TaskReminder.js';
+import type { DisplayTablet, DisplayTabletStatus } from '../../../domain/entities/DisplayTablet.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -284,4 +285,30 @@ export const mapTaskReminder = (row: {
   enabled: row.enabled,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
+});
+
+export const mapDisplayTablet = (row: {
+  id: string;
+  household_id: string;
+  name: string;
+  description: string | null;
+  token_hash: string;
+  created_at: string | Date;
+  created_by: string;
+  last_active_at: string | Date | null;
+  revoked_at: string | Date | null;
+  revoked_by: string | null;
+  status: DisplayTabletStatus;
+}): DisplayTablet => ({
+  id: row.id,
+  householdId: row.household_id,
+  name: row.name,
+  description: row.description,
+  tokenHash: row.token_hash,
+  createdAt: toIso(row.created_at),
+  createdBy: row.created_by,
+  lastActiveAt: row.last_active_at ? toIso(row.last_active_at) : null,
+  revokedAt: row.revoked_at ? toIso(row.revoked_at) : null,
+  revokedBy: row.revoked_by,
+  status: row.status,
 });

@@ -37,6 +37,7 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/invitations/accept-link',
       '/v1/households/invitations/resolve',
       '/v1/households/invitations/accept',
+      '/v1/display-tablets/authenticate', // Tablet authentication endpoint
     ];
 
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {

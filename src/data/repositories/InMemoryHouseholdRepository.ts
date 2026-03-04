@@ -739,4 +739,41 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteTaskReminder(_reminderId: string, _taskId: string, _householdId: string): Promise<void> {
     throw new Error('Task reminder operations not implemented in InMemoryRepository');
   }
+
+  // Display Tablet methods - stub implementations for test compatibility
+  async listHouseholdDisplayTablets(_householdId: string): Promise<any[]> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async getDisplayTabletById(_tabletId: string, _householdId: string): Promise<any | null> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async createDisplayTablet(_input: any): Promise<any> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async updateDisplayTablet(_tabletId: string, _householdId: string, _input: any): Promise<any> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async revokeDisplayTablet(_tabletId: string, _householdId: string, _revokedBy: string): Promise<void> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async deleteDisplayTablet(_tabletId: string, _householdId: string): Promise<void> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async regenerateDisplayTabletToken(_tabletId: string, _householdId: string): Promise<any> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async authenticateDisplayTablet(_tabletId: string, _token: string): Promise<any> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
+
+  async countActiveDisplayTablets(_householdId: string): Promise<number> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
 }
