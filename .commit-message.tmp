@@ -1,0 +1,16 @@
+fix(invitations): extend role constraints to support all valid roles
+
+Update database CHECK constraints to include all four valid household roles: 'senior', 'caregiver', 'family', 'intervenant'.
+
+**Issue:**
+Mobile app invitation creation was failing with 500 error: "new row for relation household_invitations violates check constraint household_invitations_assigned_role_check". 
+
+The database constraints only allowed 'senior' and 'caregiver' roles, while the application TypeScript types and API schemas support four roles. This caused invitations with 'family' or 'intervenant' roles to pass validation but fail at database insertion.
+
+**Fix (Migration 015):**
+- Update household_members.role CHECK constraint
+- Update household_invitations.assigned_role CHECK constraint
+- Both now accept: 'senior', 'caregiver', 'family', 'intervenant'
+
+**Impact:**
+Resolves constraint violation errors and enables mobile app to successfully invite members with all role types.

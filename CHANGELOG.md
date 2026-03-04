@@ -58,6 +58,7 @@ The format is inspired by Keep a Changelog.
 - Medication deletion endpoint response serialization error by changing to REST-compliant 204 No Content status.
 - Fastify JSON parser rejecting DELETE requests with empty body by implementing custom parser that allows empty bodies for DELETE method.
 - Invalid UUID parameter validation causing 500 errors when non-UUID values (e.g., Google user IDs) were passed as householdId, medicationId, or reminderId. All UUID parameters now validated with `.uuid()` Zod schema before database queries.
+- Database constraint violation error when creating invitations with 'family' or 'intervenant' roles. Updated CHECK constraints on `household_members.role` and `household_invitations.assigned_role` to include all four valid roles: 'senior', 'caregiver', 'family', 'intervenant' (migration 015).
 
 ## [2026-01-03] - Advanced Medication Reminders
 
