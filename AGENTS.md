@@ -49,6 +49,7 @@ Build a secure, maintainable backend platform for Senior Hub that can reliably s
 - One main intention per commit (`feat`, `fix`, `refactor`, `test`, `docs`, `chore`).
 - Commit message format is mandatory: `type(name): summary`, blank line, then commit description.
 - Commit messages must always be written in a file (using an editor), never directly on the command line with `-m`.
+  - For large commit messages, write the file content incrementally in batches (e.g., 300 characters at a time) to avoid overwhelming the editor or tool.
 - Separate functional code, refactor, tests, and docs into distinct commits whenever possible.
 - For immediate corrections to the latest commit (small omissions/typos), prefer `git commit --amend --no-edit`.
 - Any new user directive with transversal impact must be added to `AGENTS.md` in the same work cycle.
