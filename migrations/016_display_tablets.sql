@@ -9,10 +9,10 @@ CREATE TABLE display_tablets (
   description TEXT,
   token_hash VARCHAR(64) NOT NULL UNIQUE, -- SHA-256 hash of the token (64 hex chars)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by UUID NOT NULL REFERENCES users(id),
+  created_by VARCHAR(255) NOT NULL, -- Clerk user ID
   last_active_at TIMESTAMPTZ,
   revoked_at TIMESTAMPTZ,
-  revoked_by UUID REFERENCES users(id),
+  revoked_by VARCHAR(255), -- Clerk user ID
   status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked'))
 );
 

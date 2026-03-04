@@ -1,5 +1,6 @@
-refactor(types): replace any with unknown in repository stubs
+fix(migration): use Clerk user IDs instead of users table references
 
-Replace remaining `any` types with `unknown` in InMemoryHouseholdRepository
-stub methods and PostgresHouseholdRepository update methods for better type
-safety. Fix import statements to use `import type` where appropriate.
+Migration 016 incorrectly referenced a `users` table that doesn't exist
+in this project (uses Clerk for authentication). Changed `created_by` and
+`revoked_by` columns from UUID foreign keys to VARCHAR(255) to store
+Clerk user IDs directly.
