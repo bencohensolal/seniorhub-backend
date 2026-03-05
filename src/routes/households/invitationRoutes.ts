@@ -415,7 +415,7 @@ export const registerInvitationRoutes = (
       },
     },
     async (request, reply) => {
-      const pending = await useCases.listPendingInvitationsUseCase.execute({ requester: request.requester });
+      const pending = await useCases.listPendingInvitationsUseCase.execute({ requester: getRequesterContext(request) });
 
       return reply.status(200).send({
         status: 'success',
