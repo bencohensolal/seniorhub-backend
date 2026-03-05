@@ -85,9 +85,6 @@ export function registerTaskRoutes(
         });
       }
 
-      // Verify tablet can only access its own household
-      verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
-
       try {
         const filters = queryResult.data;
         const taskFilters: any = {};
