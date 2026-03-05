@@ -265,6 +265,26 @@ export const registerHouseholdRoutes = (
   fastify.get(
     '/v1/households/:householdId/members',
     {
+      preHandler: async (request: any, reply: any) => {
+        // Allow both user auth and tablet auth
+        if (!request.requester && !request.tabletSession) {
+          return reply.status(401).send({
+            status: 'error',
+            message: 'Authentication required. Provide user credentials or tablet session.',
+          });
+        }
+        
+        // If tablet, verify it's accessing its own household
+        if (request.tabletSession) {
+          const params = request.params as any;
+          if (request.tabletSession.householdId !== params.householdId) {
+            return reply.status(403).send({
+              status: 'error',
+              message: 'Tablets can only access their own household members.',
+            });
+          }
+        }
+      },
       schema: {
         tags: ['Households'],
         params: {
