@@ -45,6 +45,16 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/households/invitations/accept',
       '/v1/display-tablets/authenticate', // Tablet authentication endpoint
     ];
+    
+    // SSE endpoints are handled by their own preHandler (need custom auth check)
+    const sseEndpoints = [
+      '/config-updates', // Tablet config update SSE stream
+    ];
+    
+    // Check if this is an SSE endpoint (will be handled by route-specific preHandler)
+    if (sseEndpoints.some(endpoint => request.url.includes(endpoint))) {
+      return; // Skip global auth, let route handle it
+    }
 
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
       return;

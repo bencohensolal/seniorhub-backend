@@ -12,6 +12,7 @@ import { handleDomainError } from '../errorHandler.js';
 import { requireUserAuth } from '../../plugins/authContext.js';
 import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletConfigSchemas.js';
 import { ValidationError } from '../../domain/errors/index.js';
+import { tabletConfigNotifier } from '../../domain/services/tabletConfigNotifier.js';
 
 // Schemas
 const householdParamsSchema = z.object({
@@ -591,6 +592,9 @@ export const registerDisplayTabletRoutes = (
           configWithTimestamp,
         );
 
+        // Notify the tablet in real-time if connected via SSE
+        tabletConfigNotifier.notifyConfigUpdate(params.tabletId, tablet.config);
+
         return reply.status(200).send({
           success: true,
           data: tablet.config,
@@ -598,6 +602,70 @@ export const registerDisplayTabletRoutes = (
       } catch (error) {
         return handleDomainError(error, reply);
       }
+    },
+  );
+
+  // 10. GET /v1/households/:householdId/display-tablets/:tabletId/config-updates - SSE endpoint for real-time config updates
+  fastify.get(
+    '/v1/households/:householdId/display-tablets/:tabletId/config-updates',
+    {
+      preHandler: async (request: any, reply: any) => {
+        // Only tablets can subscribe to config updates
+        if (!request.tabletSession) {
+          return reply.status(401).send({
+            status: 'error',
+            message: 'This endpoint is only accessible to tablets.',
+          });
+        }
+        
+        // Tablet can only subscribe to its own updates
+        const params = request.params as any;
+        if (request.tabletSession.tabletId !== params.tabletId) {
+          return reply.status(403).send({
+            status: 'error',
+            message: 'Tablets can only subscribe to their own config updates.',
+          });
+        }
+        
+        if (request.tabletSession.householdId !== params.householdId) {
+          return reply.status(403).send({
+            status: 'error',
+            message: 'Tablet does not belong to this household.',
+          });
+        }
+      },
+      schema: {
+        tags: ['Display Tablets'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            tabletId: { type: 'string' },
+          },
+          required: ['householdId', 'tabletId'],
+        },
+      },
+    },
+    async (request, reply) => {
+      const params = householdTabletParamsSchema.parse(request.params);
+
+      // Set up SSE headers
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+      });
+
+      // Register the tablet for notifications
+      tabletConfigNotifier.registerTablet(params.tabletId, reply);
+
+      // Handle client disconnect
+      request.raw.on('close', () => {
+        tabletConfigNotifier.unregisterTablet(params.tabletId);
+      });
+
+      // Keep the connection open (SSE will be handled by tabletConfigNotifier)
     },
   );
 };
