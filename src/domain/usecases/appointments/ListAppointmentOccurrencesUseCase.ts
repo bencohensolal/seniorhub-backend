@@ -27,7 +27,7 @@ export class ListAppointmentOccurrencesUseCase {
   ) {}
 
   async execute(input: ListAppointmentOccurrencesInput): Promise<GeneratedOccurrence[]> {
-    // Validate access
+    // Validate access (tablets are allowed to read occurrences)
     await this.accessValidator.ensureMember(input.userId, input.householdId);
 
     // Get the appointment
