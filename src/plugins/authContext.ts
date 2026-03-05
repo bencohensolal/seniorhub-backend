@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
+import crypto from 'crypto';
 import { verifyTabletSessionToken } from '../domain/security/displayTabletSession.js';
+import type { HouseholdRepository } from '../domain/repositories/HouseholdRepository.js';
 
 const normalize = (value: string | undefined): string => (value && value.trim().length > 0 ? value.trim() : '');
 

@@ -19,7 +19,8 @@ import {
   updateTaskReminderBodySchema,
 } from './taskSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
-import { getRequesterContext } from './utils.js';
+import { getRequesterContext, verifyTabletHouseholdAccess } from './utils.js';
+import { requireWritePermission } from '../../plugins/authContext.js';
 
 export function registerTaskRoutes(
   fastify: FastifyInstance,
@@ -83,6 +84,9 @@ export function registerTaskRoutes(
           message: 'Invalid request payload.',
         });
       }
+
+      // Verify tablet can only access its own household
+      verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
 
       try {
         const filters = queryResult.data;
