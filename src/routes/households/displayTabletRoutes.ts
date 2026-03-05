@@ -465,7 +465,35 @@ export const registerDisplayTabletRoutes = (
   fastify.get(
     '/v1/households/:householdId/display-tablets/:tabletId/config',
     {
-      preHandler: requireUserAuth,
+      preHandler: async (request: any, reply: any) => {
+        // Allow both user auth and tablet auth
+        // Tablets can only read their own config
+        if (request.tabletSession) {
+          // Tablet authentication - validate it's reading its own config
+          const params = request.params as any;
+          if (request.tabletSession.tabletId !== params.tabletId) {
+            return reply.status(403).send({
+              status: 'error',
+              message: 'Tablets can only read their own configuration.',
+            });
+          }
+          if (request.tabletSession.householdId !== params.householdId) {
+            return reply.status(403).send({
+              status: 'error',
+              message: 'Tablet does not belong to this household.',
+            });
+          }
+          return; // Tablet is authorized
+        }
+        
+        // User authentication required if not tablet
+        if (!request.requester) {
+          return reply.status(401).send({
+            status: 'error',
+            message: 'Authentication required. Provide user credentials or tablet session.',
+          });
+        }
+      },
       schema: {
         tags: ['Display Tablets'],
         params: {
@@ -483,7 +511,7 @@ export const registerDisplayTabletRoutes = (
       try {
         const params = householdTabletParamsSchema.parse(request.params);
 
-        // Verify access
+        // Verify tablet exists
         const tablet = await repository.getDisplayTabletById(params.tabletId, params.householdId);
         if (!tablet) {
           throw new ValidationError('Display tablet not found.');
