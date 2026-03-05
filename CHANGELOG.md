@@ -72,6 +72,12 @@ The format is inspired by Keep a Changelog.
 - Railway deployment now uses pure Nixpacks build process without custom buildCommand to prevent cache mount conflicts.
 
 ### Fixed
+- **Display Tablets access denied issue**: Tablets can now successfully read household data after authentication.
+  - Updated `HouseholdAccessValidator.ensureMember()` to recognize tablet requests (synthetic userId format `"tablet:{tabletId}"`) and skip member validation.
+  - Tablets are validated at the route level via `verifyTabletHouseholdAccess()` before reaching use-cases.
+  - All read operations (appointments, medications, tasks, occurrences) now accept tablet authentication.
+  - Write operations properly reject tablet requests with appropriate error messages.
+  - Fixed TypeScript null handling in use-cases that expect member entities.
 - Railway deployment Docker cache mount conflict ("Device or resource busy" errors) by removing custom buildCommand.
 - Service deployment stability by letting Nixpacks manage build phases natively through nixpacks.toml.
 - Gmail SMTP now successfully sending invitation emails in production (500 emails/day free tier).

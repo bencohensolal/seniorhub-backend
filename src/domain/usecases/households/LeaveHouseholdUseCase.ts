@@ -28,6 +28,11 @@ export class LeaveHouseholdUseCase {
     // Validate member access
     const requesterMembership = await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
 
+    // Tablets cannot leave households
+    if (!requesterMembership) {
+      throw new BusinessRuleError('Tablets cannot leave households.');
+    }
+
     const allMembers = await this.repository.listHouseholdMembers(input.householdId);
 
     // Cannot leave if last member

@@ -17,6 +17,11 @@ export class EnsureHouseholdRoleUseCase {
   }): Promise<void> {
     const member = await this.accessValidator.ensureMember(input.requesterUserId, input.householdId);
 
+    // Tablets don't have roles
+    if (!member) {
+      throw new ForbiddenError('Insufficient household role.');
+    }
+
     if (!input.allowedRoles.includes(member.role)) {
       throw new ForbiddenError('Insufficient household role.');
     }

@@ -30,6 +30,11 @@ export class CompleteTaskUseCase {
     // Validate member access (any member can complete)
     const member = await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
 
+    // Tablets cannot complete tasks (read-only access)
+    if (!member) {
+      throw new NotFoundError('Tablets cannot complete tasks.');
+    }
+
     // Verify task exists
     const task = await this.repository.getTaskById(input.taskId, input.householdId);
     if (!task) {

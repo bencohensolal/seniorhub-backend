@@ -18,6 +18,11 @@ export class RegenerateDisplayTabletTokenUseCase {
     // Validate household access and role
     const member = await this.accessValidator.ensureMember(input.requesterUserId, input.householdId);
 
+    // Tablets cannot regenerate tokens
+    if (!member) {
+      throw new ForbiddenError('Tablets cannot regenerate display tablet tokens.');
+    }
+
     // Only caregivers and family can regenerate tokens (not seniors)
     if (member.role === 'senior') {
       throw new ForbiddenError('Seniors cannot regenerate display tablet tokens.');

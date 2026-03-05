@@ -1,5 +1,10 @@
-docs(agents): add guidance for writing large commit messages
+feat(auth): add x-tablet-id + x-tablet-token authentication support
 
-Added clarification that large commit messages should be written incrementally in batches (e.g., 300 characters at a time) to avoid overwhelming the editor or tool.
+Extended authContext middleware to support direct tablet authentication using x-tablet-id + x-tablet-token headers (raw token that gets SHA-256 hashed for validation).
 
-This complements the existing rule that commit messages must always be written in a file using an editor, never directly on the command line with `-m`.
+Backend now supports THREE authentication methods:
+1. User auth: x-user-* headers or Bearer JWT token
+2. Tablet JWT auth: x-tablet-session-token (returned by /authenticate endpoint)
+3. Tablet raw token auth: x-tablet-id + x-tablet-token (NEW - allows direct token use)
+
+The third method validates the raw token by hashing it with SHA-256 and checking against the database. This enables tablets to use their original token directly without needing to call /authenticate first for every app session.
