@@ -40,9 +40,14 @@ export class ListAppointmentOccurrencesUseCase {
       throw new NotFoundError('Appointment not found.');
     }
 
-    // Check if appointment is recurring
+    // Handle one-time appointments
     if (!appointment.recurrence || appointment.recurrence.frequency === 'none') {
-      return []; // Non-recurring appointments have no occurrences
+      // Check if the appointment date is within the requested range
+      if (appointment.date >= input.fromDate && appointment.date <= input.toDate) {
+        // Generate a single occurrence for the one-time appointment
+        return [this.mergeOccurrence(appointment, appointment.date, appointment.time, undefined)];
+      }
+      return []; // Appointment is outside the requested range
     }
 
     // Generate occurrences from recurrence rule
@@ -100,13 +105,21 @@ export class ListAppointmentOccurrencesUseCase {
     const overrides = storedOccurrence?.overrides || {};
     const isModified = storedOccurrence?.status === 'modified' || false;
     const status = (storedOccurrence?.status || 'scheduled') as any;
+    const finalTime = overrides.time || occurrenceTime;
+    const duration = overrides.duration !== undefined ? overrides.duration : appointment.duration;
+
+    // Compute ISO datetime strings for start and end
+    const start = this.computeISODateTime(occurrenceDate, finalTime);
+    const end = duration ? this.computeEndDateTime(start, duration) : null;
 
     return {
       id: storedOccurrence?.id || `${appointment.id}-${occurrenceDate}`,
       recurringAppointmentId: appointment.id,
       householdId: appointment.householdId,
       occurrenceDate,
-      occurrenceTime: overrides.time || occurrenceTime,
+      occurrenceTime: finalTime,
+      start,
+      end,
       status,
       isModified,
       isCancelled: status === 'cancelled',
@@ -114,7 +127,7 @@ export class ListAppointmentOccurrencesUseCase {
       // Merge fields with overrides taking precedence
       title: overrides.title || appointment.title,
       type: appointment.type,
-      duration: overrides.duration !== undefined ? overrides.duration : appointment.duration,
+      duration,
       seniorIds: appointment.seniorIds,
       caregiverId: appointment.caregiverId,
       address: overrides.address !== undefined ? overrides.address : appointment.address,
@@ -133,5 +146,21 @@ export class ListAppointmentOccurrencesUseCase {
       createdAt: storedOccurrence?.createdAt || appointment.createdAt,
       updatedAt: storedOccurrence?.updatedAt || appointment.updatedAt,
     };
+  }
+
+  /**
+   * Compute ISO datetime string from date (YYYY-MM-DD) and time (HH:MM)
+   */
+  private computeISODateTime(date: string, time: string): string {
+    return `${date}T${time}:00.000Z`;
+  }
+
+  /**
+   * Compute end datetime by adding duration (minutes) to start datetime
+   */
+  private computeEndDateTime(start: string, durationMinutes: number): string {
+    const startDate = new Date(start);
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+    return endDate.toISOString();
   }
 }

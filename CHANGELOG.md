@@ -72,6 +72,15 @@ The format is inspired by Keep a Changelog.
 - Railway deployment now uses pure Nixpacks build process without custom buildCommand to prevent cache mount conflicts.
 
 ### Fixed
+- **Critical: Appointment occurrences missing start/end fields**: Fixed tablet display showing `start: undefined`.
+  - Added `start` and `end` ISO datetime fields to `GeneratedOccurrence` entity.
+  - Implemented `computeISODateTime()` and `computeEndDateTime()` helpers in `ListAppointmentOccurrencesUseCase`.
+  - All occurrence responses now include properly formatted ISO datetime strings (e.g., `"2026-03-09T11:00:00.000Z"`).
+  - End time is computed from start + duration when duration is present, null otherwise.
+- **Critical: One-time appointments not generating occurrences**: Fixed tablet display not showing non-recurring appointments.
+  - Updated `ListAppointmentOccurrencesUseCase` to handle `recurrence: 'none'` appointments.
+  - One-time appointments now generate a single occurrence if their date falls within the requested range.
+  - Previously returned empty array for all non-recurring appointments.
 - **Display Tablets access denied issue**: Tablets can now successfully read household data after authentication.
   - Updated `HouseholdAccessValidator.ensureMember()` to recognize tablet requests (synthetic userId format `"tablet:{tabletId}"`) and skip member validation.
   - Tablets are validated at the route level via `verifyTabletHouseholdAccess()` before reaching use-cases.
