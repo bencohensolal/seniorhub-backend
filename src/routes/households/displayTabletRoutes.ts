@@ -476,15 +476,7 @@ export const registerDisplayTabletRoutes = (
           },
           required: ['householdId', 'tabletId'],
         },
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              success: { type: 'boolean' },
-              data: { type: ['object', 'null'] },
-            },
-          },
-        },
+        // Don't define response schema to allow dynamic config structure
       },
     },
     async (request, reply) => {
