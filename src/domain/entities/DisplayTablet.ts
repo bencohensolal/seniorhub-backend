@@ -6,6 +6,7 @@ export interface DisplayTablet {
   name: string;
   description: string | null;
   tokenHash: string; // SHA-256 hash of the token (never expose the plain token except at creation)
+  config: any | null; // JSON configuration (use TabletDisplayConfig type for validation)
   createdAt: string;
   createdBy: string;
   lastActiveAt: string | null;
