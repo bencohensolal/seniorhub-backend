@@ -2574,6 +2574,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       name: string;
       description: string | null;
       token_hash: string;
+      config: any | null;
       created_at: string | Date;
       created_by: string;
       last_active_at: string | Date | null;
@@ -2581,7 +2582,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       revoked_by: string | null;
       status: DisplayTabletStatus;
     }>(
-      `SELECT id, household_id, name, description, token_hash, created_at, created_by,
+      `SELECT id, household_id, name, description, token_hash, config, created_at, created_by,
               last_active_at, revoked_at, revoked_by, status
        FROM display_tablets
        WHERE household_id = $1
@@ -2599,6 +2600,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       name: string;
       description: string | null;
       token_hash: string;
+      config: any | null;
       created_at: string | Date;
       created_by: string;
       last_active_at: string | Date | null;
@@ -2606,7 +2608,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       revoked_by: string | null;
       status: DisplayTabletStatus;
     }>(
-      `SELECT id, household_id, name, description, token_hash, created_at, created_by,
+      `SELECT id, household_id, name, description, token_hash, config, created_at, created_by,
               last_active_at, revoked_at, revoked_by, status
        FROM display_tablets
        WHERE id = $1 AND household_id = $2
@@ -2630,6 +2632,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       name: string;
       description: string | null;
       token_hash: string;
+      config: any | null;
       created_at: string | Date;
       created_by: string;
       last_active_at: string | Date | null;
@@ -2641,7 +2644,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
          id, household_id, name, description, token_hash, created_at, created_by, status
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+       RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
                  last_active_at, revoked_at, revoked_by, status`,
       [id, input.householdId, input.name, input.description ?? null, tokenHash, now, input.createdBy],
     );
@@ -2689,6 +2692,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       name: string;
       description: string | null;
       token_hash: string;
+      config: any | null;
       created_at: string | Date;
       created_by: string;
       last_active_at: string | Date | null;
@@ -2699,7 +2703,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       `UPDATE display_tablets
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
-       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+       RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
                  last_active_at, revoked_at, revoked_by, status`,
       values,
     );
@@ -2749,6 +2753,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       name: string;
       description: string | null;
       token_hash: string;
+      config: any | null;
       created_at: string | Date;
       created_by: string;
       last_active_at: string | Date | null;
@@ -2759,7 +2764,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       `UPDATE display_tablets
        SET token_hash = $3
        WHERE id = $1 AND household_id = $2 AND status = 'active'
-       RETURNING id, household_id, name, description, token_hash, created_at, created_by,
+       RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
                  last_active_at, revoked_at, revoked_by, status`,
       [tabletId, householdId, newTokenHash],
     );
@@ -2836,5 +2841,36 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     );
 
     return parseInt(result.rows[0]?.count || '0', 10);
+  }
+
+  async updateDisplayTabletConfig(tabletId: string, householdId: string, config: any): Promise<DisplayTablet> {
+    const result = await this.pool.query<{
+      id: string;
+      household_id: string;
+      name: string;
+      description: string | null;
+      token_hash: string;
+      config: any | null;
+      created_at: string | Date;
+      created_by: string;
+      last_active_at: string | Date | null;
+      revoked_at: string | Date | null;
+      revoked_by: string | null;
+      status: DisplayTabletStatus;
+    }>(
+      `UPDATE display_tablets
+       SET config = $3
+       WHERE id = $1 AND household_id = $2
+       RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
+                 last_active_at, revoked_at, revoked_by, status`,
+      [tabletId, householdId, JSON.stringify(config)],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Display tablet not found.');
+    }
+
+    return mapDisplayTablet(row);
   }
 }

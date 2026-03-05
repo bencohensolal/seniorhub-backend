@@ -10,6 +10,8 @@ import { RegenerateDisplayTabletTokenUseCase } from '../../domain/usecases/displ
 import { AuthenticateDisplayTabletUseCase } from '../../domain/usecases/displayTablets/AuthenticateDisplayTabletUseCase.js';
 import { handleDomainError } from '../errorHandler.js';
 import { requireUserAuth } from '../../plugins/authContext.js';
+import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletConfigSchemas.js';
+import { ValidationError } from '../../domain/errors/index.js';
 
 // Schemas
 const householdParamsSchema = z.object({
@@ -452,6 +454,126 @@ export const registerDisplayTabletRoutes = (
         return reply.status(200).send({
           status: 'success',
           data: result,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // 8. GET /v1/households/:householdId/display-tablets/:tabletId/config - Get tablet configuration
+  fastify.get(
+    '/v1/households/:householdId/display-tablets/:tabletId/config',
+    {
+      preHandler: requireUserAuth,
+      schema: {
+        tags: ['Display Tablets'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            tabletId: { type: 'string' },
+          },
+          required: ['householdId', 'tabletId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: { type: ['object', 'null'] },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = householdTabletParamsSchema.parse(request.params);
+
+        // Verify access
+        const tablet = await repository.getDisplayTabletById(params.tabletId, params.householdId);
+        if (!tablet) {
+          throw new ValidationError('Display tablet not found.');
+        }
+
+        // Return config (can be null if not yet configured)
+        return reply.status(200).send({
+          success: true,
+          data: tablet.config,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // 9. PUT /v1/households/:householdId/display-tablets/:tabletId/config - Update tablet configuration
+  fastify.put(
+    '/v1/households/:householdId/display-tablets/:tabletId/config',
+    {
+      preHandler: requireUserAuth,
+      schema: {
+        tags: ['Display Tablets'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            tabletId: { type: 'string' },
+          },
+          required: ['householdId', 'tabletId'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            slideDuration: { type: 'number' },
+            dataCacheDuration: { type: 'number' },
+            dataRefreshInterval: { type: 'number' },
+            screens: { type: 'array' },
+          },
+          required: ['slideDuration', 'dataCacheDuration', 'dataRefreshInterval', 'screens'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: { type: 'object' },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = householdTabletParamsSchema.parse(request.params);
+        
+        // Validate the configuration
+        const configData = tabletDisplayConfigSchema.parse(request.body);
+        
+        // Validate screen-specific settings
+        for (const screen of configData.screens) {
+          if (!validateScreenSettings(screen)) {
+            throw new ValidationError(`Invalid settings for screen type: ${screen.type}`);
+          }
+        }
+
+        // Add lastUpdated timestamp
+        const configWithTimestamp = {
+          ...configData,
+          lastUpdated: new Date().toISOString(),
+        };
+
+        // Update the config
+        const tablet = await repository.updateDisplayTabletConfig(
+          params.tabletId,
+          params.householdId,
+          configWithTimestamp,
+        );
+
+        return reply.status(200).send({
+          success: true,
+          data: tablet.config,
         });
       } catch (error) {
         return handleDomainError(error, reply);

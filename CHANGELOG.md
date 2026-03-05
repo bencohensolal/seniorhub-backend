@@ -7,6 +7,22 @@ The format is inspired by Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Display Tablet Configuration** for customizing tablet display settings:
+  - Added `config` JSONB column to `display_tablets` table (migration 017) for persisting display preferences.
+  - TabletDisplayConfig TypeScript types with comprehensive screen configuration interfaces.
+  - Support for 6 screen types: summary, datetime, appointments, tasks, weekCalendar, monthCalendar.
+  - Type-specific settings for each screen with full validation (colors, fonts, time formats, display modes).
+  - Configuration validation schemas with Zod ensuring data integrity.
+  - 2 new REST API endpoints:
+    - GET `/v1/households/:householdId/display-tablets/:tabletId/config` - Retrieve tablet configuration
+    - PUT `/v1/households/:householdId/display-tablets/:tabletId/config` - Update tablet configuration
+  - Configuration features:
+    - General settings: slideDuration (1-60s), dataCacheDuration (1-60min), dataRefreshInterval (1-60min)
+    - Screen ordering with unique consecutive indices (0, 1, 2...)
+    - Per-screen enable/disable toggles
+    - Automatic `lastUpdated` timestamp tracking
+    - Returns `null` for unconfigured tablets (mobile app uses built-in defaults)
+  - Access control: all household members can read, only caregivers can modify.
 - **Display Tablets feature** for read-only household monitoring:
   - `display_tablets` table (migration 016) with secure token storage (SHA-256 hashing).
   - DisplayTablet domain entity with token security infrastructure.

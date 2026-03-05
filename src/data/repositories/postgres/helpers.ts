@@ -293,6 +293,7 @@ export const mapDisplayTablet = (row: {
   name: string;
   description: string | null;
   token_hash: string;
+  config: any | null;
   created_at: string | Date;
   created_by: string;
   last_active_at: string | Date | null;
@@ -305,6 +306,7 @@ export const mapDisplayTablet = (row: {
   name: row.name,
   description: row.description,
   tokenHash: row.token_hash,
+  config: row.config,
   createdAt: toIso(row.created_at),
   createdBy: row.created_by,
   lastActiveAt: row.last_active_at ? toIso(row.last_active_at) : null,

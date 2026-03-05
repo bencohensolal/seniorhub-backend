@@ -152,4 +152,5 @@ export interface HouseholdRepository {
   regenerateDisplayTabletToken(tabletId: string, householdId: string): Promise<DisplayTabletWithToken>;
   authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthInfo | null>;
   countActiveDisplayTablets(householdId: string): Promise<number>;
+  updateDisplayTabletConfig(tabletId: string, householdId: string, config: any): Promise<DisplayTablet>;
 }

@@ -777,4 +777,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async countActiveDisplayTablets(_householdId: string): Promise<number> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
+
+  async updateDisplayTabletConfig(_tabletId: string, _householdId: string, _config: any): Promise<any> {
+    throw new Error('Display tablet operations not implemented in InMemoryRepository');
+  }
 }
