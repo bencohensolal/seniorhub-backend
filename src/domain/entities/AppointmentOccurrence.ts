@@ -72,6 +72,8 @@ export interface GeneratedOccurrence {
   // Date and time
   occurrenceDate: string;
   occurrenceTime: string;
+  start: string; // ISO datetime string (computed from occurrenceDate + occurrenceTime)
+  end: string | null; // ISO datetime string (computed from start + duration)
   
   // Status
   status: OccurrenceStatus;
