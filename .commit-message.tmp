@@ -1,8 +1,9 @@
-fix(storage): add diagnostic logs for GCS configuration
+fix(storage): remove legacy ACL usage for GCS uniform bucket access
 
-Added console logs to help diagnose storage service initialization:
-- Logs show which GCS configuration option is being used
-- Logs show which env vars are present/missing
-- Helps identify Railway configuration issues
+Removed `public: true` option from GCS file upload as it's incompatible
+with uniform bucket-level access (which is now the default on GCS).
 
-This will help identify why GCS credentials are not loading properly.
+Instead, the bucket should be configured with public access at the bucket
+level using IAM permissions (allUsers with Storage Object Viewer role).
+
+This resolves the "Cannot insert legacy ACL" error during photo uploads.

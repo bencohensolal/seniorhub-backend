@@ -81,7 +81,8 @@ export class GCSStorageService implements StorageService {
         contentType: input.mimeType,
         cacheControl: 'public, max-age=31536000', // Cache for 1 year
       },
-      public: true, // Make file publicly accessible
+      // Note: public: true is not compatible with uniform bucket-level access
+      // The bucket must be configured with allUsers Reader permission instead
     });
 
     // Public URL format for GCS
