@@ -7,6 +7,36 @@ The format is inspired by Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Photo Screens for Display Tablets** - Complete photo gallery feature:
+  - Added `photo_screens` and `photos` tables (migration 018) with proper constraints and indexes.
+  - PhotoScreen and Photo domain entities with full TypeScript type definitions.
+  - Storage service abstraction supporting AWS S3 and Google Cloud Storage.
+  - Image processing with Sharp library (compression, resizing, format conversion).
+  - 9 REST API endpoints for complete photo management:
+    - POST/GET/PUT/DELETE photo screens
+    - POST/PUT/DELETE individual photos
+    - PUT photo reordering
+  - Integration with tablet config system:
+    - Added `photoGallery` screen type to TabletDisplayConfig
+    - Full validation support in config schemas
+    - Photo screens appear in tablet config responses
+  - Security and validation:
+    - Caregiver-only permissions for create/update/delete
+    - File type validation (JPEG, PNG, WebP only)
+    - File size validation (5MB max upload, 1MB target after compression)
+    - Limit enforcement (5 screens per tablet, 6 photos per screen)
+    - 6 new domain errors (MaxPhotoScreensReached, MaxPhotosReached, FileTooLarge, etc.)
+  - Features:
+    - 3 display modes (slideshow, mosaic, single)
+    - Slideshow configuration (duration, transition, order)
+    - Photo captions (optional, max 100 chars)
+    - Photo reordering within screens
+    - Automatic image optimization
+  - Documentation:
+    - Complete implementation guide
+    - AWS S3 + CloudFront setup guide
+    - Google Cloud Storage setup guide
+    - API documentation with examples
 - **Display Tablet Configuration** for customizing tablet display settings:
   - Added `config` JSONB column to `display_tablets` table (migration 017) for persisting display preferences.
   - TabletDisplayConfig TypeScript types with comprehensive screen configuration interfaces.
