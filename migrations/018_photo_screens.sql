@@ -7,8 +7,8 @@
 -- Create photo_screens table
 CREATE TABLE photo_screens (
   id VARCHAR(50) PRIMARY KEY,
-  tablet_id VARCHAR(50) NOT NULL,
-  household_id VARCHAR(50) NOT NULL,
+  tablet_id UUID NOT NULL,
+  household_id UUID NOT NULL,
   name VARCHAR(50) NOT NULL,
   display_mode VARCHAR(20) NOT NULL DEFAULT 'slideshow',
   slideshow_duration INTEGER DEFAULT 5,
