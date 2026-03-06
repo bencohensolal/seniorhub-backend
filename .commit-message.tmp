@@ -1,8 +1,8 @@
-fix(photo-screens): add missing authentication to all routes
+fix(storage): add diagnostic logs for GCS configuration
 
-Added requireUserAuth preHandler to all 9 photo screen endpoints:
-- Photo screens: POST, GET (list), GET (single), PUT, DELETE
-- Photos: POST (upload), PUT, DELETE, PUT (reorder)
+Added console logs to help diagnose storage service initialization:
+- Logs show which GCS configuration option is being used
+- Logs show which env vars are present/missing
+- Helps identify Railway configuration issues
 
-This was causing 404/401 errors as routes were not properly protected.
-All routes now require valid user authentication headers.
+This will help identify why GCS credentials are not loading properly.

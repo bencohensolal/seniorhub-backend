@@ -12,8 +12,11 @@ export class GCSStorageService implements StorageService {
   private bucketName: string;
 
   constructor() {
+    console.log('[GCS] Initializing GCS Storage Service...');
+    
     // Option 1: With base64 encoded service account key
     if (env.GCP_SERVICE_ACCOUNT_KEY_BASE64 && env.GCS_PROJECT_ID) {
+      console.log('[GCS] Using Option 1: Base64 encoded service account key');
       const credentials = JSON.parse(
         Buffer.from(env.GCP_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
       );
@@ -24,6 +27,7 @@ export class GCSStorageService implements StorageService {
     }
     // Option 2: With individual environment variables
     else if (env.GCS_PRIVATE_KEY && env.GCS_CLIENT_EMAIL && env.GCS_PROJECT_ID) {
+      console.log('[GCS] Using Option 2: Individual env vars (client_email + private_key)');
       this.storage = new Storage({
         projectId: env.GCS_PROJECT_ID,
         credentials: {
@@ -34,19 +38,29 @@ export class GCSStorageService implements StorageService {
     }
     // Option 3: Default (uses GOOGLE_APPLICATION_CREDENTIALS env var)
     else if (env.GCS_PROJECT_ID) {
+      console.log('[GCS] Using Option 3: Default credentials (GOOGLE_APPLICATION_CREDENTIALS)');
       this.storage = new Storage({
         projectId: env.GCS_PROJECT_ID,
       });
     }
     else {
+      console.error('[GCS] Configuration error:', {
+        hasGcpServiceAccountKeyBase64: !!env.GCP_SERVICE_ACCOUNT_KEY_BASE64,
+        hasGcsProjectId: !!env.GCS_PROJECT_ID,
+        hasGcsClientEmail: !!env.GCS_CLIENT_EMAIL,
+        hasGcsPrivateKey: !!env.GCS_PRIVATE_KEY,
+        hasGcsBucketName: !!env.GCS_BUCKET_NAME,
+      });
       throw new Error('GCS configuration is incomplete. Please set GCS_BUCKET_NAME, GCS_PROJECT_ID, and either GCP_SERVICE_ACCOUNT_KEY_BASE64 or GCS_CLIENT_EMAIL + GCS_PRIVATE_KEY.');
     }
 
     if (!env.GCS_BUCKET_NAME) {
+      console.error('[GCS] GCS_BUCKET_NAME is missing!');
       throw new Error('GCS_BUCKET_NAME is required');
     }
     
     this.bucketName = env.GCS_BUCKET_NAME;
+    console.log('[GCS] ✅ Initialized successfully with bucket:', this.bucketName);
   }
 
   async uploadPhoto(input: PhotoUploadInput): Promise<UploadPhotoResult> {
