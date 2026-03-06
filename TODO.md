@@ -1,5 +1,35 @@
 # Backend TODO
 
+## ✅ COMPLETED - Photo Screens for Display Tablets
+
+**Status:** COMPLETED on 2026-03-06
+
+**Description:**
+Implemented complete photo gallery screens feature for display tablets allowing caregivers to create custom photo displays (up to 5 screens per tablet, each with up to 6 photos).
+
+**Features Implemented:**
+- Database schema with `photo_screens` and `photos` tables (migration 018)
+- Complete entity definitions and business logic
+- S3 + GCS storage services with image processing (Sharp)
+- All 9 REST API endpoints for photo management
+- Integration with tablet config system (photoGallery screen type)
+- Error handling with 6 new domain errors
+- Multipart form-data handling for photo uploads
+- Image compression and resizing (5MB max → 1MB target)
+
+**Endpoints:**
+- Photo screen CRUD (5 endpoints)
+- Photo management (4 endpoints)
+- Config integration (photo screens included in tablet config)
+
+**Documentation:**
+- `docs/PHOTO_SCREENS_IMPLEMENTATION_COMPLETE.md` - Full implementation guide
+- `docs/PHOTO_SCREENS_FEATURE.md` - Feature specification
+- `docs/S3_CLOUDFRONT_SETUP.md` - AWS setup
+- `docs/GCS_SETUP.md` - Google Cloud setup
+
+---
+
 ## ✅ FIXED - Appointment Reminder Creation Bug
 
 **Status:** FIXED on 2026-03-03

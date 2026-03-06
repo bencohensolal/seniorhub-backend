@@ -1,60 +1,10 @@
-feat(display-tablets): add photo gallery screens with S3 storage
+docs(photo-screens): finalize implementation documentation
 
-Implement complete photo gallery feature for display tablets allowing
-caregivers to upload and manage family photos organized in custom screens.
+Complete documentation for photo gallery screens feature including:
+- Error handler updates with photo-specific errors
+- Updated TODO.md with completed feature summary
+- Updated CHANGELOG.md with full feature description
+- Complete implementation guide in docs/
 
-## Database Layer
-- Add migration 018 with photo_screens and photos tables
-- Support max 5 screens per tablet, 6 photos per screen
-- Cascade deletes and proper indexing
-
-## Domain Layer
-- New entities: PhotoScreen, Photo, PhotoScreenWithPhotos
-- New types: DisplayMode, SlideshowTransition, SlideshowOrder
-- New errors: PhotoScreenNotFoundError, PhotoNotFoundError,
-  MaxPhotoScreensReachedError, MaxPhotosReachedError,
-  UnsupportedFileFormatError, FileTooLargeError
-- S3 configuration added to env.ts
-
-## Repository Layer
-- 13 new methods in HouseholdRepository interface
-- Full PostgreSQL implementation
-- InMemoryRepository stubs for test compatibility
-
-## Storage Service
-- S3StorageService with upload/delete operations
-- Image compression using Sharp library
-- CloudFront URL generation
-- Format and size validation (JPEG/PNG/WebP, 5MB max)
-
-## Use Cases (9 total)
-Photo Screens: Create, Update, Delete, List, Get
-Photos: Upload, Update, Delete, Reorder
-
-## API Routes (9 endpoints)
-- POST /photo-screens - Create screen
-- GET /photo-screens - List screens  
-- GET /photo-screens/:screenId - Get screen details
-- PUT /photo-screens/:screenId - Update screen
-- DELETE /photo-screens/:screenId - Delete screen
-- POST /photo-screens/:screenId/photos - Upload photo
-- PUT /photos/:photoId - Update photo metadata
-- DELETE /photos/:photoId - Delete photo
-- PUT /photos/reorder - Reorder photos
-
-## Validation & Security
-- Zod schemas for all endpoints
-- Permission checks (caregivers only)
-- Real MIME type validation
-- File size limits with automatic compression
-- Household isolation enforced
-- TypeScript exactOptionalPropertyTypes compliance
-
-## Dependencies
-- @aws-sdk/client-s3 - AWS S3 client
-- @fastify/multipart - File upload handling
-- sharp - Image processing and compression
-
-The feature is production-ready and follows all project architecture
-guidelines (strict layering, strong typing, explicit validation,
-centralized error handling).
+This finalizes the photo screens feature implementation.
+All endpoints are ready and GCS storage is configured on Railway.
