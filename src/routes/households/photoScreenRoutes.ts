@@ -46,7 +46,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
   server.post<{
     Params: { householdId: string; tabletId: string };
     Body: z.infer<typeof createPhotoScreenSchema>;
-  }>('/:householdId/display-tablets/:tabletId/photo-screens', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId } = request.params;
 
@@ -77,7 +77,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
    */
   server.get<{
     Params: { householdId: string; tabletId: string };
-  }>('/:householdId/display-tablets/:tabletId/photo-screens', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId } = request.params;
 
@@ -100,7 +100,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
    */
   server.get<{
     Params: { householdId: string; tabletId: string; screenId: string };
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId } = request.params;
 
@@ -125,7 +125,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
   server.put<{
     Params: { householdId: string; tabletId: string; screenId: string };
     Body: z.infer<typeof updatePhotoScreenSchema>;
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId } = request.params;
 
@@ -157,7 +157,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
    */
   server.delete<{
     Params: { householdId: string; tabletId: string; screenId: string };
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId } = request.params;
 
@@ -183,7 +183,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
    */
   server.post<{
     Params: { householdId: string; tabletId: string; screenId: string };
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId } = request.params;
 
@@ -256,7 +256,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
   server.put<{
     Params: { householdId: string; tabletId: string; screenId: string; photoId: string };
     Body: z.infer<typeof updatePhotoSchema>;
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId, photoId } = request.params;
 
@@ -285,7 +285,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
    */
   server.delete<{
     Params: { householdId: string; tabletId: string; screenId: string; photoId: string };
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId, photoId } = request.params;
 
@@ -311,7 +311,7 @@ export async function photoScreenRoutes(server: FastifyInstance) {
   server.put<{
     Params: { householdId: string; tabletId: string; screenId: string };
     Body: z.infer<typeof reorderPhotosSchema>;
-  }>('/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/reorder', async (request, reply) => {
+  }>('/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/reorder', async (request, reply) => {
     const requester = getRequesterContext(request);
     const { householdId, tabletId, screenId } = request.params;
 

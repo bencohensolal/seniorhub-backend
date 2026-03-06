@@ -182,6 +182,6 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
 
   registerDisplayTabletRoutes(fastify, repository);
   
-  // Register photo screen routes
-  await fastify.register(photoScreenRoutes, { prefix: '' });
+  // Register photo screen routes with v1 prefix
+  await fastify.register(photoScreenRoutes, { prefix: '/v1' });
 };

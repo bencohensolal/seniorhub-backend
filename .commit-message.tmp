@@ -1,10 +1,7 @@
-docs(photo-screens): finalize implementation documentation
+fix(photo-screens): correct route paths for proper registration
 
-Complete documentation for photo gallery screens feature including:
-- Error handler updates with photo-specific errors
-- Updated TODO.md with completed feature summary
-- Updated CHANGELOG.md with full feature description
-- Complete implementation guide in docs/
+Fixed 404 errors by updating route paths from relative (/:householdId/...)
+to absolute (/households/:householdId/...) paths to match the /v1 prefix
+registration pattern.
 
-This finalizes the photo screens feature implementation.
-All endpoints are ready and GCS storage is configured on Railway.
+All 9 photo screen endpoints now properly registered and accessible.
