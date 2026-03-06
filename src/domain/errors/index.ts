@@ -10,4 +10,10 @@ export {
   ValidationError,
   ConflictError,
   BusinessRuleError,
+  MaxPhotoScreensReachedError,
+  MaxPhotosReachedError,
+  UnsupportedFileFormatError,
+  FileTooLargeError,
+  PhotoScreenNotFoundError,
+  PhotoNotFoundError,
 } from './DomainErrors.js';

@@ -26,6 +26,12 @@ const envSchema = z
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    // S3 Configuration for photo storage
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_REGION: z.string().default('us-east-1'),
+    AWS_S3_BUCKET: z.string().optional(),
+    AWS_CLOUDFRONT_URL: z.string().optional(),
   })
   .superRefine((value, context) => {
     if (value.PERSISTENCE_DRIVER === 'postgres' && !value.DATABASE_URL) {

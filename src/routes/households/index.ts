@@ -43,6 +43,7 @@ import { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/Canc
 import { registerAppointmentRoutes } from './appointmentRoutes.js';
 import { registerTaskRoutes } from './taskRoutes.js';
 import { registerDisplayTabletRoutes } from './displayTabletRoutes.js';
+import { photoScreenRoutes } from './photoScreenRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
 import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
@@ -180,4 +181,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerDisplayTabletRoutes(fastify, repository);
+  
+  // Register photo screen routes
+  await fastify.register(photoScreenRoutes, { prefix: '' });
 };

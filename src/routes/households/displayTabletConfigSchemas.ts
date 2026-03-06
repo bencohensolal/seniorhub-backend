@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Screen type enum
-const screenTypeSchema = z.enum(['summary', 'datetime', 'appointments', 'tasks', 'weekCalendar', 'monthCalendar']);
+const screenTypeSchema = z.enum(['summary', 'datetime', 'appointments', 'tasks', 'weekCalendar', 'monthCalendar', 'photoGallery']);
 
 // Screen settings schemas
 const summaryScreenSettingsSchema = z.object({
@@ -45,6 +45,25 @@ const monthCalendarScreenSettingsSchema = z.object({
   displayMode: z.enum(['compact', 'detailed']),
   showWeekNumbers: z.boolean(),
   highlightToday: z.boolean(),
+});
+
+const photoItemSchema = z.object({
+  id: z.string().uuid(),
+  url: z.string().url(),
+  caption: z.string().max(100).nullable().optional(),
+  order: z.number().int().min(0).max(5),
+  uploadedAt: z.string().datetime(),
+});
+
+const photoGalleryScreenSettingsSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(50),
+  photos: z.array(photoItemSchema).max(6),
+  displayMode: z.enum(['slideshow', 'mosaic', 'single']),
+  slideshowDuration: z.union([z.literal(3), z.literal(5), z.literal(10), z.literal(15), z.literal(30)]).optional(),
+  slideshowTransition: z.enum(['fade', 'slide', 'none']).optional(),
+  slideshowOrder: z.enum(['sequential', 'random']).optional(),
+  showCaptions: z.boolean(),
 });
 
 // Screen configuration schema
@@ -106,6 +125,9 @@ export function validateScreenSettings(screen: { type: string; settings?: any })
         break;
       case 'monthCalendar':
         monthCalendarScreenSettingsSchema.parse(screen.settings);
+        break;
+      case 'photoGallery':
+        photoGalleryScreenSettingsSchema.parse(screen.settings);
         break;
       default:
         return false;

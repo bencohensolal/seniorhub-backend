@@ -781,4 +781,62 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async updateDisplayTabletConfig(_tabletId: string, _householdId: string, _config: any): Promise<any> {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
+
+  // Photo Screen methods - stub implementations for test compatibility
+  async listPhotoScreens(_tabletId: string, _householdId: string): Promise<never[]> {
+    throw new Error('Photo screen operations not implemented in InMemoryRepository');
+  }
+
+  async getPhotoScreenById(_photoScreenId: string, _tabletId: string, _householdId: string): Promise<null> {
+    return null;
+  }
+
+  async createPhotoScreen(_input: unknown): Promise<never> {
+    throw new Error('Photo screen operations not implemented in InMemoryRepository');
+  }
+
+  async updatePhotoScreen(_photoScreenId: string, _tabletId: string, _householdId: string, _input: unknown): Promise<never> {
+    throw new Error('Photo screen operations not implemented in InMemoryRepository');
+  }
+
+  async deletePhotoScreen(_photoScreenId: string, _tabletId: string, _householdId: string): Promise<void> {
+    throw new Error('Photo screen operations not implemented in InMemoryRepository');
+  }
+
+  async countPhotoScreens(_tabletId: string): Promise<number> {
+    return 0;
+  }
+
+  // Photo methods - stub implementations for test compatibility
+  async listPhotos(_photoScreenId: string, _householdId: string): Promise<never[]> {
+    return [];
+  }
+
+  async countPhotos(_photoScreenId: string): Promise<number> {
+    return 0;
+  }
+
+  async getPhotoById(_photoId: string, _photoScreenId: string, _householdId: string): Promise<null> {
+    return null;
+  }
+
+  async createPhoto(_input: unknown): Promise<never> {
+    throw new Error('Photo operations not implemented in InMemoryRepository');
+  }
+
+  async updatePhoto(_photoId: string, _photoScreenId: string, _householdId: string, _input: unknown): Promise<never> {
+    throw new Error('Photo operations not implemented in InMemoryRepository');
+  }
+
+  async deletePhoto(_photoId: string, _photoScreenId: string, _householdId: string): Promise<void> {
+    throw new Error('Photo operations not implemented in InMemoryRepository');
+  }
+
+  async reorderPhotos(_photoScreenId: string, _householdId: string, _photoOrders: unknown): Promise<never[]> {
+    throw new Error('Photo operations not implemented in InMemoryRepository');
+  }
+
+  async deletePhotosByScreenId(_photoScreenId: string, _householdId: string): Promise<void> {
+    throw new Error('Photo operations not implemented in InMemoryRepository');
+  }
 }

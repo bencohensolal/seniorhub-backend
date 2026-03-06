@@ -7,7 +7,8 @@ export type ScreenType =
   | 'appointments' 
   | 'tasks' 
   | 'weekCalendar' 
-  | 'monthCalendar';
+  | 'monthCalendar'
+  | 'photoGallery';
 
 // Base screen configuration
 export interface ScreenConfig {
@@ -24,7 +25,8 @@ export type ScreenSettings =
   | AppointmentsScreenSettings
   | TasksScreenSettings
   | WeekCalendarScreenSettings
-  | MonthCalendarScreenSettings;
+  | MonthCalendarScreenSettings
+  | PhotoGalleryScreenSettings;
 
 // Summary screen settings
 export interface SummaryScreenSettings {
@@ -73,6 +75,26 @@ export interface MonthCalendarScreenSettings {
   displayMode: 'compact' | 'detailed';
   showWeekNumbers: boolean;
   highlightToday: boolean;
+}
+
+// Photo Gallery screen settings
+export interface PhotoItem {
+  id: string; // UUID unique pour la photo
+  url: string; // URL publique de la photo uploadée
+  caption?: string | null; // Légende optionnelle (max 100 caractères)
+  order: number; // Ordre d'affichage (0-indexed)
+  uploadedAt: string; // ISO timestamp
+}
+
+export interface PhotoGalleryScreenSettings {
+  id: string; // UUID unique pour l'écran photo
+  name: string; // Nom de l'écran (ex: "Vacances 2025")
+  photos: PhotoItem[]; // Liste des photos (1-6)
+  displayMode: 'slideshow' | 'mosaic' | 'single'; // Mode d'affichage
+  slideshowDuration?: number; // Durée par photo en secondes (3, 5, 10, 15, 30)
+  slideshowTransition?: 'fade' | 'slide' | 'none'; // Type de transition
+  slideshowOrder?: 'sequential' | 'random'; // Ordre d'affichage
+  showCaptions: boolean; // Afficher les légendes des photos
 }
 
 // Main tablet display configuration

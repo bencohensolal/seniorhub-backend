@@ -1,27 +1,29 @@
-feat(display-tablets): add tablet display configuration feature
+feat(display-tablets): add real-time config updates via Server-Sent Events
 
-Add comprehensive tablet display configuration system allowing customization of:
-- Display parameters (slide duration, cache, refresh intervals)
-- Screen selection, ordering, and per-screen settings
-- Type-specific settings for 6 screen types (summary, datetime, appointments, tasks, week/month calendars)
+Implement SSE-based push notifications to instantly refresh tablets when configuration changes.
 
-Technical implementation:
-- Database: migration 017 adds `config` JSONB column to `display_tablets` table
-- Domain: TabletDisplayConfig entity with TypeScript interfaces for all screen types and settings
-- Validation: Zod schemas with comprehensive validation rules (durations, screen ordering, type-specific settings)
-- Repository: updateDisplayTabletConfig method with JSON serialization
-- API: GET and PUT endpoints for config management
+When a user updates a tablet's configuration via PUT, the tablet is now instantly notified through a persistent SSE connection, eliminating the need for polling or manual refresh.
 
-New API endpoints:
-- GET /v1/households/:householdId/display-tablets/:tabletId/config - Retrieve configuration
-- PUT /v1/households/:householdId/display-tablets/:tabletId/config - Update configuration with validation
+Architecture:
+- TabletConfigNotifier service: Manages SSE connections and broadcasts updates
+- New endpoint: GET /v1/households/:householdId/display-tablets/:tabletId/config-updates
+- SSE heartbeat every 30 seconds to detect dead connections
+- Auto cleanup of disconnected tablets
 
-Configuration features:
-- Validates slide duration (1-60s), cache (1-60min), refresh intervals (1-60min)
-- Enforces unique consecutive screen ordering (0, 1, 2...)
-- Validates screen-specific settings per type (colors, fonts, display modes, etc.)
-- Auto-adds lastUpdated timestamp on each save
-- Returns null for unconfigured tablets (mobile app uses built-in defaults)
-- Access control: all members read, only caregivers modify
+How it works:
+1. Tablet connects to /config-updates endpoint with tablet auth
+2. Connection stays open (SSE stream)
+3. When user updates config via PUT, backend notifies connected tablet
+4. Tablet receives event and immediately fetches fresh config
+5. Display refreshes instantly without user intervention
 
-Backward compatibility: existing tablets continue working with null config.
+Security:
+- Only tablets can subscribe to config updates (no user access)
+- Tablets can only subscribe to their own updates (validated by tabletId + householdId)
+- SSE endpoint uses custom preHandler for tablet-only auth
+
+Benefits:
+- Instant config updates (no polling needed)
+- Better UX: changes appear immediately on tablets
+- Lower bandwidth: no constant polling
+- Scalable: SSE is lightweight and efficient

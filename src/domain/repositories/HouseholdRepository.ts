@@ -11,6 +11,7 @@ import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInpu
 import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, CompleteTaskInput } from '../entities/Task.js';
 import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../entities/TaskReminder.js';
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../entities/DisplayTablet.js';
+import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput, UpdatePhotoScreenInput, CreatePhotoInput, UpdatePhotoInput } from '../entities/PhotoScreen.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -153,4 +154,21 @@ export interface HouseholdRepository {
   authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthInfo | null>;
   countActiveDisplayTablets(householdId: string): Promise<number>;
   updateDisplayTabletConfig(tabletId: string, householdId: string, config: any): Promise<DisplayTablet>;
+
+  // Photo Screens
+  listPhotoScreens(tabletId: string, householdId: string): Promise<PhotoScreenWithPhotos[]>;
+  getPhotoScreenById(photoScreenId: string, tabletId: string, householdId: string): Promise<PhotoScreenWithPhotos | null>;
+  createPhotoScreen(input: CreatePhotoScreenInput): Promise<PhotoScreen>;
+  updatePhotoScreen(photoScreenId: string, tabletId: string, householdId: string, input: UpdatePhotoScreenInput): Promise<PhotoScreen>;
+  deletePhotoScreen(photoScreenId: string, tabletId: string, householdId: string): Promise<void>;
+  countPhotoScreens(tabletId: string, householdId: string): Promise<number>;
+
+  // Photos
+  listPhotos(photoScreenId: string, householdId: string): Promise<Photo[]>;
+  getPhotoById(photoId: string, photoScreenId: string, householdId: string): Promise<Photo | null>;
+  createPhoto(input: CreatePhotoInput): Promise<Photo>;
+  updatePhoto(photoId: string, photoScreenId: string, householdId: string, input: UpdatePhotoInput): Promise<Photo>;
+  deletePhoto(photoId: string, photoScreenId: string, householdId: string): Promise<void>;
+  countPhotos(photoScreenId: string): Promise<number>;
+  reorderPhotos(photoScreenId: string, householdId: string, photoOrders: Array<{ id: string; order: number }>): Promise<Photo[]>;
 }
