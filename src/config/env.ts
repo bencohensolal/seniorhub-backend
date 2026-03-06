@@ -26,12 +26,23 @@ const envSchema = z
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
-    // S3 Configuration for photo storage
-    AWS_ACCESS_KEY_ID: z.string().optional(),
-    AWS_SECRET_ACCESS_KEY: z.string().optional(),
-    AWS_REGION: z.string().default('us-east-1'),
-    AWS_S3_BUCKET: z.string().optional(),
-    AWS_CLOUDFRONT_URL: z.string().optional(),
+    
+    // Storage provider selection ('gcs' or 's3')
+    STORAGE_PROVIDER: z.enum(['gcs', 's3']).default('gcs'),
+    
+    // AWS S3 Configuration (for photo storage)
+    AWS_S3_REGION: z.string().optional(),
+    AWS_S3_BUCKET_NAME: z.string().optional(),
+    AWS_S3_ACCESS_KEY_ID: z.string().optional(),
+    AWS_S3_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_CLOUDFRONT_DOMAIN: z.string().optional(),
+    
+    // Google Cloud Storage Configuration (recommended)
+    GCS_BUCKET_NAME: z.string().optional(),
+    GCS_PROJECT_ID: z.string().optional(),
+    GCS_CLIENT_EMAIL: z.string().optional(),
+    GCS_PRIVATE_KEY: z.string().optional(),
+    GCP_SERVICE_ACCOUNT_KEY_BASE64: z.string().optional(),
   })
   .superRefine((value, context) => {
     if (value.PERSISTENCE_DRIVER === 'postgres' && !value.DATABASE_URL) {

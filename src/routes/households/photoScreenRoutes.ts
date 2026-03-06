@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { z } from 'zod';
 import multipart from '@fastify/multipart';
 import { createHouseholdRepository } from '../../data/repositories/createHouseholdRepository.js';
-import { S3StorageService } from '../../data/services/storage/S3StorageService.js';
+import { createStorageService } from '../../data/services/storage/createStorageService.js';
 import { getRequesterContext } from './utils.js';
 import { CreatePhotoScreenUseCase } from '../../domain/usecases/photoScreens/CreatePhotoScreenUseCase.js';
 import { UpdatePhotoScreenUseCase } from '../../domain/usecases/photoScreens/UpdatePhotoScreenUseCase.js';
@@ -27,7 +27,7 @@ const MAX_FILE_SIZE = MAX_PHOTO_SIZE_MB * 1024 * 1024; // Convert to bytes
 
 export async function photoScreenRoutes(server: FastifyInstance) {
   const repository = createHouseholdRepository();
-  const storageService = new S3StorageService();
+  const storageService = createStorageService();
 
   // Register multipart plugin for file uploads
   await server.register(multipart, {

@@ -1,29 +1,52 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
 import { env } from '../../../config/env.js';
 import type { StorageService, PhotoUploadInput, UploadPhotoResult } from './types.js';
 import { MAX_PHOTO_DIMENSION, TARGET_PHOTO_SIZE_MB } from '../../../domain/entities/PhotoScreen.js';
 
-export class S3StorageService implements StorageService {
-  private s3Client: S3Client;
-  private bucket: string;
-  private cloudFrontUrl: string | undefined;
+/**
+ * Google Cloud Storage implementation for photo storage
+ */
+export class GCSStorageService implements StorageService {
+  private storage: Storage;
+  private bucketName: string;
 
   constructor() {
-    if (!env.AWS_S3_ACCESS_KEY_ID || !env.AWS_S3_SECRET_ACCESS_KEY || !env.AWS_S3_BUCKET_NAME) {
-      throw new Error('S3 configuration is incomplete. Please set AWS_S3_ACCESS_KEY_ID, AWS_S3_SECRET_ACCESS_KEY, and AWS_S3_BUCKET_NAME environment variables.');
+    // Option 1: With base64 encoded service account key
+    if (env.GCP_SERVICE_ACCOUNT_KEY_BASE64 && env.GCS_PROJECT_ID) {
+      const credentials = JSON.parse(
+        Buffer.from(env.GCP_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
+      );
+      this.storage = new Storage({
+        projectId: env.GCS_PROJECT_ID,
+        credentials,
+      });
+    }
+    // Option 2: With individual environment variables
+    else if (env.GCS_PRIVATE_KEY && env.GCS_CLIENT_EMAIL && env.GCS_PROJECT_ID) {
+      this.storage = new Storage({
+        projectId: env.GCS_PROJECT_ID,
+        credentials: {
+          client_email: env.GCS_CLIENT_EMAIL,
+          private_key: env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        },
+      });
+    }
+    // Option 3: Default (uses GOOGLE_APPLICATION_CREDENTIALS env var)
+    else if (env.GCS_PROJECT_ID) {
+      this.storage = new Storage({
+        projectId: env.GCS_PROJECT_ID,
+      });
+    }
+    else {
+      throw new Error('GCS configuration is incomplete. Please set GCS_BUCKET_NAME, GCS_PROJECT_ID, and either GCP_SERVICE_ACCOUNT_KEY_BASE64 or GCS_CLIENT_EMAIL + GCS_PRIVATE_KEY.');
     }
 
-    this.s3Client = new S3Client({
-      region: env.AWS_S3_REGION || 'us-east-1',
-      credentials: {
-        accessKeyId: env.AWS_S3_ACCESS_KEY_ID,
-        secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY,
-      },
-    });
-
-    this.bucket = env.AWS_S3_BUCKET_NAME;
-    this.cloudFrontUrl = env.AWS_CLOUDFRONT_DOMAIN;
+    if (!env.GCS_BUCKET_NAME) {
+      throw new Error('GCS_BUCKET_NAME is required');
+    }
+    
+    this.bucketName = env.GCS_BUCKET_NAME;
   }
 
   async uploadPhoto(input: PhotoUploadInput): Promise<UploadPhotoResult> {
@@ -33,57 +56,52 @@ export class S3StorageService implements StorageService {
     // Determine file extension
     const extension = this.getExtensionFromMimeType(input.mimeType);
     
-    // Generate S3 key
+    // Generate GCS key (same structure as S3)
     const key = `households/${input.householdId}/tablets/${input.tabletId}/photos/${input.photoId}.${extension}`;
 
-    // Upload to S3
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: processedBuffer,
-      ContentType: input.mimeType,
-      CacheControl: 'max-age=31536000', // 1 year cache
+    const bucket = this.storage.bucket(this.bucketName);
+    const file = bucket.file(key);
+
+    await file.save(processedBuffer, {
+      metadata: {
+        contentType: input.mimeType,
+        cacheControl: 'public, max-age=31536000', // Cache for 1 year
+      },
+      public: true, // Make file publicly accessible
     });
 
-    await this.s3Client.send(command);
-
-    // Generate URL (CloudFront or S3)
-    const url = this.generateUrl(key);
+    // Public URL format for GCS
+    const url = `https://storage.googleapis.com/${this.bucketName}/${key}`;
 
     return { url, key };
   }
 
   async deletePhoto(key: string): Promise<void> {
-    const command = new DeleteObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
+    const bucket = this.storage.bucket(this.bucketName);
+    const file = bucket.file(key);
+    
+    await file.delete().catch((error) => {
+      // Ignore if file doesn't exist
+      if (error.code !== 404) {
+        throw error;
+      }
     });
-
-    await this.s3Client.send(command);
   }
 
   async deletePhotosByPrefix(prefix: string): Promise<void> {
-    // List all objects with the given prefix
-    const listCommand = new ListObjectsV2Command({
-      Bucket: this.bucket,
-      Prefix: prefix,
-    });
+    const bucket = this.storage.bucket(this.bucketName);
+    
+    // List all files with the given prefix
+    const [files] = await bucket.getFiles({ prefix });
 
-    const listResponse = await this.s3Client.send(listCommand);
-
-    if (!listResponse.Contents || listResponse.Contents.length === 0) {
-      return; // No objects to delete
+    if (files.length === 0) {
+      return; // No files to delete
     }
 
-    // Delete all objects
-    const deleteCommand = new DeleteObjectsCommand({
-      Bucket: this.bucket,
-      Delete: {
-        Objects: listResponse.Contents.map(obj => ({ Key: obj.Key! })),
-      },
-    });
-
-    await this.s3Client.send(deleteCommand);
+    // Delete all files
+    await Promise.all(files.map(file => file.delete().catch(() => {
+      // Ignore errors during deletion
+    })));
   }
 
   /**
@@ -160,37 +178,5 @@ export class S3StorageService implements StorageService {
       default:
         return 'jpg'; // Default to jpg
     }
-  }
-
-  /**
-   * Generate public URL for the photo
-   */
-  private generateUrl(key: string): string {
-    if (this.cloudFrontUrl) {
-      // Use CloudFront URL if configured
-      return `${this.cloudFrontUrl}/${key}`;
-    }
-
-    // Fallback to S3 direct URL
-    return `https://${this.bucket}.s3.${env.AWS_S3_REGION || 'us-east-1'}.amazonaws.com/${key}`;
-  }
-
-  /**
-   * Extract S3 key from URL
-   */
-  static extractKeyFromUrl(url: string): string | null {
-    // Try to match CloudFront or S3 URL patterns
-    const patterns = [
-      /\/households\/[^/]+\/tablets\/[^/]+\/photos\/[^/]+\.[^/]+/, // Match the key pattern
-    ];
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) {
-        return match[0].substring(1); // Remove leading slash
-      }
-    }
-
-    return null;
   }
 }

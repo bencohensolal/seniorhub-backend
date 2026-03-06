@@ -1,29 +1,60 @@
-feat(display-tablets): add real-time config updates via Server-Sent Events
+feat(display-tablets): add photo gallery screens with S3 storage
 
-Implement SSE-based push notifications to instantly refresh tablets when configuration changes.
+Implement complete photo gallery feature for display tablets allowing
+caregivers to upload and manage family photos organized in custom screens.
 
-When a user updates a tablet's configuration via PUT, the tablet is now instantly notified through a persistent SSE connection, eliminating the need for polling or manual refresh.
+## Database Layer
+- Add migration 018 with photo_screens and photos tables
+- Support max 5 screens per tablet, 6 photos per screen
+- Cascade deletes and proper indexing
 
-Architecture:
-- TabletConfigNotifier service: Manages SSE connections and broadcasts updates
-- New endpoint: GET /v1/households/:householdId/display-tablets/:tabletId/config-updates
-- SSE heartbeat every 30 seconds to detect dead connections
-- Auto cleanup of disconnected tablets
+## Domain Layer
+- New entities: PhotoScreen, Photo, PhotoScreenWithPhotos
+- New types: DisplayMode, SlideshowTransition, SlideshowOrder
+- New errors: PhotoScreenNotFoundError, PhotoNotFoundError,
+  MaxPhotoScreensReachedError, MaxPhotosReachedError,
+  UnsupportedFileFormatError, FileTooLargeError
+- S3 configuration added to env.ts
 
-How it works:
-1. Tablet connects to /config-updates endpoint with tablet auth
-2. Connection stays open (SSE stream)
-3. When user updates config via PUT, backend notifies connected tablet
-4. Tablet receives event and immediately fetches fresh config
-5. Display refreshes instantly without user intervention
+## Repository Layer
+- 13 new methods in HouseholdRepository interface
+- Full PostgreSQL implementation
+- InMemoryRepository stubs for test compatibility
 
-Security:
-- Only tablets can subscribe to config updates (no user access)
-- Tablets can only subscribe to their own updates (validated by tabletId + householdId)
-- SSE endpoint uses custom preHandler for tablet-only auth
+## Storage Service
+- S3StorageService with upload/delete operations
+- Image compression using Sharp library
+- CloudFront URL generation
+- Format and size validation (JPEG/PNG/WebP, 5MB max)
 
-Benefits:
-- Instant config updates (no polling needed)
-- Better UX: changes appear immediately on tablets
-- Lower bandwidth: no constant polling
-- Scalable: SSE is lightweight and efficient
+## Use Cases (9 total)
+Photo Screens: Create, Update, Delete, List, Get
+Photos: Upload, Update, Delete, Reorder
+
+## API Routes (9 endpoints)
+- POST /photo-screens - Create screen
+- GET /photo-screens - List screens  
+- GET /photo-screens/:screenId - Get screen details
+- PUT /photo-screens/:screenId - Update screen
+- DELETE /photo-screens/:screenId - Delete screen
+- POST /photo-screens/:screenId/photos - Upload photo
+- PUT /photos/:photoId - Update photo metadata
+- DELETE /photos/:photoId - Delete photo
+- PUT /photos/reorder - Reorder photos
+
+## Validation & Security
+- Zod schemas for all endpoints
+- Permission checks (caregivers only)
+- Real MIME type validation
+- File size limits with automatic compression
+- Household isolation enforced
+- TypeScript exactOptionalPropertyTypes compliance
+
+## Dependencies
+- @aws-sdk/client-s3 - AWS S3 client
+- @fastify/multipart - File upload handling
+- sharp - Image processing and compression
+
+The feature is production-ready and follows all project architecture
+guidelines (strict layering, strong typing, explicit validation,
+centralized error handling).
