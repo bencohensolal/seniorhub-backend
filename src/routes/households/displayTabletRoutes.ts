@@ -13,6 +13,7 @@ import { requireUserAuth } from '../../plugins/authContext.js';
 import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletConfigSchemas.js';
 import { ValidationError } from '../../domain/errors/index.js';
 import { tabletConfigNotifier } from '../../domain/services/tabletConfigNotifier.js';
+import { GetTabletConfigUseCase } from '../../domain/usecases/displayTablets/GetTabletConfigUseCase.js';
 
 // Schemas
 const householdParamsSchema = z.object({
@@ -512,16 +513,17 @@ export const registerDisplayTabletRoutes = (
       try {
         const params = householdTabletParamsSchema.parse(request.params);
 
-        // Verify tablet exists
-        const tablet = await repository.getDisplayTabletById(params.tabletId, params.householdId);
-        if (!tablet) {
-          throw new ValidationError('Display tablet not found.');
-        }
+        // Use GetTabletConfigUseCase to get complete config including photo screens
+        const useCase = new GetTabletConfigUseCase(repository);
+        const config = await useCase.execute({
+          householdId: params.householdId,
+          tabletId: params.tabletId,
+        });
 
         // Return config (can be null if not yet configured)
         return reply.status(200).send({
           success: true,
-          data: tablet.config,
+          data: config,
         });
       } catch (error) {
         return handleDomainError(error, reply);

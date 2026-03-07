@@ -3,7 +3,11 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { householdsRoutes } from './routes/households/index.js';
 import { registerPublicMedicationRoutes } from './routes/medicationRoutes.js';
+import { registerPrivacySettingsRoutes } from './routes/privacySettingsRoutes.js';
 import { registerAuthContext } from './plugins/authContext.js';
+import { createHouseholdRepository } from './data/repositories/createHouseholdRepository.js';
+import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
+import { UpdateUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/UpdateUserPrivacySettingsUseCase.js';
 
 export const buildApp = () => {
   const app = Fastify({
@@ -65,6 +69,13 @@ export const buildApp = () => {
   registerAuthContext(app);
   app.register(householdsRoutes);
   registerPublicMedicationRoutes(app);
+
+  // Privacy settings routes
+  const repository = createHouseholdRepository();
+  registerPrivacySettingsRoutes(app, {
+    getUserPrivacySettingsUseCase: new GetUserPrivacySettingsUseCase(repository),
+    updateUserPrivacySettingsUseCase: new UpdateUserPrivacySettingsUseCase(repository),
+  });
 
   return app;
 };

@@ -1,9 +1,12 @@
-fix(storage): remove legacy ACL usage for GCS uniform bucket access
+docs(storage): add GCS public access configuration guide
 
-Removed `public: true` option from GCS file upload as it's incompatible
-with uniform bucket-level access (which is now the default on GCS).
+Created comprehensive guide for configuring public access on GCS bucket
+with uniform bucket-level access enabled.
 
-Instead, the bucket should be configured with public access at the bucket
-level using IAM permissions (allUsers with Storage Object Viewer role).
+Includes:
+- Step-by-step instructions (Console + CLI)
+- Security considerations
+- Verification steps
+- Alternative signed URLs approach
 
-This resolves the "Cannot insert legacy ACL" error during photo uploads.
+Required to make uploaded photos accessible after removing legacy ACL support.

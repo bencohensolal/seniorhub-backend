@@ -2,6 +2,7 @@ import type { HouseholdRepository } from '../../repositories/HouseholdRepository
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { Photo } from '../../entities/PhotoScreen.js';
 import { NotFoundError, ForbiddenError, PhotoScreenNotFoundError, ValidationError } from '../../errors/index.js';
+import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 export class ReorderPhotosUseCase {
   constructor(private readonly repository: HouseholdRepository) {}
@@ -59,6 +60,9 @@ export class ReorderPhotosUseCase {
       input.householdId,
       input.photoOrders,
     );
+
+    // Notify the tablet that its config has been updated
+    tabletConfigNotifier.notifyConfigUpdate(input.tabletId, { lastUpdated: new Date().toISOString() });
 
     return reorderedPhotos;
   }

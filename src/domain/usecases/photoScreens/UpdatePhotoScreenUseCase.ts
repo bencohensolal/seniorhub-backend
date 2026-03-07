@@ -2,6 +2,7 @@ import type { HouseholdRepository } from '../../repositories/HouseholdRepository
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { UpdatePhotoScreenInput, PhotoScreen } from '../../entities/PhotoScreen.js';
 import { NotFoundError, ForbiddenError, PhotoScreenNotFoundError } from '../../errors/index.js';
+import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 export class UpdatePhotoScreenUseCase {
   constructor(private readonly repository: HouseholdRepository) {}
@@ -58,6 +59,9 @@ export class UpdatePhotoScreenUseCase {
       input.householdId,
       updateInput,
     );
+
+    // Notify the tablet that its config has been updated
+    tabletConfigNotifier.notifyConfigUpdate(input.tabletId, { lastUpdated: new Date().toISOString() });
 
     return updatedScreen;
   }

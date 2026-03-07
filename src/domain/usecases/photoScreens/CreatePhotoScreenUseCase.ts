@@ -3,6 +3,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { CreatePhotoScreenInput, PhotoScreen } from '../../entities/PhotoScreen.js';
 import { MAX_PHOTO_SCREENS_PER_TABLET } from '../../entities/PhotoScreen.js';
 import { NotFoundError, ForbiddenError, MaxPhotoScreensReachedError } from '../../errors/index.js';
+import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 export class CreatePhotoScreenUseCase {
   constructor(private readonly repository: HouseholdRepository) {}
@@ -62,6 +63,9 @@ export class CreatePhotoScreenUseCase {
     };
 
     const photoScreen = await this.repository.createPhotoScreen(createInput);
+
+    // Notify the tablet that its config has been updated
+    tabletConfigNotifier.notifyConfigUpdate(input.tabletId, { lastUpdated: new Date().toISOString() });
 
     return photoScreen;
   }

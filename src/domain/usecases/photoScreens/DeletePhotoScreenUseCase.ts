@@ -3,6 +3,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { StorageService } from '../../../data/services/storage/types.js';
 import { S3StorageService } from '../../../data/services/storage/S3StorageService.js';
 import { NotFoundError, ForbiddenError, PhotoScreenNotFoundError } from '../../errors/index.js';
+import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 export class DeletePhotoScreenUseCase {
   constructor(
@@ -60,5 +61,8 @@ export class DeletePhotoScreenUseCase {
       input.tabletId,
       input.householdId,
     );
+
+    // Notify the tablet that its config has been updated
+    tabletConfigNotifier.notifyConfigUpdate(input.tabletId, { lastUpdated: new Date().toISOString() });
   }
 }

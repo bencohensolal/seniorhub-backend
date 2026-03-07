@@ -12,6 +12,7 @@ import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, Complet
 import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../entities/TaskReminder.js';
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../entities/DisplayTablet.js';
 import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput, UpdatePhotoScreenInput, CreatePhotoInput, UpdatePhotoInput } from '../entities/PhotoScreen.js';
+import type { PrivacySettings, UpdatePrivacySettingsInput } from '../entities/PrivacySettings.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -171,4 +172,9 @@ export interface HouseholdRepository {
   deletePhoto(photoId: string, photoScreenId: string, householdId: string): Promise<void>;
   countPhotos(photoScreenId: string): Promise<number>;
   reorderPhotos(photoScreenId: string, householdId: string, photoOrders: Array<{ id: string; order: number }>): Promise<Photo[]>;
+
+  // Privacy Settings
+  getUserPrivacySettings(userId: string): Promise<PrivacySettings | null>;
+  updateUserPrivacySettings(userId: string, input: UpdatePrivacySettingsInput): Promise<PrivacySettings>;
+  getBulkPrivacySettings(userIds: string[]): Promise<Map<string, PrivacySettings>>;
 }

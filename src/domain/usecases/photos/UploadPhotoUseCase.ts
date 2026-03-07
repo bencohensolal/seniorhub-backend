@@ -12,6 +12,7 @@ import {
   UnsupportedFileFormatError,
   FileTooLargeError,
 } from '../../errors/index.js';
+import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 const SUPPORTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = MAX_PHOTO_SIZE_MB * 1024 * 1024;
@@ -101,6 +102,9 @@ export class UploadPhotoUseCase {
     };
 
     const photo = await this.repository.createPhoto(createInput);
+
+    // Notify the tablet that its config has been updated
+    tabletConfigNotifier.notifyConfigUpdate(input.tabletId, { lastUpdated: new Date().toISOString() });
 
     return photo;
   }

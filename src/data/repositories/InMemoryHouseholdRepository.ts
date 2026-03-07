@@ -839,4 +839,17 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deletePhotosByScreenId(_photoScreenId: string, _householdId: string): Promise<void> {
     throw new Error('Photo operations not implemented in InMemoryRepository');
   }
+
+  // Privacy Settings - stub implementations for test compatibility
+  async getUserPrivacySettings(_userId: string): Promise<null> {
+    return null;
+  }
+
+  async updateUserPrivacySettings(_userId: string, _input: unknown): Promise<never> {
+    throw new Error('Privacy settings operations not implemented in InMemoryRepository');
+  }
+
+  async getBulkPrivacySettings(_userIds: string[]): Promise<Map<string, import('../../domain/entities/PrivacySettings.js').PrivacySettings>> {
+    return new Map();
+  }
 }
