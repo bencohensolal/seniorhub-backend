@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog.
 
 ## [Unreleased]
 
+### Fixed
+- **Medication creation response contract** now uses an explicit medication response schema on household medication routes so `POST /v1/households/:householdId/medications` reliably returns the created medication payload with its `id`.
+
 ### Added
 - **Photo Screens for Display Tablets** - Complete photo gallery feature:
   - Added `photo_screens` and `photos` tables (migration 018) with proper constraints and indexes.

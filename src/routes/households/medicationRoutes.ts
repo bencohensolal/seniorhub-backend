@@ -8,6 +8,7 @@ import {
   createMedicationBodySchema,
   updateMedicationBodySchema,
   medicationParamsSchema,
+  medicationResponseSchema,
 } from './medicationSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
 import { requireWritePermission } from '../../plugins/authContext.js';
@@ -38,7 +39,10 @@ export function registerMedicationRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'array' },
+              data: {
+                type: 'array',
+                items: medicationResponseSchema,
+              },
             },
             required: ['status', 'data'],
           },
@@ -111,7 +115,7 @@ export function registerMedicationRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: medicationResponseSchema,
             },
             required: ['status', 'data'],
           },
@@ -199,7 +203,7 @@ export function registerMedicationRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: medicationResponseSchema,
             },
             required: ['status', 'data'],
           },

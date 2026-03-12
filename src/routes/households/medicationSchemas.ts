@@ -82,3 +82,37 @@ export const updateReminderBodySchema = z.object({
   ).optional(),
   enabled: z.boolean().optional(),
 });
+
+export const medicationResponseSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    householdId: { type: 'string' },
+    seniorId: { type: 'string' },
+    name: { type: 'string' },
+    dosage: { type: 'string' },
+    form: { type: 'string' },
+    frequency: { type: 'string' },
+    prescribedBy: { type: ['string', 'null'] },
+    prescriptionDate: { type: ['string', 'null'] },
+    startDate: { type: 'string' },
+    endDate: { type: ['string', 'null'] },
+    instructions: { type: ['string', 'null'] },
+    createdByUserId: { type: 'string' },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+  },
+  required: [
+    'id',
+    'householdId',
+    'seniorId',
+    'name',
+    'dosage',
+    'form',
+    'frequency',
+    'startDate',
+    'createdByUserId',
+    'createdAt',
+    'updatedAt',
+  ],
+} as const;
