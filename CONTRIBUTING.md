@@ -21,7 +21,6 @@ python3 scripts/agents_proof.py --refresh
 2. Run API quality checks:
 
 ```bash
-cd api
 npm run quality:check
 ```
 

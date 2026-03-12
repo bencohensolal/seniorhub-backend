@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: api/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,14 +26,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install API dependencies
-        run: |
-          cd api
-          npm ci
+        run: npm ci
 
       - name: Run API quality gate
-        run: |
-          cd api
-          npm run quality:check
+        run: npm run quality:check
 
       - name: Verify docs consistency
         run: python3 scripts/docs_guard.py

@@ -57,7 +57,7 @@ Build a secure, maintainable backend platform for Senior Hub that can reliably s
 - AGENTS proof is mandatory before commit:
   - `python3 scripts/agents_proof.py --refresh`
 - API quality gate before merge:
-  - `cd api && npm run quality:check`
+  - `npm run quality:check`
 
 ## Cross-project coordination
 
