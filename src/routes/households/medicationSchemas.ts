@@ -99,6 +99,25 @@ export const medicationResponseSchema = {
     endDate: { type: ['string', 'null'] },
     instructions: { type: ['string', 'null'] },
     createdByUserId: { type: 'string' },
+    reminders: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          medicationId: { type: 'string' },
+          time: { type: 'string' },
+          daysOfWeek: {
+            type: 'array',
+            items: { type: 'integer', minimum: 0, maximum: 6 },
+          },
+          enabled: { type: 'boolean' },
+          createdAt: { type: 'string' },
+          updatedAt: { type: 'string' },
+        },
+        required: ['id', 'medicationId', 'time', 'daysOfWeek', 'enabled', 'createdAt', 'updatedAt'],
+      },
+    },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
   },
