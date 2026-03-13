@@ -8,8 +8,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROOF_FILE = ROOT / ".agents-proof"
+AGENTS_FILE = ROOT / "AGENTS.md"
 WATCHED_FILES = [
-    ROOT / "AGENTS.md",
+    AGENTS_FILE,
     ROOT / "README.md",
     ROOT / "ARCHITECTURE.md",
     ROOT / "CHANGELOG.md",
@@ -40,7 +41,12 @@ def refresh_proof() -> int:
 def check_proof() -> int:
     expected = compute_digest()
     if not PROOF_FILE.exists():
-        print("AGENTS proof missing. Run: python3 scripts/agents_proof.py --refresh")
+        print("AGENTS proof missing.")
+        print("Your AGENTS context is missing.")
+        print(f"Before doing anything else, read this file completely: {AGENTS_FILE}")
+        print("Load and keep its directives in active session context for the rest of this session.")
+        print("Do not make further edits or run commit-related commands until this is done.")
+        print("Only then run: python3 scripts/agents_proof.py --refresh")
         return 1
 
     current = PROOF_FILE.read_text(encoding="utf-8").strip()
@@ -48,7 +54,11 @@ def check_proof() -> int:
         print("AGENTS proof is outdated.")
         print(f"Expected: {expected}")
         print(f"Current : {current or '<empty>'}")
-        print("Run: python3 scripts/agents_proof.py --refresh")
+        print("This means your AGENTS context is stale.")
+        print(f"Before doing anything else, re-read this file completely: {AGENTS_FILE}")
+        print("Load and keep its directives in active session context for the rest of this session.")
+        print("Do not make further edits or run commit-related commands until this is done.")
+        print("Only then run: python3 scripts/agents_proof.py --refresh")
         return 1
 
     print(f"AGENTS proof valid: {current}")
