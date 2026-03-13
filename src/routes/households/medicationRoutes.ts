@@ -14,6 +14,12 @@ import {
 import { handleDomainError } from '../errorHandler.js';
 import { requireWritePermission } from '../../plugins/authContext.js';
 import { verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
+import {
+  assertRequesterCanShareHealthData,
+  buildHouseholdPrivacyContext,
+  filterMedicationsByPrivacy,
+} from '../../domain/services/privacyFilter.js';
 
 export function registerMedicationRoutes(
   fastify: FastifyInstance,
@@ -23,6 +29,7 @@ export function registerMedicationRoutes(
     updateMedicationUseCase: UpdateMedicationUseCase;
     deleteMedicationUseCase: DeleteMedicationUseCase;
   },
+  repository: HouseholdRepository,
 ): void {
   type CreateMedicationRouteInput = Parameters<CreateMedicationUseCase['execute']>[0];
 
@@ -72,10 +79,16 @@ export function registerMedicationRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const filteredMedications = filterMedicationsByPrivacy(
+          medications,
+          privacyContext,
+          request.requester?.userId,
+        );
 
         return reply.status(200).send({
           status: 'success',
-          data: medications,
+          data: filteredMedications,
         });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -101,9 +114,9 @@ export function registerMedicationRoutes(
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
             dosage: { type: 'string', minLength: 1, maxLength: 100 },
-            form: { 
-              type: 'string', 
-              enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other'] 
+            form: {
+              type: 'string',
+              enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other']
             },
             frequency: { type: 'string', minLength: 1, maxLength: 200 },
             prescribedBy: { type: 'string', maxLength: 200 },
@@ -141,6 +154,8 @@ export function registerMedicationRoutes(
 
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const inputData: CreateMedicationRouteInput = {
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
@@ -189,9 +204,9 @@ export function registerMedicationRoutes(
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
             dosage: { type: 'string', minLength: 1, maxLength: 100 },
-            form: { 
-              type: 'string', 
-              enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other'] 
+            form: {
+              type: 'string',
+              enum: ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'patch', 'inhaler', 'suppository', 'other']
             },
             frequency: { type: 'string', minLength: 1, maxLength: 200 },
             prescribedBy: { type: ['string', 'null'], maxLength: 200 },
@@ -229,6 +244,8 @@ export function registerMedicationRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const updateData: UpdateMedicationInput = {};
         const body = bodyResult.data;
 
@@ -296,6 +313,8 @@ export function registerMedicationRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         await useCases.deleteMedicationUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,

@@ -56,7 +56,7 @@ import { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTas
 
 /**
  * Households plugin
- * 
+ *
  * This plugin registers all household-related routes organized by domain:
  * - Household management (create, overview, list memberships)
  * - Invitation management (create, accept, cancel, resolve)
@@ -125,7 +125,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     removeHouseholdMemberUseCase: useCases.removeHouseholdMemberUseCase,
     updateHouseholdMemberRoleUseCase: useCases.updateHouseholdMemberRoleUseCase,
     leaveHouseholdUseCase: useCases.leaveHouseholdUseCase,
-  });
+  }, repository);
 
   registerInvitationRoutes(fastify, repository, {
     createBulkInvitationsUseCase: useCases.createBulkInvitationsUseCase,
@@ -147,14 +147,14 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createMedicationUseCase: useCases.createMedicationUseCase,
     updateMedicationUseCase: useCases.updateMedicationUseCase,
     deleteMedicationUseCase: useCases.deleteMedicationUseCase,
-  });
+  }, repository);
 
   registerReminderRoutes(fastify, {
     listMedicationRemindersUseCase: useCases.listMedicationRemindersUseCase,
     createReminderUseCase: useCases.createReminderUseCase,
     updateReminderUseCase: useCases.updateReminderUseCase,
     deleteReminderUseCase: useCases.deleteReminderUseCase,
-  });
+  }, repository);
 
   registerAppointmentRoutes(fastify, {
     listHouseholdAppointmentsUseCase: useCases.listHouseholdAppointmentsUseCase,
@@ -167,7 +167,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
     modifyOccurrenceUseCase: useCases.modifyOccurrenceUseCase,
     cancelOccurrenceUseCase: useCases.cancelOccurrenceUseCase,
-  });
+  }, repository);
 
   registerTaskRoutes(fastify, {
     listHouseholdTasksUseCase: useCases.listHouseholdTasksUseCase,
@@ -178,10 +178,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createTaskReminderUseCase: useCases.createTaskReminderUseCase,
     updateTaskReminderUseCase: useCases.updateTaskReminderUseCase,
     deleteTaskReminderUseCase: useCases.deleteTaskReminderUseCase,
-  });
+  }, repository);
 
   registerDisplayTabletRoutes(fastify, repository);
-  
+
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });
 };

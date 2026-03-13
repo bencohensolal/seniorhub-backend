@@ -4,6 +4,7 @@ import { registerAuthContext } from '../../plugins/authContext.js';
 import { registerMedicationRoutes } from './medicationRoutes.js';
 
 type MedicationRouteUseCases = Parameters<typeof registerMedicationRoutes>[1];
+type MedicationRouteRepository = Parameters<typeof registerMedicationRoutes>[2];
 
 const buildUseCases = (overrides: Partial<MedicationRouteUseCases>): MedicationRouteUseCases => ({
   listHouseholdMedicationsUseCase: {
@@ -24,6 +25,34 @@ const buildUseCases = (overrides: Partial<MedicationRouteUseCases>): MedicationR
   } as unknown as MedicationRouteUseCases['deleteMedicationUseCase'],
   ...overrides,
 });
+
+const repositoryStub: MedicationRouteRepository = {
+  getUserPrivacySettings: async () => ({
+    id: 'privacy-1',
+    userId: 'user-2',
+    shareProfile: true,
+    shareHealthData: true,
+    shareActivityHistory: true,
+    allowAnalytics: false,
+    createdAt: '2026-03-12T20:00:00.000Z',
+    updatedAt: '2026-03-12T20:00:00.000Z',
+  }),
+  listHouseholdMembers: async () => [
+    {
+      id: '7bdfe6e0-beb7-4684-ae6c-eb5a0b2f3d0d',
+      householdId: '3617e173-d359-492b-94b7-4c32622e7526',
+      userId: 'user-2',
+      email: 'ben@example.com',
+      firstName: 'Ben',
+      lastName: 'Martin',
+      role: 'senior',
+      status: 'active',
+      joinedAt: '2026-03-12T20:00:00.000Z',
+      createdAt: '2026-03-12T20:00:00.000Z',
+    },
+  ],
+  getBulkPrivacySettings: async () => new Map(),
+} as unknown as MedicationRouteRepository;
 
 describe('registerMedicationRoutes', () => {
   it('keeps reminders in the medication list response', async () => {
@@ -46,7 +75,6 @@ describe('registerMedicationRoutes', () => {
             startDate: '2026-03-12T20:00:00.000Z',
             endDate: null,
             instructions: null,
-            createdByUserId: 'user-2',
             reminders: [
               {
                 id: 'reminder-123',
@@ -63,7 +91,7 @@ describe('registerMedicationRoutes', () => {
           },
         ],
       } as unknown as MedicationRouteUseCases['listHouseholdMedicationsUseCase'],
-    }));
+    }), repositoryStub);
 
     const response = await app.inject({
       method: 'GET',
@@ -110,12 +138,11 @@ describe('registerMedicationRoutes', () => {
           startDate: '2026-03-12T20:00:00.000Z',
           endDate: null,
           instructions: null,
-          createdByUserId: 'user-2',
           createdAt: '2026-03-12T20:00:00.000Z',
           updatedAt: '2026-03-12T20:00:00.000Z',
         }),
       } as unknown as MedicationRouteUseCases['createMedicationUseCase'],
-    }));
+    }), repositoryStub);
 
     const response = await app.inject({
       method: 'POST',
@@ -152,7 +179,6 @@ describe('registerMedicationRoutes', () => {
         startDate: '2026-03-12T20:00:00.000Z',
         endDate: null,
         instructions: null,
-        createdByUserId: 'user-2',
         createdAt: '2026-03-12T20:00:00.000Z',
         updatedAt: '2026-03-12T20:00:00.000Z',
       },
