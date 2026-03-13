@@ -37,7 +37,7 @@ const tasksScreenSettingsSchema = z.object({
 });
 
 const weekCalendarScreenSettingsSchema = z.object({
-  startDay: z.union([z.literal(0), z.literal(1)]),
+  startDay: z.union([z.literal(0), z.literal(1), z.literal('today')]),
   displayMode: z.enum(['compact', 'detailed']),
   showWeekNumber: z.boolean(),
 });
@@ -81,6 +81,8 @@ export const tabletDisplayConfigSchema = z.object({
   dataCacheDuration: z.number().int().min(60000).max(3600000),
   dataRefreshInterval: z.number().int().min(60000).max(3600000),
   kioskModeEnabled: z.boolean(),
+  language: z.enum(['en', 'fr']),
+  tapToAdvanceEnabled: z.boolean(),
   screens: z.array(screenConfigSchema).min(1),
 }).refine((data) => {
   // Validate unique screen orders
