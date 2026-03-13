@@ -133,9 +133,9 @@ export function registerAppointmentRoutes(
           required: ['title', 'type', 'date', 'time', 'seniorIds'],
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 200 },
-            type: { 
-              type: 'string', 
-              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other'] 
+            type: {
+              type: 'string',
+              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other']
             },
             date: { type: 'string' },
             time: { type: 'string' },
@@ -151,9 +151,9 @@ export function registerAppointmentRoutes(
             documentsToTake: { type: 'string', maxLength: 500 },
             transportArrangement: { type: 'string', maxLength: 500 },
             recurrence: { type: 'object' },
-            status: { 
-              type: 'string', 
-              enum: ['scheduled', 'confirmed', 'cancelled', 'completed', 'missed'] 
+            status: {
+              type: 'string',
+              enum: ['scheduled', 'confirmed', 'cancelled', 'completed', 'missed']
             },
             notes: { type: 'string', maxLength: 1000 },
           },
@@ -163,7 +163,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -246,9 +246,9 @@ export function registerAppointmentRoutes(
           type: 'object',
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 200 },
-            type: { 
-              type: 'string', 
-              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other'] 
+            type: {
+              type: 'string',
+              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other']
             },
             date: { type: 'string' },
             time: { type: 'string' },
@@ -264,9 +264,9 @@ export function registerAppointmentRoutes(
             documentsToTake: { type: ['string', 'null'], maxLength: 500 },
             transportArrangement: { type: ['string', 'null'], maxLength: 500 },
             recurrence: { type: ['object', 'null'] },
-            status: { 
-              type: 'string', 
-              enum: ['scheduled', 'confirmed', 'cancelled', 'completed', 'missed'] 
+            status: {
+              type: 'string',
+              enum: ['scheduled', 'confirmed', 'cancelled', 'completed', 'missed']
             },
             notes: { type: ['string', 'null'], maxLength: 1000 },
           },
@@ -276,7 +276,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -422,7 +422,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -499,7 +499,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -709,7 +709,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -772,7 +772,7 @@ export function registerAppointmentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
