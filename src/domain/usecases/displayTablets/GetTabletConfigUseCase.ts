@@ -40,6 +40,7 @@ export class GetTabletConfigUseCase {
           slideDuration: 10000,
           dataCacheDuration: 300000,
           dataRefreshInterval: 300000,
+          kioskModeEnabled: false,
           screens: [],
         };
       }
