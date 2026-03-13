@@ -1,12 +1,12 @@
 // Display Tablet Configuration Types
 // These types define the structure for configuring display tablets
 
-export type ScreenType = 
-  | 'summary' 
-  | 'datetime' 
-  | 'appointments' 
-  | 'tasks' 
-  | 'weekCalendar' 
+export type ScreenType =
+  | 'summary'
+  | 'datetime'
+  | 'appointments'
+  | 'tasks'
+  | 'weekCalendar'
   | 'monthCalendar'
   | 'photoGallery';
 
@@ -103,10 +103,11 @@ export interface TabletDisplayConfig {
   slideDuration: number; // milliseconds (default: 10000)
   dataCacheDuration: number; // milliseconds (default: 300000)
   dataRefreshInterval: number; // milliseconds (default: 300000)
-  
+  kioskModeEnabled: boolean;
+
   // Screen configurations
   screens: ScreenConfig[];
-  
+
   // Metadata
   lastUpdated?: string; // ISO timestamp
 }
@@ -116,6 +117,7 @@ export const DEFAULT_TABLET_CONFIG: TabletDisplayConfig = {
   slideDuration: 10000,
   dataCacheDuration: 300000,
   dataRefreshInterval: 300000,
+  kioskModeEnabled: false,
   screens: [
     {
       type: 'summary',

@@ -652,9 +652,10 @@ export const registerDisplayTabletRoutes = (
             slideDuration: { type: 'number' },
             dataCacheDuration: { type: 'number' },
             dataRefreshInterval: { type: 'number' },
+            kioskModeEnabled: { type: 'boolean' },
             screens: { type: 'array' },
           },
-          required: ['slideDuration', 'dataCacheDuration', 'dataRefreshInterval', 'screens'],
+          required: ['slideDuration', 'dataCacheDuration', 'dataRefreshInterval', 'kioskModeEnabled', 'screens'],
         },
         response: {
           200: {
