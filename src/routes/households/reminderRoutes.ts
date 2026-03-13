@@ -14,6 +14,13 @@ import {
 import { handleDomainError } from '../errorHandler.js';
 import { getRequesterContext } from './utils.js';
 import { requireWritePermission } from '../../plugins/authContext.js';
+import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
+import {
+  assertRequesterCanShareHealthData,
+  buildHouseholdPrivacyContext,
+  filterMedicationsByPrivacy,
+} from '../../domain/services/privacyFilter.js';
+import { NotFoundError } from '../../domain/errors/index.js';
 
 export function registerReminderRoutes(
   fastify: FastifyInstance,
@@ -23,6 +30,7 @@ export function registerReminderRoutes(
     updateReminderUseCase: UpdateReminderUseCase;
     deleteReminderUseCase: DeleteReminderUseCase;
   },
+  repository: HouseholdRepository,
 ): void {
   // GET /v1/households/:householdId/medications/:medicationId/reminders - List medication reminders
   fastify.get(
@@ -64,6 +72,24 @@ export function registerReminderRoutes(
       }
 
       try {
+        const medication = await repository.getMedicationById(
+          paramsResult.data.medicationId,
+          paramsResult.data.householdId,
+        );
+        if (!medication) {
+          throw new NotFoundError('Medication not found.');
+        }
+
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const visibleMedication = filterMedicationsByPrivacy(
+          [{ ...medication, reminders: [] }],
+          privacyContext,
+          request.requester?.userId,
+        );
+        if (visibleMedication.length === 0) {
+          throw new NotFoundError('Medication not found.');
+        }
+
         const reminders = await useCases.listMedicationRemindersUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
@@ -142,6 +168,8 @@ export function registerReminderRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const reminder = await useCases.createReminderUseCase.execute({
           medicationId: paramsResult.data.medicationId,
           householdId: paramsResult.data.householdId,
@@ -223,6 +251,8 @@ export function registerReminderRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const updateData: UpdateReminderInput = {};
         const body = bodyResult.data;
 
@@ -286,6 +316,8 @@ export function registerReminderRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         await useCases.deleteReminderUseCase.execute({
           reminderId: paramsResult.data.reminderId,
           medicationId: paramsResult.data.medicationId,

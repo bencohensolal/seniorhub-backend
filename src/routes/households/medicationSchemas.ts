@@ -98,7 +98,6 @@ export const medicationResponseSchema = {
     startDate: { type: 'string' },
     endDate: { type: ['string', 'null'] },
     instructions: { type: ['string', 'null'] },
-    createdByUserId: { type: 'string' },
     reminders: {
       type: 'array',
       items: {
@@ -130,7 +129,6 @@ export const medicationResponseSchema = {
     'form',
     'frequency',
     'startDate',
-    'createdByUserId',
     'createdAt',
     'updatedAt',
   ],

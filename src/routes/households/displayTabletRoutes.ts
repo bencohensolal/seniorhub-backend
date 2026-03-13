@@ -80,10 +80,8 @@ export const registerDisplayTabletRoutes = (
                     description: { type: ['string', 'null'] },
                     status: { type: 'string', enum: ['active', 'revoked'] },
                     createdAt: { type: 'string' },
-                    createdBy: { type: 'string' },
                     lastActiveAt: { type: ['string', 'null'] },
                     revokedAt: { type: ['string', 'null'] },
-                    revokedBy: { type: ['string', 'null'] },
                   },
                 },
               },
@@ -102,8 +100,8 @@ export const registerDisplayTabletRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
-        // Remove tokenHash from response
-        const sanitized = tablets.map(({ tokenHash, ...tablet }) => tablet);
+        // Remove internal actor IDs from response
+        const sanitized = tablets.map(({ tokenHash, createdBy, revokedBy, ...tablet }) => tablet);
 
         return reply.status(200).send({
           status: 'success',
@@ -150,10 +148,8 @@ export const registerDisplayTabletRoutes = (
                   token: { type: 'string' }, // ONLY returned at creation
                   status: { type: 'string', enum: ['active', 'revoked'] },
                   createdAt: { type: 'string' },
-                  createdBy: { type: 'string' },
                   lastActiveAt: { type: ['string', 'null'] },
                   revokedAt: { type: ['string', 'null'] },
-                  revokedBy: { type: ['string', 'null'] },
                 },
               },
             },
@@ -219,10 +215,8 @@ export const registerDisplayTabletRoutes = (
                   description: { type: ['string', 'null'] },
                   status: { type: 'string', enum: ['active', 'revoked'] },
                   createdAt: { type: 'string' },
-                  createdBy: { type: 'string' },
                   lastActiveAt: { type: ['string', 'null'] },
                   revokedAt: { type: ['string', 'null'] },
-                  revokedBy: { type: ['string', 'null'] },
                 },
               },
             },
@@ -244,8 +238,8 @@ export const registerDisplayTabletRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
-        // Remove tokenHash from response
-        const { tokenHash, ...sanitized } = tablet;
+        // Remove internal actor IDs from response
+        const { tokenHash, createdBy, revokedBy, ...sanitized } = tablet;
 
         return reply.status(200).send({
           status: 'success',
@@ -378,10 +372,8 @@ export const registerDisplayTabletRoutes = (
                   token: { type: 'string' }, // New token returned
                   status: { type: 'string', enum: ['active', 'revoked'] },
                   createdAt: { type: 'string' },
-                  createdBy: { type: 'string' },
                   lastActiveAt: { type: ['string', 'null'] },
                   revokedAt: { type: ['string', 'null'] },
-                  revokedBy: { type: ['string', 'null'] },
                 },
               },
             },

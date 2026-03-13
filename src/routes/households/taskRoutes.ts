@@ -24,6 +24,12 @@ import {
 import { handleDomainError } from '../errorHandler.js';
 import { getRequesterContext, verifyTabletHouseholdAccess } from './utils.js';
 import { requireWritePermission } from '../../plugins/authContext.js';
+import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
+import {
+  anonymizeTasksByPrivacy,
+  assertRequesterCanShareActivityHistory,
+  buildHouseholdPrivacyContext,
+} from '../../domain/services/privacyFilter.js';
 
 export function registerTaskRoutes(
   fastify: FastifyInstance,
@@ -37,6 +43,7 @@ export function registerTaskRoutes(
     updateTaskReminderUseCase: UpdateTaskReminderUseCase;
     deleteTaskReminderUseCase: DeleteTaskReminderUseCase;
   },
+  repository: HouseholdRepository,
 ): void {
   type CreateTaskRouteInput = Parameters<CreateTaskUseCase['execute']>[0];
   type TaskRecurrenceInput = z.infer<typeof createTaskBodySchema>['recurrence'];
@@ -72,9 +79,9 @@ export function registerTaskRoutes(
           properties: {
             status: { type: 'string', enum: ['pending', 'completed', 'cancelled'] },
             seniorId: { type: 'string' },
-            category: { 
-              type: 'string', 
-              enum: ['hydration', 'meals', 'medication', 'hygiene', 'mobility', 'social', 'medical', 'household', 'other'] 
+            category: {
+              type: 'string',
+              enum: ['hydration', 'meals', 'medication', 'hygiene', 'mobility', 'social', 'medical', 'household', 'other']
             },
             fromDate: { type: 'string' },
             toDate: { type: 'string' },
@@ -126,10 +133,16 @@ export function registerTaskRoutes(
           requester: getRequesterContext(request),
           filters: taskFilters,
         });
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const filteredTasks = anonymizeTasksByPrivacy(
+          tasks,
+          privacyContext,
+          request.requester?.userId,
+        );
 
         return reply.status(200).send({
           status: 'success',
-          data: tasks,
+          data: filteredTasks,
         });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -155,9 +168,9 @@ export function registerTaskRoutes(
             title: { type: 'string', minLength: 1, maxLength: 255 },
             seniorId: { type: 'string' },
             description: { type: 'string', maxLength: 1000 },
-            category: { 
-              type: 'string', 
-              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other'] 
+            category: {
+              type: 'string',
+              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other']
             },
             priority: { type: 'string', enum: ['low', 'normal', 'high'] },
             dueDate: { type: 'string' },
@@ -247,9 +260,9 @@ export function registerTaskRoutes(
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 255 },
             description: { type: ['string', 'null'], maxLength: 1000 },
-            category: { 
-              type: 'string', 
-              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other'] 
+            category: {
+              type: 'string',
+              enum: ['hydration', 'nutrition', 'exercise', 'social', 'household', 'wellbeing', 'other']
             },
             priority: { type: 'string', enum: ['low', 'normal', 'high'] },
             status: { type: 'string', enum: ['pending', 'completed', 'cancelled'] },
@@ -288,6 +301,10 @@ export function registerTaskRoutes(
       }
 
       try {
+        if (bodyResult.data.status === 'completed') {
+          await assertRequesterCanShareActivityHistory(repository, request.requester!.userId);
+        }
+
         const updateData: UpdateTaskInput = {};
         const body = bodyResult.data;
 
@@ -372,6 +389,8 @@ export function registerTaskRoutes(
       }
 
       try {
+        await assertRequesterCanShareActivityHistory(repository, request.requester!.userId);
+
         const body = bodyResult.data;
         const inputData: CompleteTaskInput & {
           taskId: string;
@@ -382,7 +401,7 @@ export function registerTaskRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         };
-        
+
         if (body.completedAt) inputData.completedAt = body.completedAt;
 
         const task = await useCases.completeTaskUseCase.execute(inputData);

@@ -28,6 +28,13 @@ import {
 import { handleDomainError } from '../errorHandler.js';
 import { requireWritePermission } from '../../plugins/authContext.js';
 import { verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
+import {
+  assertRequesterCanShareHealthData,
+  buildHouseholdPrivacyContext,
+  filterAppointmentsByPrivacy,
+} from '../../domain/services/privacyFilter.js';
+import { NotFoundError } from '../../domain/errors/index.js';
 
 export function registerAppointmentRoutes(
   fastify: FastifyInstance,
@@ -43,6 +50,7 @@ export function registerAppointmentRoutes(
     modifyOccurrenceUseCase: ModifyOccurrenceUseCase;
     cancelOccurrenceUseCase: CancelOccurrenceUseCase;
   },
+  repository: HouseholdRepository,
 ): void {
   type CreateAppointmentRouteInput = Parameters<CreateAppointmentUseCase['execute']>[0];
   type AppointmentRecurrenceInput = z.infer<typeof createAppointmentBodySchema>['recurrence'];
@@ -105,10 +113,16 @@ export function registerAppointmentRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const filteredAppointments = filterAppointmentsByPrivacy(
+          appointments,
+          privacyContext,
+          request.requester?.userId,
+        );
 
         return reply.status(200).send({
           status: 'success',
-          data: appointments,
+          data: filteredAppointments,
         });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -185,6 +199,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const body = bodyResult.data;
         const inputData: CreateAppointmentRouteInput = {
           householdId: paramsResult.data.householdId,
@@ -299,6 +315,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const updateData: UpdateAppointmentInput = {};
         const body = bodyResult.data;
 
@@ -380,6 +398,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         await useCases.deleteAppointmentUseCase.execute({
           appointmentId: paramsResult.data.appointmentId,
           householdId: paramsResult.data.householdId,
@@ -444,6 +464,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const body = bodyResult.data;
         const inputData: CreateAppointmentReminderInput & {
           householdId: string;
@@ -522,6 +544,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const updateData: UpdateAppointmentReminderInput = {};
         const body = bodyResult.data;
 
@@ -585,6 +609,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         await useCases.deleteAppointmentReminderUseCase.execute({
           reminderId: paramsResult.data.reminderId,
           appointmentId: paramsResult.data.appointmentId,
@@ -651,6 +677,24 @@ export function registerAppointmentRoutes(
       try {
         // Verify tablet can only access its own household
         verifyTabletHouseholdAccess(request, reply, paramsResult.data.householdId);
+
+        const appointment = await repository.getAppointmentById(
+          paramsResult.data.appointmentId,
+          paramsResult.data.householdId,
+        );
+        if (!appointment) {
+          throw new NotFoundError('Appointment not found.');
+        }
+
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const visibleAppointment = filterAppointmentsByPrivacy(
+          [appointment],
+          privacyContext,
+          request.requester?.userId,
+        );
+        if (visibleAppointment.length === 0) {
+          throw new NotFoundError('Appointment not found.');
+        }
 
         const requester = getRequesterContext(request);
         const occurrences = await useCases.listAppointmentOccurrencesUseCase.execute({
@@ -732,6 +776,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const requester = getRequesterContext(request);
         const occurrence = await useCases.modifyOccurrenceUseCase.execute({
           userId: requester.userId,
@@ -794,6 +840,8 @@ export function registerAppointmentRoutes(
       }
 
       try {
+        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
+
         const requester = getRequesterContext(request);
         const occurrence = await useCases.cancelOccurrenceUseCase.execute({
           userId: requester.userId,

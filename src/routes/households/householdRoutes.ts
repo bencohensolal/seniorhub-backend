@@ -9,6 +9,8 @@ import type { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/hou
 import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './schemas.js';
 import { handleDomainError } from '../errorHandler.js';
 import { getRequesterContext } from './utils.js';
+import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
+import { buildHouseholdPrivacyContext, filterMembersByPrivacy } from '../../domain/services/privacyFilter.js';
 
 export const registerHouseholdRoutes = (
   fastify: FastifyInstance,
@@ -21,6 +23,7 @@ export const registerHouseholdRoutes = (
     updateHouseholdMemberRoleUseCase: UpdateHouseholdMemberRoleUseCase;
     leaveHouseholdUseCase: LeaveHouseholdUseCase;
   },
+  repository: HouseholdRepository,
 ) => {
   // POST /v1/households - Create a new household
   fastify.post(
@@ -43,11 +46,10 @@ export const registerHouseholdRoutes = (
                 properties: {
                   id: { type: 'string' },
                   name: { type: 'string' },
-                  createdByUserId: { type: 'string' },
                   createdAt: { type: 'string' },
                   updatedAt: { type: 'string' },
                 },
-                required: ['id', 'name', 'createdByUserId', 'createdAt', 'updatedAt'],
+                required: ['id', 'name', 'createdAt', 'updatedAt'],
               },
             },
             required: ['status', 'data'],
@@ -144,10 +146,9 @@ export const registerHouseholdRoutes = (
                   id: { type: 'string' },
                   name: { type: 'string' },
                   createdAt: { type: 'string' },
-                  createdByUserId: { type: 'string' },
                   memberCount: { type: 'number' },
                 },
-                required: ['id', 'name', 'createdAt', 'createdByUserId', 'memberCount'],
+                required: ['id', 'name', 'createdAt', 'memberCount'],
               },
             },
             required: ['status', 'data'],
@@ -180,7 +181,6 @@ export const registerHouseholdRoutes = (
             id: overview.household.id,
             name: overview.household.name,
             createdAt: overview.household.createdAt,
-            createdByUserId: overview.household.createdByUserId,
             memberCount: overview.membersCount,
           },
         });
@@ -214,11 +214,10 @@ export const registerHouseholdRoutes = (
                     properties: {
                       id: { type: 'string' },
                       name: { type: 'string' },
-                      createdByUserId: { type: 'string' },
                       createdAt: { type: 'string' },
                       updatedAt: { type: 'string' },
                     },
-                    required: ['id', 'name', 'createdByUserId', 'createdAt', 'updatedAt'],
+                    required: ['id', 'name', 'createdAt', 'updatedAt'],
                   },
                   membersCount: { type: 'number' },
                   seniorsCount: { type: 'number' },
@@ -273,7 +272,7 @@ export const registerHouseholdRoutes = (
             message: 'Authentication required. Provide user credentials or tablet session.',
           });
         }
-        
+
         // If tablet, verify it's accessing its own household
         if (request.tabletSession) {
           const params = paramsSchema.parse(request.params);
@@ -324,9 +323,9 @@ export const registerHouseholdRoutes = (
       const paramsResult = paramsSchema.safeParse(request.params);
       if (!paramsResult.success) {
         const errorMessage = paramsResult.error.issues[0]?.message || 'Invalid household ID format';
-        fastify.log.warn({ 
-          error: paramsResult.error, 
-          params: request.params 
+        fastify.log.warn({
+          error: paramsResult.error,
+          params: request.params
         }, `[GET /members] Validation failed: ${errorMessage}`);
         return reply.status(400).send({
           status: 'error',
@@ -339,10 +338,16 @@ export const registerHouseholdRoutes = (
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
+        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
+        const filteredMembers = filterMembersByPrivacy(
+          members,
+          privacyContext,
+          request.requester?.userId,
+        );
 
         return reply.status(200).send({
           status: 'success',
-          data: members.map((member) => ({
+          data: filteredMembers.map((member) => ({
             id: member.id,
             firstName: member.firstName,
             lastName: member.lastName,
@@ -467,10 +472,16 @@ export const registerHouseholdRoutes = (
           newRole: body.role,
           requester: getRequesterContext(request),
         });
+        const privacyContext = await buildHouseholdPrivacyContext(repository, params.householdId);
+        const [filteredMember] = filterMembersByPrivacy(
+          [updatedMember],
+          privacyContext,
+          request.requester?.userId,
+        );
 
         return reply.status(200).send({
           status: 'success',
-          data: updatedMember,
+          data: filteredMember,
         });
       } catch (error) {
         return handleDomainError(error, reply);
