@@ -14,6 +14,7 @@ import type { DisplayTablet } from '../../domain/entities/DisplayTablet.js';
 import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../../domain/entities/Medication.js';
 import type { PrivacySettings } from '../../domain/entities/PrivacySettings.js';
 import type { TabletDisplayConfig } from '../../domain/entities/TabletDisplayConfig.js';
+import type { UserProfile } from '../../domain/entities/UserProfile.js';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../domain/errors/index.js';
 import { nowIso, addHours, hashToken, normalizeEmail, normalizeName } from './postgres/helpers.js';
 
@@ -589,6 +590,51 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     }
     member.role = newRole;
     return member;
+  }
+
+  async getUserProfile(userId: string): Promise<UserProfile | null> {
+    const member = members.find((item) => item.userId === userId && item.status === 'active');
+    if (!member) {
+      return null;
+    }
+
+    return {
+      userId: member.userId,
+      email: member.email,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      updatedAt: member.joinedAt,
+    };
+  }
+
+  async updateUserProfile(userId: string, input: { email: string; firstName: string; lastName: string }): Promise<UserProfile> {
+    const normalizedFirstName = normalizeName(input.firstName);
+    const normalizedLastName = normalizeName(input.lastName);
+    const normalizedEmail = normalizeEmail(input.email);
+    const activeMembers = members.filter((member) => member.userId === userId && member.status === 'active');
+
+    if (activeMembers.length === 0) {
+      throw new NotFoundError('No active household membership found for this user.');
+    }
+
+    activeMembers.forEach((member) => {
+      member.firstName = normalizedFirstName;
+      member.lastName = normalizedLastName;
+      member.email = normalizedEmail;
+    });
+
+    const latestMember = activeMembers[0];
+    if (!latestMember) {
+      throw new NotFoundError('No active household membership found for this user.');
+    }
+
+    return {
+      userId,
+      email: normalizedEmail,
+      firstName: normalizedFirstName,
+      lastName: normalizedLastName,
+      updatedAt: latestMember.joinedAt,
+    };
   }
 
   // Medication methods - stub implementations for test compatibility

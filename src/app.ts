@@ -4,6 +4,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import { householdsRoutes } from './routes/households/index.js';
 import { registerPublicMedicationRoutes } from './routes/medicationRoutes.js';
 import { registerPrivacySettingsRoutes } from './routes/privacySettingsRoutes.js';
+import { registerUserProfileRoutes } from './routes/userProfileRoutes.js';
 import { registerAuthContext } from './plugins/authContext.js';
 import { createHouseholdRepository } from './data/repositories/createHouseholdRepository.js';
 import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
@@ -35,7 +36,7 @@ export const buildApp = () => {
       done(null, undefined);
       return;
     }
-    
+
     try {
       const json = JSON.parse(body as string);
       done(null, json);
@@ -57,7 +58,7 @@ export const buildApp = () => {
         version: '0.1.0',
         description: 'Household onboarding and invitation management API contracts.',
       },
-      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Medications' }, { name: 'Observability' }],
+      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Medications' }, { name: 'Observability' }, { name: 'Privacy' }, { name: 'Users' }],
     },
   });
 
@@ -77,6 +78,7 @@ export const buildApp = () => {
     getUserPrivacySettingsUseCase: new GetUserPrivacySettingsUseCase(repository),
     updateUserPrivacySettingsUseCase: new UpdateUserPrivacySettingsUseCase(repository),
   });
+  registerUserProfileRoutes(app, repository);
 
   return app;
 };

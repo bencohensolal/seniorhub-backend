@@ -46,6 +46,7 @@ import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, U
 import type { TabletDisplayConfig } from '../../domain/entities/TabletDisplayConfig.js';
 import type { CreatePhotoInput, CreatePhotoScreenInput, Photo, PhotoScreen, PhotoScreenWithPhotos, UpdatePhotoInput, UpdatePhotoScreenInput } from '../../domain/entities/PhotoScreen.js';
 import type { PrivacySettings, UpdatePrivacySettingsInput } from '../../domain/entities/PrivacySettings.js';
+import type { UserProfile } from '../../domain/entities/UserProfile.js';
 import { generateDisplayTabletToken, hashDisplayTabletToken } from '../../domain/security/displayTabletToken.js';
 
 const INVITATION_TTL_HOURS = 72;
@@ -3515,6 +3516,71 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   }
 
   // Privacy Settings
+
+  async getUserProfile(userId: string): Promise<UserProfile | null> {
+    const memberResult = await this.pool.query<{
+      user_id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      joined_at: string | Date;
+    }>(
+      `SELECT user_id, email, first_name, last_name, joined_at
+       FROM household_members
+       WHERE user_id = $1 AND status = 'active'
+       ORDER BY joined_at DESC
+       LIMIT 1`,
+      [userId],
+    );
+
+    const member = memberResult.rows[0];
+    if (!member) {
+      return null;
+    }
+
+    return {
+      userId: member.user_id,
+      email: member.email,
+      firstName: member.first_name,
+      lastName: member.last_name,
+      updatedAt: toIso(member.joined_at),
+    };
+  }
+
+  async updateUserProfile(userId: string, input: { email: string; firstName: string; lastName: string }): Promise<UserProfile> {
+    const normalizedEmail = normalizeEmail(input.email);
+    const normalizedFirstName = normalizeName(input.firstName);
+    const normalizedLastName = normalizeName(input.lastName);
+
+    const result = await this.pool.query<{
+      user_id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      joined_at: string | Date;
+    }>(
+      `UPDATE household_members
+       SET email = $2,
+           first_name = $3,
+           last_name = $4
+       WHERE user_id = $1 AND status = 'active'
+       RETURNING user_id, email, first_name, last_name, joined_at`,
+      [userId, normalizedEmail, normalizedFirstName, normalizedLastName],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('No active household membership found for this user.');
+    }
+
+    return {
+      userId: row.user_id,
+      email: row.email,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      updatedAt: toIso(row.joined_at),
+    };
+  }
 
   async getUserPrivacySettings(userId: string): Promise<PrivacySettings | null> {
     const result = await this.pool.query<{
