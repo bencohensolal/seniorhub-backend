@@ -18,7 +18,7 @@ export interface DisplayTablet {
 }
 
 export interface DisplayTabletWithToken extends Omit<DisplayTablet, 'tokenHash'> {
-  token: string; // Plain token - ONLY returned at creation/regeneration
+  token: string; // Plain setup token - ONLY returned at creation/regeneration
 }
 
 export interface CreateDisplayTabletInput {
@@ -43,5 +43,6 @@ export interface DisplayTabletAuthInfo {
 // Complete authentication result with session token (from use case)
 export interface DisplayTabletAuthResult extends DisplayTabletAuthInfo {
   sessionToken: string; // JWT session token valid for 8 hours
+  refreshToken: string; // Rotating refresh token stored on the tablet after setup
   expiresAt: string; // ISO 8601 timestamp
 }

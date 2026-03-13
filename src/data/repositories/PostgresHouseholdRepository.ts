@@ -49,6 +49,7 @@ import type { PrivacySettings, UpdatePrivacySettingsInput } from '../../domain/e
 import { generateDisplayTabletToken, hashDisplayTabletToken } from '../../domain/security/displayTabletToken.js';
 
 const INVITATION_TTL_HOURS = 72;
+const DISPLAY_TABLET_SETUP_TTL_HOURS = 72;
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   constructor(private readonly pool: Pool) {}
@@ -2628,6 +2629,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const now = nowIso();
     const token = generateDisplayTabletToken();
     const tokenHash = hashDisplayTabletToken(token);
+    const tokenExpiresAt = addHours(now, DISPLAY_TABLET_SETUP_TTL_HOURS);
 
     const result = await this.pool.query<{
       id: string;
@@ -2644,12 +2646,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: DisplayTabletStatus;
     }>(
       `INSERT INTO display_tablets (
-         id, household_id, name, description, token_hash, created_at, created_by, status
+         id, household_id, name, description, token_hash, token_expires_at, created_at, created_by, status
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
        RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
                  last_active_at, revoked_at, revoked_by, status`,
-      [id, input.householdId, input.name, input.description ?? null, tokenHash, now, input.createdBy],
+      [id, input.householdId, input.name, input.description ?? null, tokenHash, tokenExpiresAt, now, input.createdBy],
     );
 
     const row = result.rows[0];
@@ -2749,6 +2751,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   async regenerateDisplayTabletToken(tabletId: string, householdId: string): Promise<DisplayTabletWithToken> {
     const newToken = generateDisplayTabletToken();
     const newTokenHash = hashDisplayTabletToken(newToken);
+    const tokenExpiresAt = addHours(nowIso(), DISPLAY_TABLET_SETUP_TTL_HOURS);
 
     const result = await this.pool.query<{
       id: string;
@@ -2765,11 +2768,15 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       status: DisplayTabletStatus;
     }>(
       `UPDATE display_tablets
-       SET token_hash = $3
+       SET token_hash = $3,
+           token_expires_at = $4,
+           token_used_at = NULL,
+           refresh_token_hash = NULL,
+           refresh_token_expires_at = NULL
        WHERE id = $1 AND household_id = $2 AND status = 'active'
        RETURNING id, household_id, name, description, token_hash, config, created_at, created_by,
                  last_active_at, revoked_at, revoked_by, status`,
-      [tabletId, householdId, newTokenHash],
+      [tabletId, householdId, newTokenHash, tokenExpiresAt],
     );
 
     const row = result.rows[0];
@@ -2788,24 +2795,35 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     };
   }
 
-  async authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthInfo | null> {
-    const tokenHash = hashDisplayTabletToken(token);
+  async authenticateDisplayTablet(
+    tabletId: string,
+    setupToken: string,
+    refreshToken: string,
+    refreshTokenExpiresAt: string,
+  ): Promise<DisplayTabletAuthInfo | null> {
+    const tokenHash = hashDisplayTabletToken(setupToken);
+    const refreshTokenHash = hashDisplayTabletToken(refreshToken);
     const now = nowIso();
 
-    // Fetch tablet with household info in a single query
     const result = await this.pool.query<{
-      id: string;
       household_id: string;
       household_name: string;
-      status: DisplayTabletStatus;
-      token_hash: string;
     }>(
-      `SELECT dt.id, dt.household_id, h.name AS household_name, dt.status, dt.token_hash
-       FROM display_tablets dt
-       JOIN households h ON h.id = dt.household_id
-       WHERE dt.id = $1 AND dt.token_hash = $2
-       LIMIT 1`,
-      [tabletId, tokenHash],
+      `UPDATE display_tablets AS dt
+       SET token_used_at = $3,
+           last_active_at = $3,
+           refresh_token_hash = $4,
+           refresh_token_expires_at = $5
+       FROM households h
+       WHERE dt.id = $1
+         AND dt.household_id = h.id
+         AND dt.token_hash = $2
+         AND dt.status = 'active'
+         AND dt.revoked_at IS NULL
+         AND dt.token_used_at IS NULL
+         AND dt.token_expires_at > $3
+       RETURNING dt.household_id, h.name AS household_name`,
+      [tabletId, tokenHash, now, refreshTokenHash, refreshTokenExpiresAt],
     );
 
     const row = result.rows[0];
@@ -2813,20 +2831,47 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       return null;
     }
 
-    // Verify tablet is active
-    if (row.status !== 'active') {
+    return {
+      householdId: row.household_id,
+      householdName: row.household_name,
+      permissions: ['read'],
+    };
+  }
+
+  async refreshDisplayTabletSession(
+    tabletId: string,
+    refreshToken: string,
+    nextRefreshToken: string,
+    nextRefreshTokenExpiresAt: string,
+  ): Promise<DisplayTabletAuthInfo | null> {
+    const refreshTokenHash = hashDisplayTabletToken(refreshToken);
+    const nextRefreshTokenHash = hashDisplayTabletToken(nextRefreshToken);
+    const now = nowIso();
+
+    const result = await this.pool.query<{
+      household_id: string;
+      household_name: string;
+    }>(
+      `UPDATE display_tablets AS dt
+       SET refresh_token_hash = $3,
+           refresh_token_expires_at = $4,
+           last_active_at = $5
+       FROM households h
+       WHERE dt.id = $1
+         AND dt.household_id = h.id
+         AND dt.refresh_token_hash = $2
+         AND dt.status = 'active'
+         AND dt.revoked_at IS NULL
+         AND dt.refresh_token_expires_at IS NOT NULL
+         AND dt.refresh_token_expires_at > $5
+       RETURNING dt.household_id, h.name AS household_name`,
+      [tabletId, refreshTokenHash, nextRefreshTokenHash, nextRefreshTokenExpiresAt, now],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
       return null;
     }
-
-    // Update last_active_at timestamp (fire and forget, don't wait for it)
-    this.pool.query(
-      `UPDATE display_tablets
-       SET last_active_at = $2
-       WHERE id = $1`,
-      [tabletId, now],
-    ).catch(err => {
-      console.error('Failed to update last_active_at for tablet:', err);
-    });
 
     return {
       householdId: row.household_id,

@@ -66,7 +66,8 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/invitations/accept-link',
       '/v1/households/invitations/resolve',
       '/v1/households/invitations/accept',
-      '/v1/display-tablets/authenticate', // Tablet authentication endpoint
+      '/v1/display-tablets/authenticate', // Tablet setup authentication endpoint
+      '/v1/display-tablets/session/refresh',
     ];
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
       return;
@@ -122,63 +123,6 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
         return reply.status(401).send({
           status: 'error',
           message: 'Invalid or expired tablet session token.',
-        });
-      }
-    }
-
-    // Try tablet authentication (Method 2: via x-tablet-id + x-tablet-token)
-    const tabletId = normalize(request.headers['x-tablet-id'] as string | undefined);
-    let tabletToken = normalize(request.headers['x-tablet-token'] as string | undefined);
-
-    // Also check Authorization header for tablet token
-    if (!tabletToken && tabletId) {
-      const authHeader = request.headers.authorization as string | undefined;
-      if (authHeader?.toLowerCase().startsWith('bearer ')) {
-        tabletToken = authHeader.substring(7).trim();
-      }
-    }
-
-    if (tabletId && tabletToken) {
-      try {
-        // Get repository
-        const repository = createHouseholdRepository();
-
-        // Authenticate tablet with raw token (will be hashed in repository)
-        const tabletAuth = await repository.authenticateDisplayTablet(tabletId, tabletToken);
-
-        if (tabletAuth) {
-          // Valid tablet - set tablet context
-          request.tabletSession = {
-            tabletId: tabletId, // Use the tabletId from headers
-            householdId: tabletAuth.householdId,
-            permissions: tabletAuth.permissions,
-            isTablet: true,
-          };
-
-          fastify.log.info({
-            tabletId: tabletId,
-            householdId: tabletAuth.householdId,
-            path: request.url
-          }, 'Tablet authenticated via x-tablet-id + x-tablet-token');
-
-          return; // Tablet is authenticated
-        } else {
-          // Invalid tablet credentials
-          fastify.log.warn({
-            tabletId,
-            path: request.url
-          }, 'Invalid tablet credentials');
-
-          return reply.status(401).send({
-            status: 'error',
-            message: 'Invalid tablet credentials or tablet is not active.',
-          });
-        }
-      } catch (error) {
-        fastify.log.error({ error, tabletId }, 'Tablet authentication error');
-        return reply.status(500).send({
-          status: 'error',
-          message: 'Internal server error during tablet authentication.',
         });
       }
     }

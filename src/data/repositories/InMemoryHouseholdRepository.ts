@@ -775,8 +775,22 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     throw new Error('Display tablet operations not implemented in InMemoryRepository');
   }
 
-  async authenticateDisplayTablet(_tabletId: string, _token: string): Promise<null> {
+  async authenticateDisplayTablet(
+    _tabletId: string,
+    _setupToken: string,
+    _refreshToken: string,
+    _refreshTokenExpiresAt: string,
+  ): Promise<null> {
     // InMemory repository doesn't support display tablets
+    return null;
+  }
+
+  async refreshDisplayTabletSession(
+    _tabletId: string,
+    _refreshToken: string,
+    _nextRefreshToken: string,
+    _nextRefreshTokenExpiresAt: string,
+  ): Promise<null> {
     return null;
   }
 

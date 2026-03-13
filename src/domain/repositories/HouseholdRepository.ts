@@ -87,7 +87,7 @@ export interface HouseholdRepository {
   removeMember(memberId: string): Promise<void>;
   updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member>;
   logAuditEvent(input: AuditEventInput): Promise<void>;
-  
+
   // Medications
   listHouseholdMedications(householdId: string): Promise<Medication[]>;
   getMedicationById(medicationId: string, householdId: string): Promise<Medication | null>;
@@ -153,7 +153,18 @@ export interface HouseholdRepository {
   revokeDisplayTablet(tabletId: string, householdId: string, revokedBy: string): Promise<void>;
   deleteDisplayTablet(tabletId: string, householdId: string): Promise<void>;
   regenerateDisplayTabletToken(tabletId: string, householdId: string): Promise<DisplayTabletWithToken>;
-  authenticateDisplayTablet(tabletId: string, token: string): Promise<DisplayTabletAuthInfo | null>;
+  authenticateDisplayTablet(
+    tabletId: string,
+    setupToken: string,
+    refreshToken: string,
+    refreshTokenExpiresAt: string,
+  ): Promise<DisplayTabletAuthInfo | null>;
+  refreshDisplayTabletSession(
+    tabletId: string,
+    refreshToken: string,
+    nextRefreshToken: string,
+    nextRefreshTokenExpiresAt: string,
+  ): Promise<DisplayTabletAuthInfo | null>;
   countActiveDisplayTablets(householdId: string): Promise<number>;
   updateDisplayTabletConfig(tabletId: string, householdId: string, config: TabletDisplayConfig): Promise<DisplayTablet>;
 

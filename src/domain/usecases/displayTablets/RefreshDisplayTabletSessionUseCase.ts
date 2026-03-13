@@ -6,43 +6,38 @@ import { ForbiddenError } from '../../errors/index.js';
 
 const REFRESH_TOKEN_TTL_HOURS = 24 * 30;
 
-export class AuthenticateDisplayTabletUseCase {
+export class RefreshDisplayTabletSessionUseCase {
   constructor(private readonly repository: HouseholdRepository) {}
 
   async execute(input: {
     tabletId: string;
-    setupToken: string;
+    refreshToken: string;
   }): Promise<DisplayTabletAuthResult> {
-    // Validate setup token format before attempting one-shot pairing.
-    if (!isValidDisplayTabletTokenFormat(input.setupToken)) {
-      throw new ForbiddenError('Invalid tablet setup token format.');
+    if (!isValidDisplayTabletTokenFormat(input.refreshToken)) {
+      throw new ForbiddenError('Invalid tablet refresh token format.');
     }
 
-    const refreshToken = generateDisplayTabletToken();
-    const refreshTokenExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_HOURS * 3600 * 1000).toISOString();
+    const nextRefreshToken = generateDisplayTabletToken();
+    const nextRefreshTokenExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_HOURS * 3600 * 1000).toISOString();
 
-    // Authenticate the tablet using its single-use setup token and mint a refresh token
-    const basicResult = await this.repository.authenticateDisplayTablet(
+    const basicResult = await this.repository.refreshDisplayTabletSession(
       input.tabletId,
-      input.setupToken,
-      refreshToken,
-      refreshTokenExpiresAt,
+      input.refreshToken,
+      nextRefreshToken,
+      nextRefreshTokenExpiresAt,
     );
 
     if (!basicResult) {
-      throw new ForbiddenError('Invalid, expired, or already-used tablet setup token.');
+      throw new ForbiddenError('Invalid or expired tablet refresh token.');
     }
 
-    // Generate a session token (valid for 8 hours)
     const sessionToken = generateTabletSessionToken(input.tabletId, basicResult.householdId);
-
-    // Calculate expiration time (8 hours from now)
     const expiresAt = new Date(Date.now() + 8 * 3600 * 1000).toISOString();
 
     return {
       ...basicResult,
       sessionToken,
-      refreshToken,
+      refreshToken: nextRefreshToken,
       expiresAt,
     };
   }
