@@ -10,6 +10,8 @@ export type ScreenType =
   | 'monthCalendar'
   | 'photoGallery';
 
+export type TabletLanguage = 'en' | 'fr';
+
 // Base screen configuration
 export interface ScreenConfig {
   type: ScreenType;
@@ -65,7 +67,7 @@ export interface TasksScreenSettings {
 
 // Week Calendar screen settings
 export interface WeekCalendarScreenSettings {
-  startDay: 0 | 1; // 0=Sunday, 1=Monday
+  startDay: 0 | 1 | 'today'; // 0=Sunday, 1=Monday, 'today'=rolling 7 days
   displayMode: 'compact' | 'detailed';
   showWeekNumber: boolean;
 }
@@ -104,6 +106,8 @@ export interface TabletDisplayConfig {
   dataCacheDuration: number; // milliseconds (default: 300000)
   dataRefreshInterval: number; // milliseconds (default: 300000)
   kioskModeEnabled: boolean;
+  language: TabletLanguage;
+  tapToAdvanceEnabled: boolean;
 
   // Screen configurations
   screens: ScreenConfig[];
@@ -118,6 +122,8 @@ export const DEFAULT_TABLET_CONFIG: TabletDisplayConfig = {
   dataCacheDuration: 300000,
   dataRefreshInterval: 300000,
   kioskModeEnabled: false,
+  language: 'en',
+  tapToAdvanceEnabled: false,
   screens: [
     {
       type: 'summary',

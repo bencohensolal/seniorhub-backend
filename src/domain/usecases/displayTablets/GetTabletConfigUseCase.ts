@@ -41,12 +41,16 @@ export class GetTabletConfigUseCase {
           dataCacheDuration: 300000,
           dataRefreshInterval: 300000,
           kioskModeEnabled: false,
+          language: 'en',
+          tapToAdvanceEnabled: false,
           screens: [],
         };
       }
 
+      const baseConfig = config;
+
       const configuredPhotoScreens = new Map(
-        config.screens
+        baseConfig.screens
           .filter((screen) => screen.type === 'photoGallery')
           .map((screen) => {
             const settings = screen.settings as PhotoGalleryScreenSettings | undefined;
@@ -56,7 +60,7 @@ export class GetTabletConfigUseCase {
       );
 
       // Remove any existing photoGallery screens from config (we'll rebuild them)
-      const nonPhotoScreens = config.screens.filter(s => s.type !== 'photoGallery');
+      const nonPhotoScreens = baseConfig.screens.filter(s => s.type !== 'photoGallery');
 
       // Build photoGallery screen configs from database photo screens
       const photoGalleryScreens: ScreenConfig[] = photoScreens.map((photoScreen) => {
@@ -89,7 +93,7 @@ export class GetTabletConfigUseCase {
 
       // Combine all screens
       config = {
-        ...config,
+        ...baseConfig,
         screens: [...nonPhotoScreens, ...photoGalleryScreens],
       };
     }
