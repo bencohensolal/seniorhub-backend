@@ -80,6 +80,7 @@ export const tabletDisplayConfigSchema = z.object({
   slideDuration: z.number().int().min(1000).max(60000),
   dataCacheDuration: z.number().int().min(60000).max(3600000),
   dataRefreshInterval: z.number().int().min(60000).max(3600000),
+  kioskModeEnabled: z.boolean(),
   screens: z.array(screenConfigSchema).min(1),
 }).refine((data) => {
   // Validate unique screen orders
