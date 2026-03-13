@@ -235,3 +235,142 @@ api/src/domain/usecases/
 - Better code discoverability (max 10 files per folder vs 29 flat)
 - Easier navigation and maintenance
 - Scalable pattern for future domains
+
+## 17. Display tablet authentication architecture
+
+The display tablet feature uses a dedicated authentication flow separate from normal user authentication. This is necessary because a household display tablet is a read-only device and should not store caregiver credentials.
+
+### 17.1 Current model
+
+The backend currently supports two tablet authentication mechanisms:
+
+- `tablet token`:
+  - long-lived secret generated when a display tablet is created
+  - hashed at rest in the database
+  - returned only once to the caregiver app
+  - encoded in the QR code and in setup deep links
+  - accepted by the backend both for initial authentication and, today, as a fallback credential on normal tablet requests
+- `tablet session token`:
+  - short-lived signed token generated after successful tablet authentication
+  - valid for 8 hours
+  - verified without a database lookup for signature/expiry
+  - accepted through the `x-tablet-session-token` header
+
+This means the backend already has a notion of "bootstrap credential" and "runtime session", but they are not yet strictly isolated.
+
+```mermaid
+flowchart TD
+  Create["Create display tablet"] --> Secret["Generate raw tablet token"]
+  Secret --> Hash["Store only token hash"]
+  Secret --> QR["Return raw token once for QR / setup link"]
+  QR --> Auth["POST /v1/display-tablets/authenticate"]
+  Auth --> Session["Generate signed tablet session token (8h)"]
+  Session --> Runtime1["Runtime requests with x-tablet-session-token"]
+  QR --> Runtime2["Runtime requests still possible with x-tablet-id + x-tablet-token"]
+```
+
+### 17.2 Why there are effectively two tokens today
+
+From a product perspective, the two credentials are often described as:
+
+- an installation or provisioning secret
+- an authentication/session secret
+
+That description is directionally true, but not fully true in the current implementation:
+
+- the raw tablet token acts like a provisioning secret because it is distributed through the QR code
+- the session token acts like a runtime session because it expires after 8 hours
+- however, the raw tablet token is still accepted on regular tablet API calls, so it is also a live access credential
+
+In short:
+
+- `yes`, the backend currently manages two tablet-related credentials
+- `no`, the raw tablet token is not yet limited to installation only
+
+### 17.3 Current request paths
+
+```mermaid
+sequenceDiagram
+  participant Tablet as Tablet App
+  participant API as API
+  participant Repo as HouseholdRepository
+  participant DB as Database
+
+  Tablet->>API: POST /v1/display-tablets/authenticate (tabletId, token)
+  API->>Repo: authenticateDisplayTablet(tabletId, token)
+  Repo->>DB: compare SHA-256(token) with stored token_hash
+  DB-->>Repo: tablet auth info
+  Repo-->>API: householdId, permissions
+  API-->>Tablet: sessionToken, expiresAt
+
+  alt Preferred runtime path
+    Tablet->>API: request with x-tablet-session-token
+    API-->>Tablet: authorized if signature valid and not expired
+  else Legacy runtime path still supported
+    Tablet->>API: request with x-tablet-id + x-tablet-token
+    API->>Repo: authenticateDisplayTablet(tabletId, token)
+    API-->>Tablet: authorized if token hash matches and tablet is active
+  end
+```
+
+### 17.4 Security properties of the current model
+
+What is already good:
+
+- the raw tablet token is generated securely
+- only a hash is stored at rest
+- revocation and regeneration are supported
+- the tablet session token is short-lived
+- the tablet permission model is read-only
+
+What remains imperfect:
+
+- the provisioning secret is still reusable after setup
+- a leaked QR code or setup link exposes a credential that is stronger than a pure one-shot installer token
+- runtime requests can still avoid the short-lived session path
+- session revocation semantics are weaker than a fully stateful server-side session store
+
+### 17.5 Recommended target model
+
+The preferred long-term design is:
+
+- `setup token`:
+  - short-lived
+  - single-use
+  - only accepted by the pairing endpoint
+- `session token`:
+  - short-lived
+  - used for all runtime tablet requests
+  - renewable when needed
+- no runtime use of the setup token after pairing
+
+```mermaid
+flowchart TD
+  Setup["One-shot setup token"] --> Pair["Pairing endpoint only"]
+  Pair --> Session["Issue short-lived session token"]
+  Session --> Runtime["All tablet reads use session token only"]
+  Runtime --> Refresh["Optional renew / re-enroll flow"]
+```
+
+### 17.6 Why the raw tablet token should not simply become single-use by itself
+
+Making the current long-lived raw tablet token single-use without changing the flow would create UX issues:
+
+- a tablet reboot would force a full re-scan
+- app reinstall or local storage loss would require caregiver intervention every time
+- temporary connectivity issues would become operationally painful
+
+So the right split is usually:
+
+- one-shot secret for installation
+- renewable short-lived session for normal operation
+
+### 17.7 Implementation guidance for future hardening
+
+Recommended order of improvements:
+
+1. Stop using `x-tablet-token` on normal tablet API calls after the initial authentication flow.
+2. Use only `x-tablet-session-token` for read-only tablet requests and SSE subscriptions.
+3. Introduce a dedicated `setupToken` model distinct from the current long-lived tablet secret.
+4. Add explicit revocation checks so an already-issued session can be rejected quickly after tablet revocation when required.
+5. Add rate limiting and audit logging to the pairing endpoint.
