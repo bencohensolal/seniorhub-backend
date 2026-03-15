@@ -947,7 +947,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   }> {
     const client = await this.pool.connect();
     let transactionCommitted = false;
-    const MAX_REACTIVATIONS = 3;
 
     try {
       await client.query('BEGIN');
@@ -989,10 +988,6 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
       if (invitationRow.status !== 'expired') {
         throw new ConflictError('Can only reactivate expired invitations.');
-      }
-
-      if (invitationRow.reactivation_count >= MAX_REACTIVATIONS) {
-        throw new ConflictError(`Maximum reactivation limit (${MAX_REACTIVATIONS}) reached. Please create a new invitation.`);
       }
 
       const newExpiresAt = addHours(nowIso(), INVITATION_TTL_HOURS);

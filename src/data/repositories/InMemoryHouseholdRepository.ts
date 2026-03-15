@@ -544,8 +544,6 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     deepLinkUrl: string;
     fallbackUrl: string | null;
   }> {
-    const MAX_REACTIVATIONS = 3;
-
     const requester = await this.findActiveMemberByUserInHousehold(input.requesterUserId, input.householdId);
     if (!requester || requester.role !== 'caregiver') {
       throw new Error('Only caregivers can reactivate invitations.');
@@ -561,10 +559,6 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
 
     if (invitation.status !== 'expired') {
       throw new Error('Can only reactivate expired invitations.');
-    }
-
-    if (invitation.reactivationCount >= MAX_REACTIVATIONS) {
-      throw new Error(`Maximum reactivation limit (${MAX_REACTIVATIONS}) reached. Please create a new invitation.`);
     }
 
     const newExpiresAt = addHours(nowIso(), INVITATION_TTL_HOURS);
