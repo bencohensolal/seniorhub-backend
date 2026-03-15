@@ -108,6 +108,7 @@ export interface TabletDisplayConfig {
   kioskModeEnabled: boolean;
   language: TabletLanguage;
   tapToAdvanceEnabled: boolean;
+  showCountdownEnabled: boolean;
 
   // Screen configurations
   screens: ScreenConfig[];
@@ -124,6 +125,7 @@ export const DEFAULT_TABLET_CONFIG: TabletDisplayConfig = {
   kioskModeEnabled: false,
   language: 'en',
   tapToAdvanceEnabled: false,
+  showCountdownEnabled: false,
   screens: [
     {
       type: 'summary',

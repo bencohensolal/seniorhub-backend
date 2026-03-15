@@ -43,6 +43,7 @@ export class GetTabletConfigUseCase {
           kioskModeEnabled: false,
           language: 'en',
           tapToAdvanceEnabled: false,
+          showCountdownEnabled: false,
           screens: [],
         };
       }

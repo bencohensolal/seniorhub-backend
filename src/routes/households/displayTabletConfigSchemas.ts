@@ -83,6 +83,7 @@ export const tabletDisplayConfigSchema = z.object({
   kioskModeEnabled: z.boolean(),
   language: z.enum(['en', 'fr']),
   tapToAdvanceEnabled: z.boolean(),
+  showCountdownEnabled: z.boolean(),
   screens: z.array(screenConfigSchema).min(1),
 }).refine((data) => {
   // Validate unique screen orders

@@ -645,9 +645,12 @@ export const registerDisplayTabletRoutes = (
             dataCacheDuration: { type: 'number' },
             dataRefreshInterval: { type: 'number' },
             kioskModeEnabled: { type: 'boolean' },
+            language: { type: 'string', enum: ['en', 'fr'] },
+            tapToAdvanceEnabled: { type: 'boolean' },
+            showCountdownEnabled: { type: 'boolean' },
             screens: { type: 'array' },
           },
-          required: ['slideDuration', 'dataCacheDuration', 'dataRefreshInterval', 'kioskModeEnabled', 'screens'],
+          required: ['slideDuration', 'dataCacheDuration', 'dataRefreshInterval', 'kioskModeEnabled', 'language', 'tapToAdvanceEnabled', 'showCountdownEnabled', 'screens'],
         },
         response: {
           200: {
