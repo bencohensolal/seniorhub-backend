@@ -27,9 +27,8 @@ CREATE TABLE document_folders (
   CHECK (
     (type = 'senior_folder' AND senior_id IS NOT NULL) OR
     (type != 'senior_folder' AND senior_id IS NULL)
-  ),
-  -- Ensure system roots are unique per household per type
-  -- Ensure senior folder per senior per household is unique (only one senior folder per senior)
+  )
+  -- Note: Unique constraints are implemented as partial indexes below
 );
 
 -- documents table
