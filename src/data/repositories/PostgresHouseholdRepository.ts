@@ -3136,7 +3136,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3144,7 +3144,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       deleted_at: string | Date | null;
     }>(
       `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              is_system_root, system_root_type, created_by_user_id,
+              type, system_root_type, created_by_user_id,
               created_at, updated_at, deleted_at
        FROM document_folders
        WHERE id = $1 AND household_id = $2 AND deleted_at IS NULL
@@ -3159,13 +3159,13 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   async listDocumentFoldersByParent(parentFolderId: string | null, householdId: string): Promise<DocumentFolder[]> {
     const query = parentFolderId === null
       ? `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-                is_system_root, system_root_type, created_by_user_id,
+                type, system_root_type, created_by_user_id,
                 created_at, updated_at, deleted_at
          FROM document_folders
          WHERE household_id = $1 AND parent_folder_id IS NULL AND deleted_at IS NULL
          ORDER BY name ASC`
       : `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-                is_system_root, system_root_type, created_by_user_id,
+                type, system_root_type, created_by_user_id,
                 created_at, updated_at, deleted_at
          FROM document_folders
          WHERE household_id = $1 AND parent_folder_id = $2 AND deleted_at IS NULL
@@ -3179,7 +3179,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3194,6 +3194,18 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     const id = randomUUID();
     const now = nowIso();
 
+    // Determine type from input
+    let type: 'system_root' | 'senior_folder' | 'user_folder';
+    if (input.type) {
+      type = input.type;
+    } else if (input.isSystemRoot) {
+      type = 'system_root';
+    } else if (input.seniorId) {
+      type = 'senior_folder';
+    } else {
+      type = 'user_folder';
+    }
+
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -3201,7 +3213,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3210,11 +3222,11 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     }>(
       `INSERT INTO document_folders (
          id, household_id, parent_folder_id, senior_id, name, description,
-         is_system_root, system_root_type, created_by_user_id, created_at, updated_at
+         type, system_root_type, created_by_user_id, created_at, updated_at
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
        RETURNING id, household_id, parent_folder_id, senior_id, name, description,
-                 is_system_root, system_root_type, created_by_user_id,
+                 type, system_root_type, created_by_user_id,
                  created_at, updated_at, deleted_at`,
       [
         id,
@@ -3223,7 +3235,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
         input.seniorId ?? null,
         input.name,
         input.description ?? null,
-        input.isSystemRoot ?? false,
+        type,
         input.systemRootType ?? null,
         input.createdByUserId,
         now,
@@ -3273,7 +3285,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3284,7 +3296,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex - 1} AND household_id = $${paramIndex} AND deleted_at IS NULL
        RETURNING id, household_id, parent_folder_id, senior_id, name, description,
-                 is_system_root, system_root_type, created_by_user_id,
+                 type, system_root_type, created_by_user_id,
                  created_at, updated_at, deleted_at`,
       values,
     );
@@ -3506,7 +3518,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3514,7 +3526,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       deleted_at: string | Date | null;
     }>(
       `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              is_system_root, system_root_type, created_by_user_id,
+              type, system_root_type, created_by_user_id,
               created_at, updated_at, deleted_at
        FROM document_folders
        WHERE household_id = $1 AND senior_id IS NOT NULL AND deleted_at IS NULL
@@ -3533,7 +3545,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3541,10 +3553,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       deleted_at: string | Date | null;
     }>(
       `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              is_system_root, system_root_type, created_by_user_id,
+              type, system_root_type, created_by_user_id,
               created_at, updated_at, deleted_at
        FROM document_folders
-       WHERE household_id = $1 AND is_system_root = true AND deleted_at IS NULL
+       WHERE household_id = $1 AND type = 'system_root' AND deleted_at IS NULL
        ORDER BY system_root_type ASC`,
       [householdId],
     );
@@ -3591,7 +3603,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -3599,7 +3611,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       deleted_at: string | Date | null;
     }>(
       `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              is_system_root, system_root_type, created_by_user_id,
+              type, system_root_type, created_by_user_id,
               created_at, updated_at, deleted_at
        FROM document_folders
        WHERE household_id = $1 AND deleted_at IS NULL
@@ -4453,7 +4465,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       senior_id: string | null;
       name: string;
       description: string | null;
-      is_system_root: boolean;
+      type: 'system_root' | 'senior_folder' | 'user_folder';
       system_root_type: 'medical' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
@@ -4461,10 +4473,10 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
       deleted_at: string | Date | null;
     }>(
       `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              is_system_root, system_root_type, created_by_user_id,
+              type, system_root_type, created_by_user_id,
               created_at, updated_at, deleted_at
        FROM document_folders
-       WHERE household_id = $1 AND is_system_root = true AND system_root_type = $2 AND deleted_at IS NULL
+       WHERE household_id = $1 AND type = 'system_root' AND system_root_type = $2 AND deleted_at IS NULL
        LIMIT 1`,
       [householdId, systemRootType],
     );
@@ -4483,6 +4495,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
           parentFolderId: null,
           name: type === 'medical' ? 'Medical Documents' : 'Administrative Documents',
           description: type === 'medical' ? 'Medical records and health-related documents' : 'Administrative and legal documents',
+          type: 'system_root',
           isSystemRoot: true,
           systemRootType: type,
           createdByUserId: userId,

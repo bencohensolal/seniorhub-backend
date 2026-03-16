@@ -357,22 +357,13 @@ export const mapDocumentFolder = (row: {
   senior_id: string | null;
   name: string;
   description: string | null;
-  is_system_root: boolean;
+  type: 'system_root' | 'senior_folder' | 'user_folder';
   system_root_type: 'medical' | 'administrative' | null;
   created_by_user_id: string;
   created_at: string | Date;
   updated_at: string | Date;
   deleted_at: string | Date | null;
 }): DocumentFolder => {
-  let type: DocumentFolderType;
-  if (row.is_system_root) {
-    type = 'system_root';
-  } else if (row.senior_id !== null) {
-    type = 'senior_folder';
-  } else {
-    type = 'user_folder';
-  }
-
   return {
     id: row.id,
     householdId: row.household_id,
@@ -380,7 +371,7 @@ export const mapDocumentFolder = (row: {
     seniorId: row.senior_id,
     name: row.name,
     description: row.description,
-    type,
+    type: row.type,
     systemRootType: row.system_root_type,
     createdByUserId: row.created_by_user_id,
     createdAt: toIso(row.created_at),
