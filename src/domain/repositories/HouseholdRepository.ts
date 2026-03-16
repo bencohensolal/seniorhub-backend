@@ -16,6 +16,8 @@ import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput,
 import type { PrivacySettings, UpdatePrivacySettingsInput } from '../entities/PrivacySettings.js';
 import type { UserProfile, UpdateUserProfileInput } from '../entities/UserProfile.js';
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
+import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../entities/Document.js';
+import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -195,6 +197,28 @@ export interface HouseholdRepository {
   // User Profile
   getUserProfile(userId: string): Promise<UserProfile | null>;
   updateUserProfile(userId: string, input: UpdateUserProfileInput): Promise<UserProfile>;
+
+  // Documents
+  getDocumentFolderById(folderId: string, householdId: string): Promise<DocumentFolder | null>;
+  listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]>;
+  createDocumentFolder(input: CreateDocumentFolderInput): Promise<DocumentFolder>;
+  updateDocumentFolder(folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder>;
+  softDeleteDocumentFolder(folderId: string, householdId: string): Promise<void>;
+  restoreDocumentFolder(folderId: string, householdId: string): Promise<void>;
+  getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null>;
+  ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void>;
+  listSeniorFolders(householdId: string): Promise<DocumentFolder[]>;
+
+  getDocumentById(documentId: string, householdId: string): Promise<Document | null>;
+  listDocumentsByFolder(householdId: string, folderId: string): Promise<Document[]>;
+  createDocument(input: CreateDocumentInput): Promise<Document>;
+  updateDocument(documentId: string, householdId: string, input: UpdateDocumentInput): Promise<Document>;
+  softDeleteDocument(documentId: string, householdId: string): Promise<void>;
+  restoreDocument(documentId: string, householdId: string): Promise<void>;
+  searchDocumentsAndFolders(householdId: string, query: string): Promise<{
+    folders: DocumentFolder[];
+    documents: Document[];
+  }>;
 
   // Household settings
   getHouseholdSettings(householdId: string): Promise<HouseholdSettings>;

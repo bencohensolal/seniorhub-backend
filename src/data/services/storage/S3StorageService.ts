@@ -1,7 +1,8 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
 import { env } from '../../../config/env.js';
-import type { StorageService, PhotoUploadInput, UploadPhotoResult } from './types.js';
+import type { StorageService, PhotoUploadInput, UploadPhotoResult, DocumentUploadInput, UploadDocumentResult } from './types.js';
 import { MAX_PHOTO_DIMENSION, TARGET_PHOTO_SIZE_MB } from '../../../domain/entities/PhotoScreen.js';
 
 export class S3StorageService implements StorageService {
@@ -32,7 +33,7 @@ export class S3StorageService implements StorageService {
 
     // Determine file extension
     const extension = this.getExtensionFromMimeType(input.mimeType);
-    
+
     // Generate S3 key
     const key = `households/${input.householdId}/tablets/${input.tabletId}/photos/${input.photoId}.${extension}`;
 
@@ -192,5 +193,57 @@ export class S3StorageService implements StorageService {
     }
 
     return null;
+  }
+
+  // Document operations
+
+  async uploadDocument(input: DocumentUploadInput): Promise<UploadDocumentResult> {
+    // Generate S3 key
+    const sanitizedFilename = input.originalFilename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const key = `documents/${input.householdId}/${input.documentId}/${sanitizedFilename}`;
+
+    // Upload to S3
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: input.buffer,
+      ContentType: input.mimeType,
+      CacheControl: 'max-age=31536000', // 1 year cache
+    });
+
+    await this.s3Client.send(command);
+
+    // Generate signed URL for immediate download (valid for 1 hour)
+    const signedUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn: 3600,
+    });
+
+    // Generate public URL
+    const url = this.generateUrl(key);
+
+    return { url, key, signedUrl };
+  }
+
+  async deleteDocument(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    await this.s3Client.send(command);
+  }
+
+  async getSignedUrl(key: string, expiresInSeconds: number = 3600): Promise<string> {
+    // Create a GetObjectCommand to generate presigned URL for downloading
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const signedUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn: expiresInSeconds,
+    });
+
+    return signedUrl;
   }
 }

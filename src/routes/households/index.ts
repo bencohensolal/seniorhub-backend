@@ -53,6 +53,16 @@ import { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTaskUse
 import { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
 import { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
 import { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
+import { ListDocumentRootsUseCase } from '../../domain/usecases/documents/ListDocumentRootsUseCase.js';
+import { ListFolderContentUseCase } from '../../domain/usecases/documents/ListFolderContentUseCase.js';
+import { CreateFolderUseCase } from '../../domain/usecases/documents/CreateFolderUseCase.js';
+import { UpdateFolderUseCase } from '../../domain/usecases/documents/UpdateFolderUseCase.js';
+import { DeleteFolderUseCase } from '../../domain/usecases/documents/DeleteFolderUseCase.js';
+import { CreateDocumentUseCase } from '../../domain/usecases/documents/CreateDocumentUseCase.js';
+import { UpdateDocumentUseCase } from '../../domain/usecases/documents/UpdateDocumentUseCase.js';
+import { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
+import { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
+import { registerDocumentRoutes } from './documentRoutes.js';
 
 /**
  * Households plugin
@@ -114,6 +124,15 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createTaskReminderUseCase: new CreateTaskReminderUseCase(repository),
     updateTaskReminderUseCase: new UpdateTaskReminderUseCase(repository),
     deleteTaskReminderUseCase: new DeleteTaskReminderUseCase(repository),
+    listDocumentRootsUseCase: new ListDocumentRootsUseCase(repository),
+    listFolderContentUseCase: new ListFolderContentUseCase(repository),
+    createFolderUseCase: new CreateFolderUseCase(repository),
+    updateFolderUseCase: new UpdateFolderUseCase(repository),
+    deleteFolderUseCase: new DeleteFolderUseCase(repository),
+    createDocumentUseCase: new CreateDocumentUseCase(repository),
+    updateDocumentUseCase: new UpdateDocumentUseCase(repository),
+    deleteDocumentUseCase: new DeleteDocumentUseCase(repository),
+    searchDocumentsUseCase: new SearchDocumentsUseCase(repository),
   };
 
   // Register route modules
@@ -181,6 +200,18 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerDisplayTabletRoutes(fastify, repository);
+
+  registerDocumentRoutes(fastify, repository, {
+    listDocumentRootsUseCase: useCases.listDocumentRootsUseCase,
+    listFolderContentUseCase: useCases.listFolderContentUseCase,
+    createFolderUseCase: useCases.createFolderUseCase,
+    updateFolderUseCase: useCases.updateFolderUseCase,
+    deleteFolderUseCase: useCases.deleteFolderUseCase,
+    createDocumentUseCase: useCases.createDocumentUseCase,
+    updateDocumentUseCase: useCases.updateDocumentUseCase,
+    deleteDocumentUseCase: useCases.deleteDocumentUseCase,
+    searchDocumentsUseCase: useCases.searchDocumentsUseCase,
+  });
 
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });
