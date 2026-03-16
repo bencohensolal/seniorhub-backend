@@ -60,7 +60,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -121,8 +121,8 @@ export function registerDocumentRoutes(
               data: {
                 type: 'object',
                 properties: {
-                  folders: { type: 'array', items: { type: 'object' } },
-                  documents: { type: 'array', items: { type: 'object' } },
+                  folders: { type: 'array', items: { type: 'object', additionalProperties: true } },
+                  documents: { type: 'array', items: { type: 'object', additionalProperties: true } },
                 },
                 required: ['folders', 'documents'],
               },
@@ -193,7 +193,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -259,7 +259,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -383,7 +383,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -449,7 +449,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -563,7 +563,7 @@ export function registerDocumentRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
