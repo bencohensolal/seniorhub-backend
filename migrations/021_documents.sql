@@ -91,7 +91,7 @@ CREATE TRIGGER update_documents_updated_at
 CREATE OR REPLACE FUNCTION ensure_document_system_roots_for_household(household_uuid UUID, user_id TEXT)
 RETURNS VOID AS $$
 BEGIN
-  -- Insert Medical File root if not exists
+  -- Insert Medical File root if not exists (using WHERE NOT EXISTS to avoid ON CONFLICT issues)
   INSERT INTO document_folders (
     household_id,
     name,
@@ -99,14 +99,21 @@ BEGIN
     type,
     system_root_type,
     created_by_user_id
-  ) VALUES (
+  )
+  SELECT
     household_uuid,
     'Medical File',
     'A folder per senior with prescriptions, reports, insurance cards, and lab results.',
     'system_root',
     'medical',
     user_id
-  ) ON CONFLICT (household_id, system_root_type) DO NOTHING;
+  WHERE NOT EXISTS (
+    SELECT 1 FROM document_folders
+    WHERE household_id = household_uuid
+      AND system_root_type = 'medical'
+      AND type = 'system_root'
+      AND deleted_at IS NULL
+  );
 
   -- Insert Administrative root if not exists
   INSERT INTO document_folders (
@@ -116,13 +123,20 @@ BEGIN
     type,
     system_root_type,
     created_by_user_id
-  ) VALUES (
+  )
+  SELECT
     household_uuid,
     'Administrative',
     'Household administrative documents, bills, contracts, and personal files.',
     'system_root',
     'administrative',
     user_id
-  ) ON CONFLICT (household_id, system_root_type) DO NOTHING;
+  WHERE NOT EXISTS (
+    SELECT 1 FROM document_folders
+    WHERE household_id = household_uuid
+      AND system_root_type = 'administrative'
+      AND type = 'system_root'
+      AND deleted_at IS NULL
+  );
 END;
 $$ LANGUAGE plpgsql;
