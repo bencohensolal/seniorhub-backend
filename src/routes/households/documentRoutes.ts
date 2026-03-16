@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import type { MultipartFields } from '@fastify/multipart';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
 import type { ListDocumentRootsUseCase } from '../../domain/usecases/documents/ListDocumentRootsUseCase.js';
 import type { ListFolderContentUseCase } from '../../domain/usecases/documents/ListFolderContentUseCase.js';
@@ -9,6 +10,7 @@ import type { CreateDocumentUseCase } from '../../domain/usecases/documents/Crea
 import type { UpdateDocumentUseCase } from '../../domain/usecases/documents/UpdateDocumentUseCase.js';
 import type { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
 import type { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
+import { createStorageService } from '../../data/services/storage/createStorageService.js';
 import { paramsSchema, errorResponseSchema } from './schemas.js';
 import {
   createDocumentFolderBodySchema,
@@ -536,6 +538,68 @@ export function registerDocumentRoutes(
         return reply.status(204).send({
           status: 'success',
         });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/documents/upload - Upload document file (multipart)
+  fastify.post(
+    '/v1/households/:householdId/documents/upload',
+    { preHandler: requireWritePermission },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({ status: 'error', message: 'Invalid householdId.' });
+      }
+      const { householdId } = paramsResult.data;
+
+      const data = await request.file({ limits: { fileSize: 50 * 1024 * 1024 } });
+      if (!data) {
+        return reply.status(400).send({ status: 'error', message: 'No file provided.' });
+      }
+
+      const fileBuffer = await data.toBuffer();
+      const mimeType = data.mimetype;
+      const originalFilename = data.filename || 'document';
+      const fields = data.fields as MultipartFields;
+      const folderId = (fields.folderId as { value?: string })?.value;
+      const name = (fields.name as { value?: string })?.value || originalFilename;
+      const seniorId = (fields.seniorId as { value?: string })?.value || null;
+
+      if (!folderId) {
+        return reply.status(400).send({ status: 'error', message: 'folderId is required.' });
+      }
+
+      const extension = originalFilename.split('.').pop()?.toUpperCase() ?? '';
+      const fileSizeBytes = fileBuffer.length;
+
+      try {
+        const storageService = createStorageService();
+        const { key: storageKey } = await storageService.uploadDocument({
+          buffer: fileBuffer,
+          mimeType,
+          householdId,
+          documentId: crypto.randomUUID(),
+          originalFilename,
+          extension: extension.toLowerCase(),
+        });
+
+        const document = await useCases.createDocumentUseCase.execute({
+          householdId,
+          folderId,
+          seniorId: seniorId ?? null,
+          name,
+          originalFilename,
+          storageKey,
+          mimeType,
+          fileSizeBytes,
+          extension,
+          requester: getRequesterContext(request),
+        });
+
+        return reply.status(201).send({ status: 'success', data: document });
       } catch (error) {
         return handleDomainError(error, reply);
       }
