@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { MultipartFields } from '@fastify/multipart';
+import multipart from '@fastify/multipart';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
 import type { ListDocumentRootsUseCase } from '../../domain/usecases/documents/ListDocumentRootsUseCase.js';
 import type { ListFolderContentUseCase } from '../../domain/usecases/documents/ListFolderContentUseCase.js';
@@ -545,66 +546,71 @@ export function registerDocumentRoutes(
   );
 
   // POST /v1/households/:householdId/documents/upload - Upload document file (multipart)
-  fastify.post(
-    '/v1/households/:householdId/documents/upload',
-    { preHandler: requireWritePermission },
-    async (request, reply) => {
-      const paramsResult = paramsSchema.safeParse(request.params);
-      if (!paramsResult.success) {
-        return reply.status(400).send({ status: 'error', message: 'Invalid householdId.' });
-      }
-      const { householdId } = paramsResult.data;
+  // Wrapped in a scoped plugin so @fastify/multipart can be registered for this route
+  void fastify.register(async (scope) => {
+    await scope.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
 
-      const data = await request.file({ limits: { fileSize: 50 * 1024 * 1024 } });
-      if (!data) {
-        return reply.status(400).send({ status: 'error', message: 'No file provided.' });
-      }
+    scope.post(
+      '/v1/households/:householdId/documents/upload',
+      { preHandler: requireWritePermission },
+      async (request, reply) => {
+        const paramsResult = paramsSchema.safeParse(request.params);
+        if (!paramsResult.success) {
+          return reply.status(400).send({ status: 'error', message: 'Invalid householdId.' });
+        }
+        const { householdId } = paramsResult.data;
 
-      const fileBuffer = await data.toBuffer();
-      const mimeType = data.mimetype;
-      const originalFilename = data.filename || 'document';
-      const fields = data.fields as MultipartFields;
-      const folderId = (fields.folderId as { value?: string })?.value;
-      const name = (fields.name as { value?: string })?.value || originalFilename;
-      const seniorId = (fields.seniorId as { value?: string })?.value || null;
+        const data = await request.file({ limits: { fileSize: 50 * 1024 * 1024 } });
+        if (!data) {
+          return reply.status(400).send({ status: 'error', message: 'No file provided.' });
+        }
 
-      if (!folderId) {
-        return reply.status(400).send({ status: 'error', message: 'folderId is required.' });
-      }
+        const fileBuffer = await data.toBuffer();
+        const mimeType = data.mimetype;
+        const originalFilename = data.filename || 'document';
+        const fields = data.fields as MultipartFields;
+        const folderId = (fields.folderId as { value?: string })?.value;
+        const name = (fields.name as { value?: string })?.value || originalFilename;
+        const seniorId = (fields.seniorId as { value?: string })?.value || null;
 
-      const extension = originalFilename.split('.').pop()?.toUpperCase() ?? '';
-      const fileSizeBytes = fileBuffer.length;
+        if (!folderId) {
+          return reply.status(400).send({ status: 'error', message: 'folderId is required.' });
+        }
 
-      try {
-        const storageService = createStorageService();
-        const { key: storageKey } = await storageService.uploadDocument({
-          buffer: fileBuffer,
-          mimeType,
-          householdId,
-          documentId: crypto.randomUUID(),
-          originalFilename,
-          extension: extension.toLowerCase(),
-        });
+        const extension = originalFilename.split('.').pop()?.toUpperCase() ?? '';
+        const fileSizeBytes = fileBuffer.length;
 
-        const document = await useCases.createDocumentUseCase.execute({
-          householdId,
-          folderId,
-          seniorId: seniorId ?? null,
-          name,
-          originalFilename,
-          storageKey,
-          mimeType,
-          fileSizeBytes,
-          extension,
-          requester: getRequesterContext(request),
-        });
+        try {
+          const storageService = createStorageService();
+          const { key: storageKey } = await storageService.uploadDocument({
+            buffer: fileBuffer,
+            mimeType,
+            householdId,
+            documentId: crypto.randomUUID(),
+            originalFilename,
+            extension: extension.toLowerCase(),
+          });
 
-        return reply.status(201).send({ status: 'success', data: document });
-      } catch (error) {
-        return handleDomainError(error, reply);
-      }
-    },
-  );
+          const document = await useCases.createDocumentUseCase.execute({
+            householdId,
+            folderId,
+            seniorId: seniorId ?? null,
+            name,
+            originalFilename,
+            storageKey,
+            mimeType,
+            fileSizeBytes,
+            extension,
+            requester: getRequesterContext(request),
+          });
+
+          return reply.status(201).send({ status: 'success', data: document });
+        } catch (error) {
+          return handleDomainError(error, reply);
+        }
+      },
+    );
+  });
 
   // GET /v1/households/:householdId/documents/search - Search documents and folders
   fastify.get(
