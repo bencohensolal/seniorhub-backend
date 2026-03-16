@@ -29,9 +29,7 @@ CREATE TABLE document_folders (
     (type != 'senior_folder' AND senior_id IS NULL)
   ),
   -- Ensure system roots are unique per household per type
-  UNIQUE (household_id, system_root_type) WHERE (type = 'system_root' AND deleted_at IS NULL),
   -- Ensure senior folder per senior per household is unique (only one senior folder per senior)
-  UNIQUE (household_id, senior_id) WHERE (type = 'senior_folder' AND deleted_at IS NULL)
 );
 
 -- documents table
@@ -49,9 +47,7 @@ CREATE TABLE documents (
   uploaded_by_user_id TEXT NOT NULL,
   uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ,
-  -- Ensure storage_key is unique (though path-based)
-  UNIQUE (storage_key) WHERE (deleted_at IS NULL)
+  deleted_at TIMESTAMPTZ
 );
 
 -- Indexes for performance
@@ -61,6 +57,14 @@ CREATE INDEX idx_document_folders_senior ON document_folders (senior_id) WHERE d
 CREATE INDEX idx_documents_household_folder ON documents (household_id, folder_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_documents_household_senior ON documents (household_id, senior_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_documents_storage_key ON documents (storage_key) WHERE deleted_at IS NULL;
+
+-- Partial unique indexes for constraints that couldn't be expressed as UNIQUE constraints
+CREATE UNIQUE INDEX unique_system_root_per_household ON document_folders (household_id, system_root_type)
+  WHERE type = 'system_root' AND deleted_at IS NULL;
+CREATE UNIQUE INDEX unique_senior_folder_per_household ON document_folders (household_id, senior_id)
+  WHERE type = 'senior_folder' AND deleted_at IS NULL;
+CREATE UNIQUE INDEX unique_storage_key_active ON documents (storage_key)
+  WHERE deleted_at IS NULL;
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -102,7 +106,7 @@ BEGIN
     'system_root',
     'medical',
     user_id
-  ) ON CONFLICT (household_id, system_root_type) WHERE (type = 'system_root' AND deleted_at IS NULL) DO NOTHING;
+  ) ON CONFLICT (household_id, system_root_type) DO NOTHING;
 
   -- Insert Administrative root if not exists
   INSERT INTO document_folders (
@@ -119,6 +123,6 @@ BEGIN
     'system_root',
     'administrative',
     user_id
-  ) ON CONFLICT (household_id, system_root_type) WHERE (type = 'system_root' AND deleted_at IS NULL) DO NOTHING;
+  ) ON CONFLICT (household_id, system_root_type) DO NOTHING;
 END;
 $$ LANGUAGE plpgsql;
