@@ -3156,7 +3156,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     return row ? mapDocumentFolder(row) : null;
   }
 
-  async listDocumentFoldersByParent(parentFolderId: string | null, householdId: string): Promise<DocumentFolder[]> {
+  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]> {
     const query = parentFolderId === null
       ? `SELECT id, household_id, parent_folder_id, senior_id, name, description,
                 type, system_root_type, created_by_user_id,
