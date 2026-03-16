@@ -2,7 +2,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { DocumentFolder } from '../../entities/DocumentFolder.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
-import { ForbiddenError } from '../../errors/index.js';
+import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 
 /**
  * Lists the two system root folders (Medical File and Administrative) for a household.
@@ -44,7 +44,7 @@ export class ListDocumentRootsUseCase {
     const administrativeRoot = await this.repository.getSystemRootFolder(input.householdId, 'administrative');
 
     if (!medicalRoot || !administrativeRoot) {
-      throw new Error('System roots not found after creation');
+      throw new NotFoundError('System roots not found after creation');
     }
 
     // Fetch senior folders under Medical File root

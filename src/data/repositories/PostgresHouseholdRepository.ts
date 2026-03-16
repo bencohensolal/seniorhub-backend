@@ -4500,6 +4500,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
           systemRootType: type,
           createdByUserId: userId,
         });
+
+        // Verify creation by fetching again
+        const verified = await this.getSystemRootFolder(householdId, type);
+        if (!verified) {
+          throw new Error(`Failed to create system root folder of type ${type} for household ${householdId}`);
+        }
       }
     }
   }
