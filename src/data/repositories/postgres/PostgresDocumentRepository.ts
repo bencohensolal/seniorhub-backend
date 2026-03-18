@@ -186,7 +186,7 @@ export class PostgresDocumentRepository {
     }>(
       `UPDATE document_folders
        SET ${updates.join(', ')}
-       WHERE id = $${paramIndex - 1} AND household_id = $${paramIndex} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND household_id = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING id, household_id, parent_folder_id, senior_id, name, description,
                  type, system_root_type, created_by_user_id,
                  created_at, updated_at, deleted_at`,
@@ -409,7 +409,7 @@ export class PostgresDocumentRepository {
     }>(
       `UPDATE documents
        SET ${updates.join(', ')}
-       WHERE id = $${paramIndex - 1} AND household_id = $${paramIndex} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND household_id = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING id, household_id, folder_id, senior_id, name, description, original_filename,
                  storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
                  uploaded_by_user_id, uploaded_at, updated_at, deleted_at`,
