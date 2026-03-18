@@ -781,6 +781,10 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     return [];
   }
 
+  async listAllHouseholdOccurrencesInRange(_householdId: string, _fromDate: string, _toDate: string): Promise<never[]> {
+    return [];
+  }
+
   async createOccurrence(_input: unknown): Promise<never> {
     throw new Error('Occurrence operations not implemented in InMemoryRepository');
   }

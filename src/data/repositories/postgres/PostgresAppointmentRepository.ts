@@ -603,6 +603,29 @@ export class PostgresAppointmentRepository {
     return result.rows.map(mapOccurrence);
   }
 
+  async listAllHouseholdOccurrencesInRange(householdId: string, fromDate: string, toDate: string): Promise<AppointmentOccurrence[]> {
+    const result = await this.pool.query<{
+      id: string;
+      recurring_appointment_id: string;
+      household_id: string;
+      occurrence_date: string | Date;
+      occurrence_time: string;
+      status: 'scheduled' | 'modified' | 'cancelled' | 'completed' | 'missed';
+      overrides: string | null;
+      created_at: string | Date;
+      updated_at: string | Date;
+    }>(
+      `SELECT id, recurring_appointment_id, household_id, occurrence_date, occurrence_time,
+              status, overrides::text, created_at, updated_at
+       FROM appointment_occurrences
+       WHERE household_id = $1 AND occurrence_date >= $2 AND occurrence_date <= $3
+       ORDER BY occurrence_date ASC, occurrence_time ASC`,
+      [householdId, fromDate, toDate],
+    );
+
+    return result.rows.map(mapOccurrence);
+  }
+
   async createOccurrence(input: CreateOccurrenceInput): Promise<AppointmentOccurrence> {
     const id = randomUUID();
     const now = nowIso();

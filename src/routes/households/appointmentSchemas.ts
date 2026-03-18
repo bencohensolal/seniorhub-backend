@@ -137,6 +137,34 @@ export const occurrenceStatusSchema = z.enum([
   'missed',
 ]);
 
+// Schema for batch modifying occurrences
+export const batchModifyOccurrencesBodySchema = z.object({
+  modifications: z.array(z.object({
+    occurrenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    overrides: z.object({
+      title: z.string().min(1).max(200).optional(),
+      time: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/).optional(),
+      duration: z.number().int().positive().optional(),
+      locationName: z.string().max(255).optional(),
+      address: z.string().max(500).optional(),
+      phoneNumber: z.string().max(50).optional(),
+      professionalName: z.string().max(255).optional(),
+      description: z.string().max(1000).optional(),
+      preparation: z.string().max(1000).optional(),
+      documentsToTake: z.string().max(500).optional(),
+      transportArrangement: z.string().max(500).optional(),
+      notes: z.string().max(1000).optional(),
+    }),
+  })).min(1, 'At least one modification must be provided'),
+});
+
+// Schema for batch cancelling occurrences
+export const batchCancelOccurrencesBodySchema = z.object({
+  dates: z.array(
+    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Each date must be in YYYY-MM-DD format'),
+  ).min(1, 'At least one date must be provided'),
+});
+
 // Schema for modifying an occurrence
 export const modifyOccurrenceBodySchema = z.object({
   status: occurrenceStatusSchema.optional(),

@@ -124,6 +124,7 @@ export interface HouseholdRepository {
   getOccurrenceById(occurrenceId: string, householdId: string): Promise<AppointmentOccurrence | null>;
   getOccurrenceByDate(appointmentId: string, occurrenceDate: string, householdId: string): Promise<AppointmentOccurrence | null>;
   listOccurrences(appointmentId: string, householdId: string, fromDate?: string, toDate?: string): Promise<AppointmentOccurrence[]>;
+  listAllHouseholdOccurrencesInRange(householdId: string, fromDate: string, toDate: string): Promise<AppointmentOccurrence[]>;
   createOccurrence(input: CreateOccurrenceInput): Promise<AppointmentOccurrence>;
   updateOccurrence(occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence>;
   deleteOccurrence(occurrenceId: string, householdId: string): Promise<void>;

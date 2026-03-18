@@ -104,6 +104,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   getOccurrenceById = (occurrenceId: string, householdId: string): Promise<AppointmentOccurrence | null> => this.appointments.getOccurrenceById(occurrenceId, householdId);
   getOccurrenceByDate = (appointmentId: string, occurrenceDate: string, householdId: string): Promise<AppointmentOccurrence | null> => this.appointments.getOccurrenceByDate(appointmentId, occurrenceDate, householdId);
   listOccurrences = (appointmentId: string, householdId: string, fromDate?: string, toDate?: string): Promise<AppointmentOccurrence[]> => this.appointments.listOccurrences(appointmentId, householdId, fromDate, toDate);
+  listAllHouseholdOccurrencesInRange = (householdId: string, fromDate: string, toDate: string): Promise<AppointmentOccurrence[]> => this.appointments.listAllHouseholdOccurrencesInRange(householdId, fromDate, toDate);
   createOccurrence = (input: CreateOccurrenceInput): Promise<AppointmentOccurrence> => this.appointments.createOccurrence(input);
   updateOccurrence = (occurrenceId: string, householdId: string, input: UpdateOccurrenceInput): Promise<AppointmentOccurrence> => this.appointments.updateOccurrence(occurrenceId, householdId, input);
   deleteOccurrence = (occurrenceId: string, householdId: string): Promise<void> => this.appointments.deleteOccurrence(occurrenceId, householdId);
