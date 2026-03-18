@@ -5,7 +5,9 @@ export type HouseholdPermissionAction =
   | 'manageAppointments'
   | 'manageTasks'
   | 'manageMembers'
-  | 'viewSensitiveInfo';
+  | 'viewSensitiveInfo'
+  | 'viewDocuments'
+  | 'manageDocuments';
 
 export interface HouseholdMemberPermissions {
   manageMedications: boolean;
@@ -13,6 +15,8 @@ export interface HouseholdMemberPermissions {
   manageTasks: boolean;
   manageMembers: boolean;
   viewSensitiveInfo: boolean;
+  viewDocuments: boolean;
+  manageDocuments: boolean;
 }
 
 export interface HouseholdNotificationSettings {
@@ -51,6 +55,8 @@ export const getDefaultHouseholdMemberPermissions = (
         manageTasks: true,
         manageMembers: true,
         viewSensitiveInfo: true,
+        viewDocuments: true,
+        manageDocuments: true,
       };
     case 'family':
       return {
@@ -59,6 +65,8 @@ export const getDefaultHouseholdMemberPermissions = (
         manageTasks: true,
         manageMembers: false,
         viewSensitiveInfo: false,
+        viewDocuments: true,
+        manageDocuments: false,
       };
     case 'intervenant':
       return {
@@ -67,6 +75,8 @@ export const getDefaultHouseholdMemberPermissions = (
         manageTasks: false,
         manageMembers: false,
         viewSensitiveInfo: true,
+        viewDocuments: true,
+        manageDocuments: true,
       };
     case 'senior':
     default:
@@ -76,6 +86,8 @@ export const getDefaultHouseholdMemberPermissions = (
         manageTasks: false,
         manageMembers: false,
         viewSensitiveInfo: true,
+        viewDocuments: true,
+        manageDocuments: false,
       };
   }
 };

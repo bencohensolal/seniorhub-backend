@@ -17,11 +17,11 @@ import { ResolveInvitationUseCase } from '../../domain/usecases/invitations/Reso
 import { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/households/UpdateHouseholdMemberRoleUseCase.js';
 import { AutoAcceptPendingInvitationsUseCase } from '../../domain/usecases/invitations/AutoAcceptPendingInvitationsUseCase.js';
 import { createHouseholdRepository } from '../../data/repositories/createHouseholdRepository.js';
-import { registerHouseholdRoutes } from './householdRoutes.js';
-import { registerInvitationRoutes } from './invitationRoutes.js';
+import { registerHouseholdRoutes } from './households/householdRoutes.js';
+import { registerInvitationRoutes } from './invitations/invitationRoutes.js';
 import { registerObservabilityRoutes } from './observabilityRoutes.js';
-import { registerMedicationRoutes } from './medicationRoutes.js';
-import { registerReminderRoutes } from './reminderRoutes.js';
+import { registerMedicationRoutes } from './medications/medicationRoutes.js';
+import { registerReminderRoutes } from './medications/reminderRoutes.js';
 import { ListHouseholdMedicationsUseCase } from '../../domain/usecases/medications/ListHouseholdMedicationsUseCase.js';
 import { CreateMedicationUseCase } from '../../domain/usecases/medications/CreateMedicationUseCase.js';
 import { UpdateMedicationUseCase } from '../../domain/usecases/medications/UpdateMedicationUseCase.js';
@@ -38,12 +38,19 @@ import { CreateAppointmentReminderUseCase } from '../../domain/usecases/appointm
 import { UpdateAppointmentReminderUseCase } from '../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
 import { DeleteAppointmentReminderUseCase } from '../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
 import { ListAppointmentOccurrencesUseCase } from '../../domain/usecases/appointments/ListAppointmentOccurrencesUseCase.js';
+import { ListUpcomingAppointmentsUseCase } from '../../domain/usecases/appointments/ListUpcomingAppointmentsUseCase.js';
 import { ModifyOccurrenceUseCase } from '../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
 import { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
-import { registerAppointmentRoutes } from './appointmentRoutes.js';
-import { registerTaskRoutes } from './taskRoutes.js';
-import { registerDisplayTabletRoutes } from './displayTabletRoutes.js';
-import { photoScreenRoutes } from './photoScreenRoutes.js';
+import { BatchModifyOccurrencesUseCase } from '../../domain/usecases/appointments/BatchModifyOccurrencesUseCase.js';
+import { BatchCancelOccurrencesUseCase } from '../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
+import { RestoreOccurrenceUseCase } from '../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
+import { registerAppointmentRoutes } from './appointments/appointmentRoutes.js';
+import { registerOccurrenceRoutes } from './appointments/occurrenceRoutes.js';
+import { registerMemberRoutes } from './households/memberRoutes.js';
+import { registerTaskRoutes } from './tasks/taskRoutes.js';
+import { registerDisplayTabletRoutes } from './displayTablets/displayTabletRoutes.js';
+import { registerTabletConfigRoutes } from './displayTablets/tabletConfigRoutes.js';
+import { photoScreenRoutes } from './photoScreens/photoScreenRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
 import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
@@ -53,6 +60,16 @@ import { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTaskUse
 import { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
 import { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
 import { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
+import { ListDocumentRootsUseCase } from '../../domain/usecases/documents/ListDocumentRootsUseCase.js';
+import { ListFolderContentUseCase } from '../../domain/usecases/documents/ListFolderContentUseCase.js';
+import { CreateFolderUseCase } from '../../domain/usecases/documents/CreateFolderUseCase.js';
+import { UpdateFolderUseCase } from '../../domain/usecases/documents/UpdateFolderUseCase.js';
+import { DeleteFolderUseCase } from '../../domain/usecases/documents/DeleteFolderUseCase.js';
+import { CreateDocumentUseCase } from '../../domain/usecases/documents/CreateDocumentUseCase.js';
+import { UpdateDocumentUseCase } from '../../domain/usecases/documents/UpdateDocumentUseCase.js';
+import { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
+import { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
+import { registerDocumentRoutes } from './documents/documentRoutes.js';
 
 /**
  * Households plugin
@@ -104,8 +121,12 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     updateAppointmentReminderUseCase: new UpdateAppointmentReminderUseCase(repository),
     deleteAppointmentReminderUseCase: new DeleteAppointmentReminderUseCase(repository),
     listAppointmentOccurrencesUseCase: new ListAppointmentOccurrencesUseCase(repository, accessValidator),
+    listUpcomingAppointmentsUseCase: new ListUpcomingAppointmentsUseCase(repository, accessValidator),
     modifyOccurrenceUseCase: new ModifyOccurrenceUseCase(repository, accessValidator),
     cancelOccurrenceUseCase: new CancelOccurrenceUseCase(repository, accessValidator),
+    batchModifyOccurrencesUseCase: new BatchModifyOccurrencesUseCase(repository, accessValidator),
+    batchCancelOccurrencesUseCase: new BatchCancelOccurrencesUseCase(repository, accessValidator),
+    restoreOccurrenceUseCase: new RestoreOccurrenceUseCase(repository, accessValidator),
     listHouseholdTasksUseCase: new ListHouseholdTasksUseCase(repository),
     createTaskUseCase: new CreateTaskUseCase(repository),
     updateTaskUseCase: new UpdateTaskUseCase(repository),
@@ -114,6 +135,15 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createTaskReminderUseCase: new CreateTaskReminderUseCase(repository),
     updateTaskReminderUseCase: new UpdateTaskReminderUseCase(repository),
     deleteTaskReminderUseCase: new DeleteTaskReminderUseCase(repository),
+    listDocumentRootsUseCase: new ListDocumentRootsUseCase(repository),
+    listFolderContentUseCase: new ListFolderContentUseCase(repository),
+    createFolderUseCase: new CreateFolderUseCase(repository),
+    updateFolderUseCase: new UpdateFolderUseCase(repository),
+    deleteFolderUseCase: new DeleteFolderUseCase(repository),
+    createDocumentUseCase: new CreateDocumentUseCase(repository),
+    updateDocumentUseCase: new UpdateDocumentUseCase(repository),
+    deleteDocumentUseCase: new DeleteDocumentUseCase(repository),
+    searchDocumentsUseCase: new SearchDocumentsUseCase(repository),
   };
 
   // Register route modules
@@ -121,6 +151,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createHouseholdUseCase: useCases.createHouseholdUseCase,
     getHouseholdOverviewUseCase: useCases.getHouseholdOverviewUseCase,
     listUserHouseholdsUseCase: useCases.listUserHouseholdsUseCase,
+  });
+
+  registerMemberRoutes(fastify, repository, {
     listHouseholdMembersUseCase: useCases.listHouseholdMembersUseCase,
     removeHouseholdMemberUseCase: useCases.removeHouseholdMemberUseCase,
     updateHouseholdMemberRoleUseCase: useCases.updateHouseholdMemberRoleUseCase,
@@ -164,9 +197,16 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createAppointmentReminderUseCase: useCases.createAppointmentReminderUseCase,
     updateAppointmentReminderUseCase: useCases.updateAppointmentReminderUseCase,
     deleteAppointmentReminderUseCase: useCases.deleteAppointmentReminderUseCase,
+    listUpcomingAppointmentsUseCase: useCases.listUpcomingAppointmentsUseCase,
+  });
+
+  registerOccurrenceRoutes(fastify, repository, {
     listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
     modifyOccurrenceUseCase: useCases.modifyOccurrenceUseCase,
     cancelOccurrenceUseCase: useCases.cancelOccurrenceUseCase,
+    batchModifyOccurrencesUseCase: useCases.batchModifyOccurrencesUseCase,
+    batchCancelOccurrencesUseCase: useCases.batchCancelOccurrencesUseCase,
+    restoreOccurrenceUseCase: useCases.restoreOccurrenceUseCase,
   });
 
   registerTaskRoutes(fastify, repository, {
@@ -181,6 +221,19 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerDisplayTabletRoutes(fastify, repository);
+  registerTabletConfigRoutes(fastify, repository);
+
+  registerDocumentRoutes(fastify, repository, {
+    listDocumentRootsUseCase: useCases.listDocumentRootsUseCase,
+    listFolderContentUseCase: useCases.listFolderContentUseCase,
+    createFolderUseCase: useCases.createFolderUseCase,
+    updateFolderUseCase: useCases.updateFolderUseCase,
+    deleteFolderUseCase: useCases.deleteFolderUseCase,
+    createDocumentUseCase: useCases.createDocumentUseCase,
+    updateDocumentUseCase: useCases.updateDocumentUseCase,
+    deleteDocumentUseCase: useCases.deleteDocumentUseCase,
+    searchDocumentsUseCase: useCases.searchDocumentsUseCase,
+  });
 
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });

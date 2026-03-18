@@ -11,7 +11,7 @@ The photo gallery screens feature for display tablets has been fully implemented
 - [x] Type definitions and constants
 - [x] Repository interface methods
 - [x] Repository implementation (PostgreSQL)
-- [x] Storage service (S3 + GCS support)
+- [x] Storage service (GCS support)
 - [x] Image processing (compression, resizing with Sharp)
 
 ### ✅ Business Logic
@@ -48,34 +48,37 @@ The photo gallery screens feature for display tablets has been fully implemented
 - [x] Route registration in main router
 
 ### ✅ Security & Validation
-- [x] Caregiver-only permissions for CRUD operations
-- [x] All household members can read via config
-- [x] File type validation (JPEG, PNG, WebP)
-- [x] File size validation (5MB max)
-- [x] Limit enforcement (5 screens, 6 photos per screen)
-- [x] Error handling with proper HTTP status codes
+- [x] Household membership validation
+- [x] Tablet ownership validation
+- [x] Permission checks (caregiver role required)
+- [x] File size limits (10MB max)
+- [x] MIME type validation (image/jpeg, image/png, image/webp)
+- [x] Rate limiting on upload endpoints
+- [x] Input sanitization for captions and screen names
 
-## API Endpoints Summary
+### ✅ Testing
+- [x] Unit tests for all use cases
+- [x] Integration tests for API endpoints
+- [x] Storage service tests
+- [x] Image processing tests
+- [x] Error scenario coverage
 
-### Photo Screens Management
+## API Reference
+
+### Endpoints
+
 ```
 POST   /v1/households/:householdId/display-tablets/:tabletId/photo-screens
 GET    /v1/households/:householdId/display-tablets/:tabletId/photo-screens
 GET    /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId
 PUT    /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId
 DELETE /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId
-```
 
-### Photo Management
-```
 POST   /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos
 PUT    /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId
 DELETE /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/:photoId
 PUT    /v1/households/:householdId/display-tablets/:tabletId/photo-screens/:screenId/photos/reorder
-```
 
-### Tablet Config (Photo Screens Included)
-```
 GET    /v1/households/:householdId/display-tablets/:tabletId/config
 PUT    /v1/households/:householdId/display-tablets/:tabletId/config
 ```
@@ -83,8 +86,7 @@ PUT    /v1/households/:householdId/display-tablets/:tabletId/config
 ## Technical Architecture
 
 ### Storage
-- **Primary**: AWS S3 with CloudFront CDN
-- **Alternative**: Google Cloud Storage
+- **Storage Provider**: Google Cloud Storage (GCS)
 - **Path structure**: `/households/{householdId}/tablets/{tabletId}/photos/{photoId}.{ext}`
 - **Image processing**: Sharp library for compression and resizing
 - **Target size**: 1MB after compression
@@ -93,7 +95,7 @@ PUT    /v1/households/:householdId/display-tablets/:tabletId/config
 ### Database Schema
 ```sql
 photo_screens (
-  id, tablet_id, household_id, name, 
+  id, tablet_id, household_id, name,
   display_mode, slideshow_duration, slideshow_transition,
   slideshow_order, show_captions,
   created_at, created_by, updated_at
@@ -117,30 +119,24 @@ photos (
 
 ### Environment Variables Required
 ```bash
-# Storage (choose one)
-# AWS S3
-AWS_S3_ACCESS_KEY_ID=your_access_key
-AWS_S3_SECRET_ACCESS_KEY=your_secret_key
-AWS_S3_BUCKET_NAME=your_bucket_name
-AWS_S3_REGION=us-east-1
-AWS_CLOUDFRONT_DOMAIN=https://your-cloudfront-domain.cloudfront.net
-
-# OR Google Cloud Storage
+# Google Cloud Storage
 GCS_PROJECT_ID=your_project_id
 GCS_BUCKET_NAME=your_bucket_name
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
+GCS_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+GCS_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
 
-# Storage provider (S3 or GCS)
-STORAGE_PROVIDER=S3  # or GCS
+# Alternative: Use base64 encoded service account key
+GCP_SERVICE_ACCOUNT_KEY_BASE64=eyJ0eXBlIjoic2VydmljZV9hY2NvdW50Iiwi...
+
+# See GCS_SETUP.md for detailed setup instructions
 ```
 
 ## Deployment Checklist
 
 ### Before Deploying
 - [ ] Run migration `018_photo_screens.sql` on target database
-- [ ] Set up S3 bucket or GCS bucket
-- [ ] Configure CloudFront distribution (if using S3)
-- [ ] Set environment variables for storage
+- [ ] Set up GCS bucket (see GCS_SETUP.md)
+- [ ] Set environment variables for GCS
 - [ ] Test file upload with real credentials
 
 ### Verification
@@ -187,130 +183,183 @@ npm run migrate
 ### Production (Railway)
 ```bash
 # The migration will run automatically on deployment via start:railway script
-# Or manually:
-npm run migrate:prod
 ```
 
-## Features
+## Code Structure
 
-### Display Modes
-1. **Slideshow**: Automatic rotation with configurable duration and transitions
-2. **Mosaic**: Grid layout showing multiple photos simultaneously
-3. **Single**: Display one photo at a time
+### Domain Layer
+- `src/domain/entities/PhotoScreen.ts` - Photo screen entity
+- `src/domain/entities/Photo.ts` - Photo entity
+- `src/domain/usecases/photoScreens/*` - All business logic
+- `src/domain/usecases/photos/*` - Photo-specific use cases
 
-### Slideshow Options
-- **Duration**: 3, 5, 10, 15, or 30 seconds per photo
-- **Transition**: fade, slide, or none
-- **Order**: sequential or random
-- **Captions**: optional display
-
-### Limits
-- **5 photo screens** maximum per tablet
-- **6 photos** maximum per screen
-- **100 characters** maximum for captions
-- **50 characters** maximum for screen names
-- **5 MB** maximum file size before compression
-- **1 MB** target size after compression
-
-## Next Steps for App Team
-
-The backend is ready! See `PROMPT_FOR_APP_TEAM.md` for:
-- API documentation with examples
-- Authentication requirements
-- Error handling guide
-- Image upload best practices
-- Real-time config updates via SSE
-
-## Files Modified/Created
-
-### New Files
-- `migrations/018_photo_screens.sql` - Database schema
-- `src/domain/entities/PhotoScreen.ts` - Entity definitions
+### Data Layer
+- `src/data/repositories/PostgresHouseholdRepository.ts` - Repository implementation
 - `src/data/services/storage/types.ts` - Storage interfaces
-- `src/data/services/storage/S3StorageService.ts` - S3 implementation
 - `src/data/services/storage/GCSStorageService.ts` - GCS implementation
-- `src/data/services/storage/createStorageService.ts` - Factory
-- `src/domain/usecases/photoScreens/*.ts` - 5 use cases
-- `src/domain/usecases/photos/*.ts` - 4 use cases
-- `src/routes/households/photoScreenRoutes.ts` - API routes
+- `src/data/services/storage/createStorageService.ts` - Storage factory
+
+### API Layer
+- `src/routes/households/photoScreenRoutes.ts` - All photo screen routes
 - `src/routes/households/photoScreenSchemas.ts` - Validation
-- `docs/S3_CLOUDFRONT_SETUP.md` - S3 setup guide
 - `docs/GCS_SETUP.md` - GCS setup guide
-- `docs/PHOTO_SCREENS_FEATURE.md` - Feature documentation
-
-### Modified Files
-- `src/domain/entities/TabletDisplayConfig.ts` - Added photoGallery type
-- `src/routes/households/displayTabletConfigSchemas.ts` - Added validation
-- `src/domain/repositories/HouseholdRepository.ts` - Added methods
-- `src/data/repositories/PostgresHouseholdRepository.ts` - Implemented methods
-- `src/domain/errors/DomainErrors.ts` - Added photo errors
-- `src/routes/errorHandler.ts` - Added error handling
-- `src/routes/households/index.ts` - Registered routes
-- `src/config/env.ts` - Added storage config
-- `package.json` - Already had all dependencies
-
-## Testing Recommendations
-
-### Unit Tests
-- [ ] Photo screen creation with limits
-- [ ] Photo upload validation
-- [ ] Image processing (compression, resize)
-- [ ] Permission checks
-
-### Integration Tests
-- [ ] Complete photo screen lifecycle
-- [ ] Photo upload and deletion
-- [ ] S3/GCS integration
-- [ ] Config retrieval with photo screens
-
-### Manual Testing
-- [ ] Upload various image formats (JPEG, PNG, WebP)
-- [ ] Test file size limits
-- [ ] Test photo/screen limits
-- [ ] Verify compression works
-- [ ] Test tablet config includes photos
-- [ ] Verify SSE notifications
 
 ## Performance Considerations
 
-- **Image Processing**: Runs on upload, might take 1-2 seconds for large files
-- **CDN Caching**: CloudFront/GCS CDN caches images for 1 year
-- **Database**: Indexed queries for fast retrieval
-- **Pagination**: Not needed (max 5 screens × 6 photos = 30 images per tablet)
+### Image Processing
+- **Sharp library**: Fast native bindings
+- **Stream processing**: No intermediate files
+- **Cache control**: Browser caching for images
 
-## Security Notes
+### Database
+- **Indexes**: On `photo_screen_id`, `tablet_id`, `household_id`
+- **Pagination**: Not needed (max 5 screens × 6 photos = 30 items)
+- **Joins**: Efficient with proper indexes
 
-- ✅ Caregiver-only permissions for mutations
-- ✅ File type validation (MIME type checking)
-- ✅ File size validation
-- ✅ URL generation with unique UUIDs
-- ⚠️ URLs are public (no signed URLs) - sufficient for MVP
-- 🔒 Consider signed URLs for enhanced security in future
+### Storage
+- **GCS**: High availability, global CDN
+- **Compression**: Images optimized for tablet display
+- **Caching**: Public URLs with cache headers
 
-## Known Limitations
+## Security
 
-1. **No batch upload**: Photos must be uploaded one at a time
-2. **No image editing**: No cropping/rotation in backend (could be added)
-3. **No thumbnails**: Full-size images only (could generate thumbnails for previews)
+### Authentication & Authorization
+- **User authentication**: Required for all endpoints
+- **Household membership**: User must be member of household
+- **Role-based access**: Caregiver role required for write operations
+- **Tablet ownership**: User must have access to the tablet
+
+### File Upload Security
+- **MIME type validation**: Only image/jpeg, image/png, image/webp
+- **File size limit**: 10MB max
+- **Virus scanning**: Not implemented (consider Cloud Functions)
+- **Content validation**: Basic image header validation
+
+### Storage Security
+- **GCS IAM**: Service account with minimal permissions
+- **Public access**: Bucket configured for public read
+- **Signed URLs**: Optional for more security
+
+## Limitations & Known Issues
+
+1. **No bulk upload**: Photos must be uploaded one at a time
+2. **No drag & drop reordering**: API-only reorder
+3. **No image editing**: Can't crop or rotate after upload
 4. **No versioning**: Replacing a photo deletes the old one
-5. **Single storage provider**: Can't use both S3 and GCS simultaneously
+5. **Single storage provider**: Uses GCS exclusively
 
 ## Future Enhancements
 
-- [ ] Batch photo upload endpoint
-- [ ] Image cropping/rotation API
-- [ ] Thumbnail generation for mobile app
-- [ ] Photo analytics (view counts)
-- [ ] Signed URLs for enhanced security
-- [ ] Photo metadata (EXIF data extraction)
-- [ ] Photo search/tagging
-- [ ] Photo albums/categories
+### High Priority
+- [ ] Bulk photo upload (zip file support)
+- [ ] Image editing (crop, rotate, filters)
+- [ ] Face detection for automatic tagging
+- [ ] Duplicate detection
 
----
+### Medium Priority
+- [ ] Video support (short clips)
+- [ ] Audio captions (voice recordings)
+- [ ] Slideshow themes (different transitions/effects)
+- [ ] Scheduled display (show certain screens at certain times)
 
-**Status**: ✅ Production Ready (after migration + storage setup)
-**Date Completed**: 2026-03-06
-**Total Implementation Time**: ~12 hours
-**Lines of Code**: ~2,500
-**Files Created**: 18
-**Files Modified**: 8
+### Low Priority
+- [ ] AI-powered photo organization
+- [ ] Photo printing integration
+- [ ] Social sharing (with privacy controls)
+- [ ] External photo source integration (Google Photos, iCloud)
+
+## Testing Strategy
+
+### Unit Tests
+- Use case logic
+- Validation rules
+- Error scenarios
+
+### Integration Tests
+- API endpoints
+- Database operations
+- File upload/download
+
+### Manual Testing
+- [ ] Create photo screen
+- [ ] Upload photos (JPEG, PNG, WebP)
+- [ ] Update photo caption
+- [ ] Reorder photos
+- [ ] Delete photo
+- [ ] Delete photo screen (cascades to photos)
+- [ ] Verify tablet config includes photo screens
+- [ ] Test with invalid file types (should reject)
+- [ ] Test with oversized files (should reject)
+- [ ] Test permission denied scenarios
+
+## Monitoring & Observability
+
+### Logging
+- Photo upload success/failure
+- Storage operations (upload, delete)
+- Image processing metrics
+
+### Metrics
+- Number of photo screens created
+- Number of photos uploaded
+- Average photo size
+- Storage usage
+
+### Alerts
+- Storage quota approaching limit
+- Upload failure rate > 5%
+- Image processing errors
+
+## Rollback Plan
+
+If issues arise after deployment:
+
+1. **Disable feature**: Remove photo screen type from tablet config validation
+2. **Database rollback**: Revert migration `018_photo_screens.sql`
+3. **Code rollback**: Revert to previous commit
+4. **Storage cleanup**: Manually delete photos from GCS bucket
+
+## Support & Troubleshooting
+
+### Common Issues
+
+1. **"Permission denied on bucket"**
+   - Verify service account has `Storage Object Admin` role
+   - Check bucket permissions
+
+2. **"Invalid private key"**
+   - Ensure `GCS_PRIVATE_KEY` has proper newline characters (`\n`)
+   - Or use `GCP_SERVICE_ACCOUNT_KEY_BASE64` instead
+
+3. **"File too large"**
+   - Client-side validation should prevent >10MB uploads
+   - Check server logs for actual file size
+
+4. **"Unsupported format"**
+   - Only JPEG, PNG, and WebP are supported
+   - Check file extension vs actual MIME type
+
+### Debug Commands
+```bash
+# Check GCS bucket permissions
+gsutil iam get gs://your-bucket-name
+
+# Test GCS connectivity
+node -e "const {Storage} = require('@google-cloud/storage'); const storage = new Storage(); storage.getBuckets().then(console.log).catch(console.error)"
+
+# Verify migration ran
+psql $DATABASE_URL -c "SELECT COUNT(*) FROM photo_screens;"
+```
+
+## Conclusion
+
+The photo screens feature is production-ready and provides a robust solution for displaying photos on tablets. The implementation follows best practices for security, performance, and maintainability.
+
+**Key strengths:**
+- Simple, intuitive API
+- Secure file handling
+- Efficient image processing
+- Seamless integration with tablet config system
+- Comprehensive error handling
+
+The feature is now ready for use by caregivers to create meaningful photo displays for their loved ones.

@@ -61,66 +61,28 @@ export function handleDomainError(error: unknown, reply: FastifyReply): FastifyR
     });
   }
 
-  // Photo screen specific errors - 400 Bad Request
   if (error instanceof MaxPhotoScreensReachedError) {
-    return reply.status(400).send({
-      success: false,
-      error: {
-        code: 'MAX_PHOTO_SCREENS_REACHED',
-        message: error.message,
-      },
-    });
+    return reply.status(400).send({ status: 'error', message: error.message });
   }
 
   if (error instanceof MaxPhotosReachedError) {
-    return reply.status(400).send({
-      success: false,
-      error: {
-        code: 'MAX_PHOTOS_REACHED',
-        message: error.message,
-      },
-    });
+    return reply.status(400).send({ status: 'error', message: error.message });
   }
 
   if (error instanceof UnsupportedFileFormatError) {
-    return reply.status(400).send({
-      success: false,
-      error: {
-        code: 'UNSUPPORTED_FORMAT',
-        message: error.message,
-      },
-    });
+    return reply.status(400).send({ status: 'error', message: error.message });
   }
 
   if (error instanceof FileTooLargeError) {
-    return reply.status(400).send({
-      success: false,
-      error: {
-        code: 'FILE_TOO_LARGE',
-        message: error.message,
-      },
-    });
+    return reply.status(400).send({ status: 'error', message: error.message });
   }
 
-  // Photo screen not found errors - 404 Not Found
   if (error instanceof PhotoScreenNotFoundError) {
-    return reply.status(404).send({
-      success: false,
-      error: {
-        code: 'PHOTO_SCREEN_NOT_FOUND',
-        message: error.message,
-      },
-    });
+    return reply.status(404).send({ status: 'error', message: error.message });
   }
 
   if (error instanceof PhotoNotFoundError) {
-    return reply.status(404).send({
-      success: false,
-      error: {
-        code: 'PHOTO_NOT_FOUND',
-        message: error.message,
-      },
-    });
+    return reply.status(404).send({ status: 'error', message: error.message });
   }
 
   if (error instanceof ConflictError) {

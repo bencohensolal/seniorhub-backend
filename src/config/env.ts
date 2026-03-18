@@ -26,18 +26,8 @@ const envSchema = z
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
-    
-    // Storage provider selection ('gcs' or 's3')
-    STORAGE_PROVIDER: z.enum(['gcs', 's3']).default('gcs'),
-    
-    // AWS S3 Configuration (for photo storage)
-    AWS_S3_REGION: z.string().optional(),
-    AWS_S3_BUCKET_NAME: z.string().optional(),
-    AWS_S3_ACCESS_KEY_ID: z.string().optional(),
-    AWS_S3_SECRET_ACCESS_KEY: z.string().optional(),
-    AWS_CLOUDFRONT_DOMAIN: z.string().optional(),
-    
-    // Google Cloud Storage Configuration (recommended)
+
+    // Google Cloud Storage Configuration (only storage provider)
     GCS_BUCKET_NAME: z.string().optional(),
     GCS_PROJECT_ID: z.string().optional(),
     GCS_CLIENT_EMAIL: z.string().optional(),

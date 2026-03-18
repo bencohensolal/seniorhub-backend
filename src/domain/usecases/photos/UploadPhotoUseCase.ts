@@ -60,7 +60,7 @@ export class UploadPhotoUseCase {
 
     // Check max photos limit
     const existingCount = await this.repository.countPhotos(input.photoScreenId);
-    
+
     if (existingCount >= MAX_PHOTOS_PER_SCREEN) {
       throw new MaxPhotosReachedError(
         `This photo screen has already reached the limit of ${MAX_PHOTOS_PER_SCREEN} photos.`,
@@ -84,7 +84,7 @@ export class UploadPhotoUseCase {
     // Generate photo ID
     const photoId = randomUUID();
 
-    // Upload to S3 (processing happens in the storage service)
+    // Upload to storage (processing happens in the storage service)
     const { url } = await this.storageService.uploadPhoto({
       buffer: input.fileBuffer,
       mimeType: input.mimeType,

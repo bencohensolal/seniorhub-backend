@@ -1,7 +1,7 @@
 import { Storage } from '@google-cloud/storage';
 import sharp from 'sharp';
 import { env } from '../../../config/env.js';
-import type { StorageService, PhotoUploadInput, UploadPhotoResult } from './types.js';
+import type { StorageService, PhotoUploadInput, UploadPhotoResult, DocumentUploadInput, UploadDocumentResult } from './types.js';
 import { MAX_PHOTO_DIMENSION, TARGET_PHOTO_SIZE_MB } from '../../../domain/entities/PhotoScreen.js';
 
 /**
@@ -13,7 +13,7 @@ export class GCSStorageService implements StorageService {
 
   constructor() {
     console.info('[GCS] Initializing GCS Storage Service...');
-    
+
     // Option 1: With base64 encoded service account key
     if (env.GCP_SERVICE_ACCOUNT_KEY_BASE64 && env.GCS_PROJECT_ID) {
       console.info('[GCS] Using Option 1: Base64 encoded service account key');
@@ -58,7 +58,7 @@ export class GCSStorageService implements StorageService {
       console.error('[GCS] GCS_BUCKET_NAME is missing!');
       throw new Error('GCS_BUCKET_NAME is required');
     }
-    
+
     this.bucketName = env.GCS_BUCKET_NAME;
     console.info('[GCS] ✅ Initialized successfully with bucket:', this.bucketName);
   }
@@ -69,8 +69,8 @@ export class GCSStorageService implements StorageService {
 
     // Determine file extension
     const extension = this.getExtensionFromMimeType(input.mimeType);
-    
-    // Generate GCS key (same structure as S3)
+
+    // Generate GCS key (same structure as before for compatibility)
     const key = `households/${input.householdId}/tablets/${input.tabletId}/photos/${input.photoId}.${extension}`;
 
     const bucket = this.storage.bucket(this.bucketName);
@@ -94,7 +94,7 @@ export class GCSStorageService implements StorageService {
   async deletePhoto(key: string): Promise<void> {
     const bucket = this.storage.bucket(this.bucketName);
     const file = bucket.file(key);
-    
+
     await file.delete().catch((error) => {
       // Ignore if file doesn't exist
       if (error.code !== 404) {
@@ -105,7 +105,7 @@ export class GCSStorageService implements StorageService {
 
   async deletePhotosByPrefix(prefix: string): Promise<void> {
     const bucket = this.storage.bucket(this.bucketName);
-    
+
     // List all files with the given prefix
     const [files] = await bucket.getFiles({ prefix });
 
@@ -193,5 +193,100 @@ export class GCSStorageService implements StorageService {
       default:
         return 'jpg'; // Default to jpg
     }
+  }
+
+  // Document operations
+
+  async uploadDocument(input: DocumentUploadInput): Promise<UploadDocumentResult> {
+    const bucket = this.storage.bucket(this.bucketName);
+
+    // Generate storage key: documents/{householdId}/{documentId}/{originalFilename}
+    // Use sanitized filename to avoid path traversal
+    const sanitizedFilename = input.originalFilename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const key = `documents/${input.householdId}/${input.documentId}/${sanitizedFilename}`;
+
+    // Upload file
+    const file = bucket.file(key);
+    await file.save(input.buffer, {
+      metadata: {
+        contentType: input.mimeType,
+        cacheControl: 'public, max-age=31536000', // Cache for 1 year
+      },
+    });
+
+    // Generate signed URL for immediate download (valid for 1 hour)
+    const [signedUrl] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + 3600 * 1000, // 1 hour
+    });
+
+    // Public URL format for GCS
+    const url = `https://storage.googleapis.com/${this.bucketName}/${key}`;
+
+    return { url, key, signedUrl };
+  }
+
+  async deleteDocument(key: string): Promise<void> {
+    const bucket = this.storage.bucket(this.bucketName);
+    const file = bucket.file(key);
+
+    await file.delete().catch((error) => {
+      // Ignore if file doesn't exist
+      if (error.code !== 404) {
+        throw error;
+      }
+    });
+  }
+
+  async getSignedUrl(key: string, expiresInSeconds: number = 3600): Promise<string> {
+    const bucket = this.storage.bucket(this.bucketName);
+    const file = bucket.file(key);
+
+    // Check if file exists
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new Error(`File not found: ${key}`);
+    }
+
+    // Generate signed URL
+    const [signedUrl] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + expiresInSeconds * 1000,
+    });
+
+    return signedUrl;
+  }
+
+  /**
+   * Extract GCS key from URL
+   */
+  static extractKeyFromUrl(url: string): string | null {
+    // Try to match GCS URL patterns
+    const patterns = [
+      // storage.googleapis.com/{bucket}/{key}
+      /storage\.googleapis\.com\/[^/]+\/(.+)/,
+      // {bucket}.storage.googleapis.com/{key}
+      /([^/]+)\.storage\.googleapis\.com\/(.+)/,
+      // Match the key pattern directly (households/{householdId}/tablets/{tabletId}/photos/{photoId}.{ext})
+      /\/households\/[^/]+\/tablets\/[^/]+\/photos\/[^/]+\.[^/]+/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        // Return the key part (could be in different capture groups depending on pattern)
+        if (pattern.toString().includes('storage.googleapis.com')) {
+          // For patterns with bucket name, return everything after bucket
+          return match[1] ?? match[2] ?? null;
+        } else {
+          // For direct pattern match
+          return match[0].substring(1); // Remove leading slash
+        }
+      }
+    }
+
+    return null;
   }
 }

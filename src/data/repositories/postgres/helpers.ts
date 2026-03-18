@@ -10,6 +10,8 @@ import type { Task, TaskCategory, TaskPriority, TaskStatus, TaskRecurrence } fro
 import type { TaskReminder } from '../../../domain/entities/TaskReminder.js';
 import type { DisplayTablet, DisplayTabletStatus } from '../../../domain/entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../../../domain/entities/TabletDisplayConfig.js';
+import type { Document } from '../../../domain/entities/Document.js';
+import type { DocumentFolder, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -315,3 +317,65 @@ export const mapDisplayTablet = (row: {
   revokedBy: row.revoked_by,
   status: row.status,
 });
+
+export const mapDocument = (row: {
+  id: string;
+  household_id: string;
+  folder_id: string;
+  senior_id: string | null;
+  name: string;
+  original_filename: string;
+  storage_key: string;
+  mime_type: string;
+  file_size_bytes: number;
+  extension: string;
+  uploaded_by_user_id: string;
+  uploaded_at: string | Date;
+  updated_at: string | Date;
+  deleted_at: string | Date | null;
+}): Document => ({
+  id: row.id,
+  householdId: row.household_id,
+  folderId: row.folder_id,
+  seniorId: row.senior_id,
+  name: row.name,
+  originalFilename: row.original_filename,
+  storageKey: row.storage_key,
+  mimeType: row.mime_type,
+  fileSizeBytes: row.file_size_bytes,
+  extension: row.extension,
+  uploadedByUserId: row.uploaded_by_user_id,
+  uploadedAt: toIso(row.uploaded_at),
+  updatedAt: toIso(row.updated_at),
+  deletedAt: row.deleted_at ? toIso(row.deleted_at) : null,
+});
+
+export const mapDocumentFolder = (row: {
+  id: string;
+  household_id: string;
+  parent_folder_id: string | null;
+  senior_id: string | null;
+  name: string;
+  description: string | null;
+  type: 'system_root' | 'senior_folder' | 'user_folder';
+  system_root_type: 'medical' | 'administrative' | null;
+  created_by_user_id: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  deleted_at: string | Date | null;
+}): DocumentFolder => {
+  return {
+    id: row.id,
+    householdId: row.household_id,
+    parentFolderId: row.parent_folder_id,
+    seniorId: row.senior_id,
+    name: row.name,
+    description: row.description,
+    type: row.type,
+    systemRootType: row.system_root_type,
+    createdByUserId: row.created_by_user_id,
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+    deletedAt: row.deleted_at ? toIso(row.deleted_at) : null,
+  };
+};

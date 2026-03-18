@@ -20,6 +20,8 @@ import {
   DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS,
   getDefaultHouseholdMemberPermissions,
 } from '../../domain/entities/HouseholdSettings.js';
+import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../domain/entities/Document.js';
+import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput, DocumentFolderType, SystemRootType } from '../../domain/entities/DocumentFolder.js';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../domain/errors/index.js';
 import { nowIso, addHours, hashToken, normalizeEmail, normalizeName } from './postgres/helpers.js';
 
@@ -35,7 +37,7 @@ export const DEFAULT_TEST_HOUSEHOLD_ID = '3617e173-d359-492b-94b7-4c32622e7526';
 const households: Household[] = [
   {
     id: DEFAULT_TEST_HOUSEHOLD_ID,
-    name: 'Martin Family Home',
+    name: 'Famille Cohen Solal',
     createdByUserId: 'user-2',
     createdAt: nowIso(),
     updatedAt: nowIso(),
@@ -67,11 +69,25 @@ const members: Member[] = [
     joinedAt: nowIso(),
     createdAt: nowIso(),
   },
+  {
+    id: 'member-3',
+    householdId: DEFAULT_TEST_HOUSEHOLD_ID,
+    userId: '111325199791749121741',
+    email: 'ben.cohen.solal@gmail.com',
+    firstName: 'Ben',
+    lastName: 'Cohen Solal',
+    role: 'caregiver',
+    status: 'active',
+    joinedAt: nowIso(),
+    createdAt: nowIso(),
+  },
 ];
 
 const invitations: HouseholdInvitation[] = [];
 const auditEvents: AuditEvent[] = [];
 const householdSettingsStore = new Map<string, HouseholdSettings>();
+const documentFolders: DocumentFolder[] = [];
+const documents: Document[] = [];
 
 export const forceExpireInvitationForTests = (invitationId: string): void => {
   const invitation = invitations.find((item) => item.id === invitationId);
@@ -765,6 +781,10 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     return [];
   }
 
+  async listAllHouseholdOccurrencesInRange(_householdId: string, _fromDate: string, _toDate: string): Promise<never[]> {
+    return [];
+  }
+
   async createOccurrence(_input: unknown): Promise<never> {
     throw new Error('Occurrence operations not implemented in InMemoryRepository');
   }
@@ -990,5 +1010,312 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     household.name = name.trim();
     household.updatedAt = nowIso();
     return household;
+  }
+
+  // Documents
+  async getDocumentFolderById(folderId: string, householdId: string): Promise<DocumentFolder | null> {
+    return documentFolders.find(
+      (folder) => folder.id === folderId && folder.householdId === householdId && !folder.deletedAt
+    ) ?? null;
+  }
+
+  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]> {
+    return documentFolders.filter(
+      (folder) =>
+        folder.householdId === householdId &&
+        folder.parentFolderId === parentFolderId &&
+        !folder.deletedAt
+    ).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async createDocumentFolder(input: CreateDocumentFolderInput): Promise<DocumentFolder> {
+    const now = nowIso();
+
+    // Determine type based on input
+    let type: DocumentFolderType;
+    if (input.type) {
+      type = input.type;
+    } else if (input.isSystemRoot) {
+      type = 'system_root';
+    } else if (input.seniorId) {
+      type = 'senior_folder';
+    } else {
+      type = 'user_folder';
+    }
+
+    // Determine systemRootType
+    let systemRootType: SystemRootType | null = input.systemRootType ?? null;
+    if (type === 'system_root' && !systemRootType) {
+      // Default to 'medical' if not specified
+      systemRootType = 'medical';
+    }
+
+    const folder: DocumentFolder = {
+      id: randomUUID(),
+      householdId: input.householdId,
+      parentFolderId: input.parentFolderId ?? null,
+      seniorId: input.seniorId ?? null,
+      name: input.name.trim(),
+      description: input.description?.trim() ?? null,
+      type,
+      systemRootType,
+      createdByUserId: input.createdByUserId,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    };
+    documentFolders.push(folder);
+    return folder;
+  }
+
+  async updateDocumentFolder(folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder> {
+    const index = documentFolders.findIndex(
+      (folder) => folder.id === folderId && folder.householdId === householdId && !folder.deletedAt
+    );
+    if (index === -1) {
+      throw new NotFoundError('Document folder not found.');
+    }
+    const folder = documentFolders[index]!;
+    const updated: DocumentFolder = {
+      id: folder.id,
+      householdId: folder.householdId,
+      parentFolderId: folder.parentFolderId,
+      seniorId: folder.seniorId,
+      name: input.name?.trim() ?? folder.name,
+      description: input.description !== undefined ? (input.description?.trim() ?? null) : folder.description,
+      type: folder.type,
+      systemRootType: folder.systemRootType,
+      createdByUserId: folder.createdByUserId,
+      createdAt: folder.createdAt,
+      updatedAt: nowIso(),
+      deletedAt: folder.deletedAt,
+    };
+    documentFolders[index] = updated;
+    return updated;
+  }
+
+  async softDeleteDocumentFolder(folderId: string, householdId: string): Promise<void> {
+    const index = documentFolders.findIndex(
+      (folder) => folder.id === folderId && folder.householdId === householdId && !folder.deletedAt
+    );
+    if (index === -1) {
+      throw new NotFoundError('Document folder not found.');
+    }
+    const folder = documentFolders[index]!;
+    documentFolders[index] = {
+      id: folder.id,
+      householdId: folder.householdId,
+      parentFolderId: folder.parentFolderId,
+      seniorId: folder.seniorId,
+      name: folder.name,
+      description: folder.description,
+      type: folder.type,
+      systemRootType: folder.systemRootType,
+      createdByUserId: folder.createdByUserId,
+      createdAt: folder.createdAt,
+      updatedAt: nowIso(),
+      deletedAt: nowIso(),
+    };
+  }
+
+  async restoreDocumentFolder(folderId: string, householdId: string): Promise<void> {
+    const index = documentFolders.findIndex(
+      (folder) => folder.id === folderId && folder.householdId === householdId && folder.deletedAt !== null
+    );
+    if (index === -1) {
+      throw new NotFoundError('Deleted document folder not found.');
+    }
+    const folder = documentFolders[index]!;
+    documentFolders[index] = {
+      id: folder.id,
+      householdId: folder.householdId,
+      parentFolderId: folder.parentFolderId,
+      seniorId: folder.seniorId,
+      name: folder.name,
+      description: folder.description,
+      type: folder.type,
+      systemRootType: folder.systemRootType,
+      createdByUserId: folder.createdByUserId,
+      createdAt: folder.createdAt,
+      updatedAt: nowIso(),
+      deletedAt: null,
+    };
+  }
+
+  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null> {
+    return documentFolders.find(
+      (folder) =>
+        folder.householdId === householdId &&
+        folder.type === 'system_root' &&
+        folder.systemRootType === systemRootType &&
+        !folder.deletedAt
+    ) ?? null;
+  }
+
+  async ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void> {
+    const types: ('medical' | 'administrative')[] = ['medical', 'administrative'];
+    for (const type of types) {
+      const existing = await this.getSystemRootFolder(householdId, type);
+      if (!existing) {
+        await this.createDocumentFolder({
+          householdId,
+          parentFolderId: null,
+          name: type === 'medical' ? 'Medical Documents' : 'Administrative Documents',
+          description: type === 'medical' ? 'Medical records and health-related documents' : 'Administrative and legal documents',
+          type: 'system_root',
+          systemRootType: type,
+          createdByUserId: userId,
+        });
+      }
+    }
+  }
+
+  async listSeniorFolders(householdId: string): Promise<DocumentFolder[]> {
+    // In-memory implementation: return folders with seniorId not null
+    return documentFolders.filter(
+      (folder) => folder.householdId === householdId && folder.seniorId !== null && !folder.deletedAt
+    ).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async getDocumentById(documentId: string, householdId: string): Promise<Document | null> {
+    return documents.find(
+      (doc) => doc.id === documentId && doc.householdId === householdId && !doc.deletedAt
+    ) ?? null;
+  }
+
+  async listDocumentsByFolder(householdId: string, folderId: string): Promise<Document[]> {
+    return documents.filter(
+      (doc) => doc.householdId === householdId && doc.folderId === folderId && !doc.deletedAt
+    ).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async createDocument(input: CreateDocumentInput): Promise<Document> {
+    const now = nowIso();
+    const document: Document = {
+      id: randomUUID(),
+      householdId: input.householdId,
+      folderId: input.folderId,
+      seniorId: input.seniorId ?? null,
+      name: input.name.trim(),
+      originalFilename: input.originalFilename,
+      storageKey: input.storageKey,
+      mimeType: input.mimeType,
+      fileSizeBytes: input.fileSizeBytes,
+      extension: input.extension,
+      uploadedByUserId: input.uploadedByUserId,
+      uploadedAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    };
+    documents.push(document);
+    return document;
+  }
+
+  async updateDocument(documentId: string, householdId: string, input: UpdateDocumentInput): Promise<Document> {
+    const index = documents.findIndex(
+      (doc) => doc.id === documentId && doc.householdId === householdId && !doc.deletedAt
+    );
+    if (index === -1) {
+      throw new NotFoundError('Document not found.');
+    }
+    const doc = documents[index]!;
+    const updated: Document = {
+      id: doc.id,
+      householdId: doc.householdId,
+      folderId: input.folderId ?? doc.folderId,
+      seniorId: input.seniorId !== undefined ? input.seniorId : doc.seniorId,
+      name: input.name?.trim() ?? doc.name,
+      originalFilename: doc.originalFilename,
+      storageKey: doc.storageKey,
+      mimeType: doc.mimeType,
+      fileSizeBytes: doc.fileSizeBytes,
+      extension: doc.extension,
+      uploadedByUserId: doc.uploadedByUserId,
+      uploadedAt: doc.uploadedAt,
+      updatedAt: nowIso(),
+      deletedAt: doc.deletedAt,
+    };
+    documents[index] = updated;
+    return updated;
+  }
+
+  async softDeleteDocument(documentId: string, householdId: string): Promise<void> {
+    const index = documents.findIndex(
+      (doc) => doc.id === documentId && doc.householdId === householdId && !doc.deletedAt
+    );
+    if (index === -1) {
+      throw new NotFoundError('Document not found.');
+    }
+    const doc = documents[index]!;
+    documents[index] = {
+      id: doc.id,
+      householdId: doc.householdId,
+      folderId: doc.folderId,
+      seniorId: doc.seniorId,
+      name: doc.name,
+      originalFilename: doc.originalFilename,
+      storageKey: doc.storageKey,
+      mimeType: doc.mimeType,
+      fileSizeBytes: doc.fileSizeBytes,
+      extension: doc.extension,
+      uploadedByUserId: doc.uploadedByUserId,
+      uploadedAt: doc.uploadedAt,
+      updatedAt: nowIso(),
+      deletedAt: nowIso(),
+    };
+  }
+
+  async restoreDocument(documentId: string, householdId: string): Promise<void> {
+    const index = documents.findIndex(
+      (doc) => doc.id === documentId && doc.householdId === householdId && doc.deletedAt !== null
+    );
+    if (index === -1) {
+      throw new NotFoundError('Deleted document not found.');
+    }
+    const doc = documents[index]!;
+    documents[index] = {
+      id: doc.id,
+      householdId: doc.householdId,
+      folderId: doc.folderId,
+      seniorId: doc.seniorId,
+      name: doc.name,
+      originalFilename: doc.originalFilename,
+      storageKey: doc.storageKey,
+      mimeType: doc.mimeType,
+      fileSizeBytes: doc.fileSizeBytes,
+      extension: doc.extension,
+      uploadedByUserId: doc.uploadedByUserId,
+      uploadedAt: doc.uploadedAt,
+      updatedAt: nowIso(),
+      deletedAt: null,
+    };
+  }
+
+  async searchDocumentsAndFolders(householdId: string, query: string): Promise<{
+    folders: DocumentFolder[];
+    documents: Document[];
+  }> {
+    const normalizedQuery = query.toLowerCase().trim();
+    if (!normalizedQuery) {
+      return { folders: [], documents: [] };
+    }
+    const filteredFolders = documentFolders.filter(
+      (folder) =>
+        folder.householdId === householdId &&
+        !folder.deletedAt &&
+        (folder.name.toLowerCase().includes(normalizedQuery) ||
+          (folder.description && folder.description.toLowerCase().includes(normalizedQuery)))
+    );
+    const filteredDocuments = documents.filter(
+      (doc) =>
+        doc.householdId === householdId &&
+        !doc.deletedAt &&
+        (doc.name.toLowerCase().includes(normalizedQuery) ||
+          doc.originalFilename.toLowerCase().includes(normalizedQuery))
+    );
+    return {
+      folders: filteredFolders,
+      documents: filteredDocuments,
+    };
   }
 }

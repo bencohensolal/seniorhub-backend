@@ -1,0 +1,18 @@
+feat(documents): implement complete document system with backend integration
+
+Adds document management capabilities to Senior Hub backend:
+- New entities: Document and DocumentFolder
+- Migration 021_documents.sql creates tables and indexes
+- Use cases: CreateFolderUseCase, ListDocumentRootsUseCase, ListFolderContentUseCase, SearchDocumentsUseCase, UpdateFolderUseCase, DeleteFolderUseCase, CreateDocumentUseCase, UpdateDocumentUseCase, DeleteDocumentUseCase
+- Permission updates: add viewDocuments and manageDocuments to HouseholdSettings
+- Storage service integration for file uploads (GCS/S3)
+- API endpoints under /v1/households/{id}/documents/
+- Repository implementations in PostgresHouseholdRepository
+- Documentation: docs/DOCUMENTS_SYSTEM.md
+- Authentication fix: support Google OAuth tokens in development mode
+
+Frontend integration:
+- Hooks for data fetching, navigation, stats, and actions
+- Real/mock data switching based on householdId availability
+- UI components: DocumentCard, EmptyDocumentsState, LoadingState, ErrorBanner
+- Translation keys added for loading/error states

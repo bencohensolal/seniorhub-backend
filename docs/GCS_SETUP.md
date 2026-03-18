@@ -1,17 +1,18 @@
 # Configuration Google Cloud Storage pour Photo Screens
 
-Guide pour utiliser Google Cloud Storage (GCS) au lieu d'AWS S3 - plus cohérent si vous utilisez déjà GCP pour OAuth.
+Guide pour utiliser Google Cloud Storage (GCS) - le service de stockage de fichiers pour Senior Hub.
 
 ## 💡 Pourquoi GCS ?
 
 - ✅ **Déjà sur GCP** pour OAuth → une seule plateforme
 - ✅ **Free Tier permanent** : 5GB stockage + 1GB network gratuit/mois
 - ✅ **Plus simple** : un seul compte, une seule facturation
-- ✅ **Moins cher** pour petits volumes (~30% moins cher qu'AWS)
+- ✅ **Moins cher** pour petits volumes
+- ✅ **Solution unique** : Pas besoin de gérer plusieurs providers
 
-## 💰 Comparaison des coûts
+## 💰 Coûts GCS
 
-### Google Cloud Storage (Recommandé)
+### Google Cloud Storage
 
 **Free Tier (PERMANENT) :**
 - 5GB stockage gratuit/mois
@@ -20,24 +21,11 @@ Guide pour utiliser Google Cloud Storage (GCS) au lieu d'AWS S3 - plus cohérent
 - 50000 opérations Class B (read) gratuites/mois
 
 **Tarifs après Free Tier (europe-west1) :**
-- Stockage : $0.020/GB/mois (vs $0.023 AWS)
-- Egress : $0.12/GB (vs $0.09 AWS)
+- Stockage : $0.020/GB/mois
+- Egress : $0.12/GB
 - **Total estimé : ~$3-7/mois** pour usage modéré
 
-### AWS S3 + CloudFront
-
-**Free Tier (12 MOIS SEULEMENT) :**
-- 5GB stockage
-- 20000 GET requests
-- 2000 PUT requests
-- CloudFront : 50GB/mois puis 1TB pendant 12 mois
-
-**Tarifs après Free Tier :**
-- Stockage : $0.023/GB/mois
-- CloudFront : $0.085/GB
-- **Total estimé : ~$5-10/mois**
-
-**🎯 Verdict : GCS est moins cher ET permanent !**
+**🎯 GCS est économique et simple !**
 
 ## 🚀 Configuration GCS (15 minutes)
 
@@ -99,289 +87,271 @@ Service account ID: seniorhub-storage
 Description: Service account for SeniorHub photo storage
 ```
 
-2. **Grant access** → Ajouter le rôle :
-   - **Storage Object Admin** (sur le bucket spécifique)
+2. Cliquer **Create and Continue**
 
-3. **Create key** :
-   - Key type: **JSON**
-   - Télécharger le fichier JSON
+3. Rôles à attribuer :
+   - **Storage Object Admin** (pour upload/delete)
+   - **Storage Object Viewer** (pour lire)
 
-### Étape 5 : Configurer Railway
+4. Cliquer **Continue** → **Done**
 
-Option 1 - **Avec fichier de credentials (Recommandé)** :
+### Étape 5 : Générer une clé JSON
 
-1. Encoder le fichier JSON en base64 :
+1. Dans la liste des Service Accounts → **Actions** (⋮) → **Manage keys**
+2. **Add key** → **Create new key**
+3. Type : **JSON**
+4. Cliquer **Create**
+
+⚠️ **Télécharger et sauvegarder le fichier JSON immédiatement** - il ne sera plus accessible !
+
+### Étape 6 : Encoder la clé en base64 (pour Railway)
+
+Pour faciliter le déploiement sur Railway, encoder la clé JSON en base64 :
+
 ```bash
+# Sur macOS/Linux
 cat service-account-key.json | base64
+
+# Sur Windows (PowerShell)
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("service-account-key.json"))
 ```
 
-2. Dans Railway, ajouter :
+Copier la sortie (très longue) - c'est votre `GCP_SERVICE_ACCOUNT_KEY_BASE64`.
+
+## ⚙️ Configuration Railway
+
+### Variables d'environnement requises
+
+Dans Railway → votre service → **Variables** :
+
 ```bash
-GCP_SERVICE_ACCOUNT_KEY_BASE64=ewogICJ0eXBlIjogInNlcnZpY...
+# Google Cloud Storage
 GCS_BUCKET_NAME=seniorhub-photos-production
 GCS_PROJECT_ID=votre-project-id
+GCS_CLIENT_EMAIL=votre-service-account@votre-project.iam.gserviceaccount.com
+GCS_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
+GCP_SERVICE_ACCOUNT_KEY_BASE64=eyJ0eXBlIjoic2VydmljZV9hY2NvdW50Iiwi... (très long)
 ```
 
-Option 2 - **Sans fichier (variables individuelles)** :
+### Alternative : Utiliser GCP_SERVICE_ACCOUNT_KEY_BASE64 uniquement
+
+Si vous avez encodé la clé JSON en base64, vous pouvez utiliser uniquement :
 
 ```bash
-GCS_BUCKET_NAME=seniorhub-photos-production
-GCS_PROJECT_ID=votre-project-id
-GCS_CLIENT_EMAIL=seniorhub-storage@votre-project.iam.gserviceaccount.com
-GCS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...-----END PRIVATE KEY-----\n"
+GCP_SERVICE_ACCOUNT_KEY_BASE64=eyJ0eXBlIjoic2VydmljZV9hY2NvdW50Iiwi...
 ```
 
-## 🔧 Adapter le code
+Le système extraira automatiquement `GCS_PROJECT_ID`, `GCS_CLIENT_EMAIL` et `GCS_PRIVATE_KEY`.
 
-### 1. Installer la dépendance GCS
+## 🔧 Configuration backend
 
-```bash
-npm install @google-cloud/storage
-```
+### 1. Mettre à jour env.ts
 
-### 2. Créer GCSStorageService
-
-Créer `src/data/services/storage/GCSStorageService.ts` :
+Le fichier `src/config/env.ts` contient déjà la configuration GCS :
 
 ```typescript
-import { Storage } from '@google-cloud/storage';
-import type { StorageService, UploadResult } from './types.js';
-import { env } from '../../../config/env.js';
-import sharp from 'sharp';
-
-export class GCSStorageService implements StorageService {
-  private storage: Storage;
-  private bucketName: string;
-
-  constructor() {
-    // Option 1: Avec credentials base64
-    if (env.GCP_SERVICE_ACCOUNT_KEY_BASE64) {
-      const credentials = JSON.parse(
-        Buffer.from(env.GCP_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
-      );
-      this.storage = new Storage({
-        projectId: env.GCS_PROJECT_ID,
-        credentials,
-      });
-    }
-    // Option 2: Avec variables individuelles
-    else if (env.GCS_PRIVATE_KEY) {
-      this.storage = new Storage({
-        projectId: env.GCS_PROJECT_ID,
-        credentials: {
-          client_email: env.GCS_CLIENT_EMAIL,
-          private_key: env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        },
-      });
-    }
-    // Option 3: Default (utilise GOOGLE_APPLICATION_CREDENTIALS)
-    else {
-      this.storage = new Storage({
-        projectId: env.GCS_PROJECT_ID,
-      });
-    }
-
-    this.bucketName = env.GCS_BUCKET_NAME;
-  }
-
-  async uploadPhoto(params: {
-    fileBuffer: Buffer;
-    key: string;
-    mimeType: string;
-  }): Promise<UploadResult> {
-    // Compresser l'image
-    const compressedBuffer = await sharp(params.fileBuffer)
-      .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-
-    const bucket = this.storage.bucket(this.bucketName);
-    const file = bucket.file(params.key);
-
-    await file.save(compressedBuffer, {
-      metadata: {
-        contentType: params.mimeType,
-        cacheControl: 'public, max-age=31536000',
-      },
-      public: true, // Rend le fichier accessible publiquement
-    });
-
-    // URL publique
-    const url = `https://storage.googleapis.com/${this.bucketName}/${params.key}`;
-
-    return {
-      url,
-      key: params.key,
-    };
-  }
-
-  async deletePhoto(key: string): Promise<void> {
-    const bucket = this.storage.bucket(this.bucketName);
-    const file = bucket.file(key);
-    
-    await file.delete().catch((error) => {
-      // Ignorer si le fichier n'existe pas
-      if (error.code !== 404) {
-        throw error;
-      }
-    });
-  }
-}
-```
-
-### 3. Mettre à jour env.ts
-
-Ajouter à `src/config/env.ts` :
-
-```typescript
-// Google Cloud Storage (alternative à S3)
+// Google Cloud Storage
 GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
 GCS_PROJECT_ID: process.env.GCS_PROJECT_ID || '',
 GCS_CLIENT_EMAIL: process.env.GCS_CLIENT_EMAIL || '',
 GCS_PRIVATE_KEY: process.env.GCS_PRIVATE_KEY || '',
 GCP_SERVICE_ACCOUNT_KEY_BASE64: process.env.GCP_SERVICE_ACCOUNT_KEY_BASE64 || '',
-
-// Choix du provider de stockage
-STORAGE_PROVIDER: process.env.STORAGE_PROVIDER || 'gcs', // 'gcs' ou 's3'
 ```
 
-### 4. Factory pattern pour choisir le provider
+### 2. Service de stockage
 
-Créer `src/data/services/storage/createStorageService.ts` :
+Le service de stockage utilise automatiquement GCS via `createStorageService()` :
 
 ```typescript
-import { S3StorageService } from './S3StorageService.js';
-import { GCSStorageService } from './GCSStorageService.js';
-import type { StorageService } from './types.js';
-import { env } from '../../../config/env.js';
-
 export function createStorageService(): StorageService {
-  if (env.STORAGE_PROVIDER === 's3') {
-    return new S3StorageService();
-  }
-  
-  return new GCSStorageService(); // Default
+  console.info('[Storage] Initializing GCS storage service:', {
+    hasGcpServiceAccountKeyBase64: !!env.GCP_SERVICE_ACCOUNT_KEY_BASE64,
+    hasGcsProjectId: !!env.GCS_PROJECT_ID,
+    hasGcsBucketName: !!env.GCS_BUCKET_NAME,
+    hasGcsClientEmail: !!env.GCS_CLIENT_EMAIL,
+    hasGcsPrivateKey: !!env.GCS_PRIVATE_KEY,
+  });
+
+  return new GCSStorageService();
 }
 ```
 
-### 5. Utiliser le factory dans les routes
+### 3. Utiliser le service dans les routes
 
-Modifier `src/routes/households/photoScreenRoutes.ts` :
+Dans `src/routes/households/photoScreenRoutes.ts` :
 
 ```typescript
 import { createStorageService } from '../../data/services/storage/createStorageService.js';
 
 export async function photoScreenRoutes(server: FastifyInstance) {
   const repository = createHouseholdRepository();
-  const storageService = createStorageService(); // Au lieu de new S3StorageService()
-  
+  const storageService = createStorageService();
+
   // ... reste du code
 }
 ```
 
-## 🧪 Tester
+## 🧪 Tester la configuration
 
-### Test local
-
-1. Créer `.env` :
-```bash
-STORAGE_PROVIDER=gcs
-GCS_BUCKET_NAME=seniorhub-photos-production
-GCS_PROJECT_ID=votre-project-id
-GCP_SERVICE_ACCOUNT_KEY_BASE64=ewogICJ0eXBlIjog...
-```
-
-2. Tester :
-```bash
-npm run dev
-```
-
-### Vérifier
+### Test 1 : Vérifier les variables d'environnement
 
 ```bash
-# Créer un écran photo
-curl -X POST 'http://localhost:3000/v1/households/{id}/display-tablets/{id}/photo-screens' \
-  -H 'x-user-id: test' \
-  -H 'x-user-email: test@test.com' \
-  -H 'x-user-first-name: Test' \
-  -H 'x-user-last-name: User' \
-  -H 'Content-Type: application/json' \
-  -d '{"name": "Test", "displayMode": "slideshow"}'
-
-# Upload une photo
-curl -X POST 'http://localhost:3000/v1/households/{id}/display-tablets/{id}/photo-screens/{screenId}/photos' \
-  -H 'x-user-id: test' \
-  -H 'x-user-email: test@test.com' \
-  -H 'x-user-first-name: Test' \
-  -H 'x-user-last-name: User' \
-  -F 'photo=@test.jpg' \
-  -F 'caption=Test' \
-  -F 'order=0'
+cd backend
+npm run test:storage
 ```
 
-L'URL retournée devrait être : `https://storage.googleapis.com/seniorhub-photos-production/...`
+### Test 2 : Téléverser une image test
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "file=@test.jpg" \
+  -F "tabletId=test-tablet" \
+  -F "photoScreenId=test-screen" \
+  https://votre-api.railway.app/v1/households/{householdId}/tablets/{tabletId}/photo-screens/{photoScreenId}/photos
+```
+
+### Test 3 : Vérifier l'URL générée
+
+L'URL devrait ressembler à :
+```
+https://storage.googleapis.com/seniorhub-photos-production/households/{householdId}/tablets/{tabletId}/photos/{photoId}.jpg
+```
+
+Ouvrir cette URL dans un navigateur pour vérifier que l'image est accessible.
+
+## 🔐 Configuration avancée : Signed URLs
+
+Pour plus de sécurité, vous pouvez utiliser des signed URLs au lieu d'un accès public :
+
+### 1. Désactiver l'accès public
+
+Dans le bucket → **Permissions** → Retirer `allUsers`
+
+### 2. Générer des signed URLs dans le code
+
+Le `GCSStorageService` génère automatiquement des signed URLs pour les uploads :
+
+```typescript
+const { url } = await storageService.uploadPhoto({
+  householdId: '...',
+  tabletId: '...',
+  photoId: '...',
+  buffer: imageBuffer,
+  mimeType: 'image/jpeg',
+});
+```
+
+### 3. Configurer la durée de validité
+
+Par défaut : 1 heure. Modifiable via `expiresInSeconds` :
+
+```typescript
+const signedUrl = await storageService.getSignedUrl(
+  'households/.../photo.jpg',
+  3600 // 1 heure
+);
+```
+
+## 🐛 Dépannage
+
+### Erreur : "Permission denied on bucket"
+
+1. Vérifier que le Service Account a les rôles :
+   - `roles/storage.objectAdmin`
+   - `roles/storage.objectViewer`
+
+2. Vérifier les permissions du bucket :
+   ```bash
+   gsutil iam get gs://seniorhub-photos-production
+   ```
+
+### Erreur : "Invalid private key"
+
+1. Vérifier que `GCS_PRIVATE_KEY` contient les sauts de ligne `\n` :
+   ```bash
+   -----BEGIN PRIVATE KEY-----\nMII...\n-----END PRIVATE KEY-----
+   ```
+
+2. Ou utiliser `GCP_SERVICE_ACCOUNT_KEY_BASE64` à la place.
+
+### Erreur : "Bucket not found"
+
+1. Vérifier `GCS_BUCKET_NAME` (exactement le même nom)
+2. Vérifier `GCS_PROJECT_ID` (le projet où se trouve le bucket)
+
+### Images non accessibles publiquement
+
+1. Vérifier les permissions du bucket :
+   ```bash
+   gsutil acl get gs://seniorhub-photos-production
+   ```
+
+2. Ajouter `allUsers` avec rôle `READER` :
+   ```bash
+   gsutil iam ch allUsers:objectViewer gs://seniorhub-photos-production
+   ```
 
 ## 📊 Monitoring
 
-### Voir l'utilisation
+### Google Cloud Console
 
-1. **Cloud Console** → **Cloud Storage** → Votre bucket
-2. Onglet **Monitoring** pour voir :
+1. **Cloud Storage** → votre bucket → **Monitoring**
+   - Requêtes par seconde
+   - Bandwidth
    - Stockage utilisé
-   - Nombre de requêtes
-   - Bande passante
 
-### Alertes
+2. **Logging** → filtrer par :
+   ```
+   resource.type="gcs_bucket"
+   resource.labels.bucket_name="seniorhub-photos-production"
+   ```
 
-1. **Monitoring** → **Alerting**
-2. Créer une alerte si :
-   - Stockage > 4GB (avant la fin du free tier)
-   - Coûts > $10/mois
+### Alertes recommandées
 
-## 🔒 Sécurité
+1. **Stockage > 80%** du quota
+2. **Egress > 1TB/mois** (dépassement du free tier)
+3. **Erreurs 4xx/5xx** > 1%
 
-### Option : Signed URLs (plus sécurisé)
+## ♻️ Gestion du cycle de vie
 
-Au lieu de rendre le bucket public, utiliser des signed URLs :
+### Suppression automatique des anciennes photos
 
-```typescript
-async uploadPhoto(params: {
-  fileBuffer: Buffer;
-  key: string;
-  mimeType: string;
-}): Promise<UploadResult> {
-  // ... compression ...
+Créer une règle de lifecycle dans le bucket :
 
-  const bucket = this.storage.bucket(this.bucketName);
-  const file = bucket.file(params.key);
+1. Bucket → **Configuration** → **Lifecycle**
+2. **Add rule**
+3. Configuration :
+   - **Object conditions** : Age > 90 days
+   - **Action** : Delete
 
-  await file.save(compressedBuffer, {
-    metadata: {
-      contentType: params.mimeType,
-      cacheControl: 'public, max-age=31536000',
-    },
-    // NE PAS mettre public: true
-  });
+### Versioning (optionnel)
 
-  // Générer une signed URL valide 7 jours
-  const [url] = await file.getSignedUrl({
-    action: 'read',
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  });
+Pour récupérer des photos supprimées par erreur :
 
-  return { url, key: params.key };
-}
-```
+1. Bucket → **Protection** → **Object versioning**
+2. Activer **Object versioning**
+3. Configurer la règle de lifecycle pour supprimer les anciennes versions
 
-## 🎯 Résumé - Pourquoi GCS ?
+## 🎯 Résumé
 
-| Critère | Google Cloud Storage | AWS S3 + CloudFront |
-|---------|---------------------|---------------------|
-| **Free Tier** | ✅ Permanent (5GB) | ⚠️ 12 mois seulement |
-| **Cohérence** | ✅ Déjà sur GCP | ❌ Nouvelle plateforme |
-| **Prix** | ✅ ~$3-7/mois | ⚠️ ~$5-10/mois |
-| **Simplicité** | ✅ Un seul compte | ❌ Deux comptes |
-| **CDN** | ✅ Intégré | ✅ CloudFront |
-| **Performance** | ✅ Excellent | ✅ Excellent |
+Google Cloud Storage est la solution de stockage unique pour Senior Hub. Elle offre :
 
-**🏆 GCS est le meilleur choix pour votre cas !**
+| Critère | Google Cloud Storage |
+|---------|---------------------|
+| **Free Tier** | ✅ Permanent (5GB) |
+| **Cohérence** | ✅ Déjà sur GCP |
+| **Prix** | ✅ ~$3-7/mois |
+| **Simplicité** | ✅ Un seul compte |
+| **CDN** | ✅ Intégré |
+| **Performance** | ✅ Excellent |
+| **Sécurité** | ✅ IAM + signed URLs |
+
+**🏆 GCS est le choix idéal pour votre application !**
+
+## 🔗 Ressources
+
+- [Documentation GCS](https://cloud.google.com/storage/docs)
+- [Guide IAM pour GCS](https://cloud.google.com/storage/docs/access-control/iam)
+- [Prix GCS](https://cloud.google.com/storage/pricing)
+- [Guide Railway + GCS](RAILWAY_GCS_SETUP.md)

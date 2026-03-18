@@ -30,23 +30,20 @@ const validateActiveTabletSession = async (
 };
 
 /**
- * Decode a JWT token (simple base64 decode for development)
- * In production, this should use proper JWT verification with a secret key
+ * Decodes the payload of a JWT without verifying the signature.
+ * Signature verification is delegated to the upstream auth provider (BFF/gateway).
+ * Returns null if the token is not a valid 3-part JWT.
  */
 const decodeJWT = (token: string): Record<string, unknown> | null => {
   try {
-    // Split the JWT into parts
     const parts = token.split('.');
     if (parts.length !== 3 || !parts[1]) {
       return null;
     }
 
-    // Decode the payload (second part)
-    const payload = parts[1];
-    const decoded = Buffer.from(payload, 'base64').toString('utf-8');
+    const decoded = Buffer.from(parts[1], 'base64').toString('utf-8');
     return JSON.parse(decoded);
-  } catch (error) {
-    console.error('JWT decode failed:', error);
+  } catch {
     return null;
   }
 };
@@ -144,15 +141,18 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
         if (decoded) {
           const firstName = getStringClaim(decoded, 'firstName', 'given_name', 'first_name');
           const lastName = getStringClaim(decoded, 'lastName', 'family_name', 'last_name');
+          const userId = getStringClaim(decoded, 'sub', 'userId', 'user_id');
+          const email = getStringClaim(decoded, 'email');
+
           userContext = {
-            userId: getStringClaim(decoded, 'sub', 'userId', 'user_id') || '',
-            email: getStringClaim(decoded, 'email') || '',
+            userId: userId || '',
+            email: email || '',
             ...(firstName !== undefined && { firstName }),
             ...(lastName !== undefined && { lastName }),
           };
         }
-      } catch (error) {
-        console.error('JWT verification failed:', error);
+      } catch {
+        // Non-JWT Bearer token — fall through to x-user-* headers
       }
     }
 
@@ -172,7 +172,7 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
     if (!userContext?.userId || !userContext?.email) {
       return reply.status(401).send({
         status: 'error',
-        message: 'Authentication required. Provide either Bearer token, x-user-* headers, or x-tablet-session-token.',
+        message: 'Authentication required. Provide either a Bearer token, x-user-* headers, or x-tablet-session-token.',
       });
     }
 

@@ -1,7 +1,7 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { StorageService } from '../../../data/services/storage/types.js';
-import { S3StorageService } from '../../../data/services/storage/S3StorageService.js';
+import { GCSStorageService } from '../../../data/services/storage/GCSStorageService.js';
 import { NotFoundError, ForbiddenError, PhotoNotFoundError } from '../../errors/index.js';
 import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
@@ -43,14 +43,14 @@ export class DeletePhotoUseCase {
       throw new PhotoNotFoundError('Photo not found.');
     }
 
-    // Delete from S3
-    const key = S3StorageService.extractKeyFromUrl(photo.url);
+    // Delete from storage
+    const key = GCSStorageService.extractKeyFromUrl(photo.url);
     if (key) {
       try {
         await this.storageService.deletePhoto(key);
       } catch (error) {
-        console.error(`Failed to delete photo ${photo.id} from S3:`, error);
-        // Continue with database deletion even if S3 delete fails
+        console.error(`Failed to delete photo ${photo.id} from storage:`, error);
+        // Continue with database deletion even if storage delete fails
       }
     }
 
