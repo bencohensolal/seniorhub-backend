@@ -14,6 +14,7 @@ import type { SearchDocumentsUseCase } from '../../../domain/usecases/documents/
 import type { MoveToTrashUseCase } from '../../../domain/usecases/documents/MoveToTrashUseCase.js';
 import type { RestoreFromTrashUseCase } from '../../../domain/usecases/documents/RestoreFromTrashUseCase.js';
 import type { PurgeExpiredTrashUseCase } from '../../../domain/usecases/documents/PurgeExpiredTrashUseCase.js';
+import type { GetDocumentDownloadUrlUseCase } from '../../../domain/usecases/documents/GetDocumentDownloadUrlUseCase.js';
 import { createStorageService } from '../../../data/services/storage/createStorageService.js';
 import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
@@ -51,6 +52,7 @@ export function registerDocumentRoutes(
     moveToTrashUseCase: MoveToTrashUseCase;
     restoreFromTrashUseCase: RestoreFromTrashUseCase;
     purgeExpiredTrashUseCase: PurgeExpiredTrashUseCase;
+    getDocumentDownloadUrlUseCase: GetDocumentDownloadUrlUseCase;
   },
 ): void {
   // GET /v1/households/:householdId/documents/roots - List system roots and senior folders
@@ -741,6 +743,62 @@ export function registerDocumentRoutes(
           status: 'success',
           data: result,
         });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // GET /v1/households/:householdId/documents/:documentId/download-url
+  fastify.get(
+    '/v1/households/:householdId/documents/:documentId/download-url',
+    {
+      schema: {
+        tags: ['Documents'],
+        params: {
+          type: 'object',
+          required: ['householdId', 'documentId'],
+          properties: {
+            householdId: { type: 'string' },
+            documentId: { type: 'string' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: {
+                type: 'object',
+                properties: {
+                  url: { type: 'string' },
+                  filename: { type: 'string' },
+                  mimeType: { type: 'string' },
+                },
+                required: ['url', 'filename', 'mimeType'],
+              },
+            },
+            required: ['status', 'data'],
+          },
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = documentParamsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(403).send({ status: 'error', message: 'Invalid request payload.' });
+      }
+
+      try {
+        const result = await useCases.getDocumentDownloadUrlUseCase.execute({
+          documentId: paramsResult.data.documentId,
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+        });
+
+        return reply.status(200).send({ status: 'success', data: result });
       } catch (error) {
         return handleDomainError(error, reply);
       }

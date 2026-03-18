@@ -72,6 +72,8 @@ import { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDo
 import { MoveToTrashUseCase } from '../../domain/usecases/documents/MoveToTrashUseCase.js';
 import { RestoreFromTrashUseCase } from '../../domain/usecases/documents/RestoreFromTrashUseCase.js';
 import { PurgeExpiredTrashUseCase } from '../../domain/usecases/documents/PurgeExpiredTrashUseCase.js';
+import { GetDocumentDownloadUrlUseCase } from '../../domain/usecases/documents/GetDocumentDownloadUrlUseCase.js';
+import { createStorageService } from '../../data/services/storage/createStorageService.js';
 import { registerDocumentRoutes } from './documents/documentRoutes.js';
 
 /**
@@ -150,6 +152,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     moveToTrashUseCase: new MoveToTrashUseCase(repository),
     restoreFromTrashUseCase: new RestoreFromTrashUseCase(repository),
     purgeExpiredTrashUseCase: new PurgeExpiredTrashUseCase(repository),
+    getDocumentDownloadUrlUseCase: new GetDocumentDownloadUrlUseCase(repository, createStorageService()),
   };
 
   // Register route modules
@@ -242,6 +245,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     moveToTrashUseCase: useCases.moveToTrashUseCase,
     restoreFromTrashUseCase: useCases.restoreFromTrashUseCase,
     purgeExpiredTrashUseCase: useCases.purgeExpiredTrashUseCase,
+    getDocumentDownloadUrlUseCase: useCases.getDocumentDownloadUrlUseCase,
   });
 
   // Register photo screen routes with v1 prefix
