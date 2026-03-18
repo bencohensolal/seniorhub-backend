@@ -228,16 +228,19 @@ src/routes/households/
 ├── index.ts                      # Plugin entry point, dependency injection
 ├── schemas.ts                    # Shared Zod + JSON Schema definitions
 ├── utils.ts                      # Shared utilities (tablet access check, requester context)
-├── householdRoutes.ts            # Household CRUD + member management
+├── householdRoutes.ts            # Household CRUD (create, list, overview, settings)
+├── memberRoutes.ts               # Household member management (list, remove, role, leave)
 ├── invitationRoutes.ts           # Invitation lifecycle
-├── appointmentRoutes.ts          # Appointments + occurrence overrides
+├── appointmentRoutes.ts          # Appointments CRUD + reminders + upcoming timeline
+├── occurrenceRoutes.ts           # Appointment occurrence overrides (list, modify, cancel, batch, restore)
 ├── appointmentSchemas.ts
 ├── medicationRoutes.ts           # Medications
 ├── medicationSchemas.ts
 ├── reminderRoutes.ts             # Medication reminders
 ├── taskRoutes.ts                 # Tasks
 ├── taskSchemas.ts
-├── displayTabletRoutes.ts        # Display tablets, SSE, config
+├── displayTabletRoutes.ts        # Display tablet lifecycle (create, update, revoke, auth)
+├── tabletConfigRoutes.ts         # Tablet config + SSE config-updates stream
 ├── displayTabletConfigSchemas.ts
 ├── photoScreenRoutes.ts          # Photo screens + photo uploads
 ├── photoScreenSchemas.ts
