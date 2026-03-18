@@ -11,7 +11,7 @@ import type { CreateAppointmentReminderUseCase } from '../../domain/usecases/app
 import type { UpdateAppointmentReminderUseCase } from '../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
 import type { DeleteAppointmentReminderUseCase } from '../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
 import type { ListUpcomingAppointmentsUseCase } from '../../domain/usecases/appointments/ListUpcomingAppointmentsUseCase.js';
-import { paramsSchema, errorResponseSchema } from './schemas.js';
+import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import {
   createAppointmentBodySchema,
   updateAppointmentBodySchema,

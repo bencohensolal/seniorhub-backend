@@ -7,7 +7,7 @@ import type { CancelOccurrenceUseCase } from '../../domain/usecases/appointments
 import type { BatchModifyOccurrencesUseCase } from '../../domain/usecases/appointments/BatchModifyOccurrencesUseCase.js';
 import type { BatchCancelOccurrencesUseCase } from '../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
 import type { RestoreOccurrenceUseCase } from '../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
-import { errorResponseSchema } from './schemas.js';
+import { errorResponseSchema } from './householdSchemas.js';
 import {
   appointmentParamsSchema,
   occurrenceParamsSchema,

@@ -4,7 +4,7 @@ import type { CreateHouseholdUseCase } from '../../domain/usecases/households/Cr
 import type { GetHouseholdOverviewUseCase } from '../../domain/usecases/households/GetHouseholdOverviewUseCase.js';
 import type { ListUserHouseholdsUseCase } from '../../domain/usecases/households/ListUserHouseholdsUseCase.js';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './schemas.js';
+import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
 import { requireWritePermission } from '../../plugins/authContext.js';

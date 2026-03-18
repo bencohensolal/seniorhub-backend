@@ -5,7 +5,7 @@ import type { ListMedicationRemindersUseCase } from '../../domain/usecases/remin
 import type { CreateReminderUseCase } from '../../domain/usecases/reminders/CreateReminderUseCase.js';
 import type { UpdateReminderUseCase } from '../../domain/usecases/reminders/UpdateReminderUseCase.js';
 import type { DeleteReminderUseCase } from '../../domain/usecases/reminders/DeleteReminderUseCase.js';
-import { errorResponseSchema } from './schemas.js';
+import { errorResponseSchema } from './householdSchemas.js';
 import {
   medicationParamsSchema,
   reminderParamsSchema,

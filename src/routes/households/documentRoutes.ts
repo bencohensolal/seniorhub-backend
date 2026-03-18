@@ -12,7 +12,7 @@ import type { UpdateDocumentUseCase } from '../../domain/usecases/documents/Upda
 import type { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
 import type { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
 import { createStorageService } from '../../data/services/storage/createStorageService.js';
-import { paramsSchema, errorResponseSchema } from './schemas.js';
+import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import {
   createDocumentFolderBodySchema,
   updateDocumentFolderBodySchema,

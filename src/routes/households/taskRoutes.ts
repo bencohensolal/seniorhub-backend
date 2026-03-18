@@ -11,7 +11,7 @@ import type { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTa
 import type { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
 import type { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
 import type { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
-import { paramsSchema, errorResponseSchema } from './schemas.js';
+import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import {
   createTaskBodySchema,
   updateTaskBodySchema,

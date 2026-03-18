@@ -12,17 +12,18 @@ import type { AutoAcceptPendingInvitationsUseCase } from '../../domain/usecases/
 import type { ReactivateInvitationUseCase } from '../../domain/usecases/invitations/ReactivateInvitationUseCase.js';
 import { invitationEmailRuntime } from '../../data/services/email/invitationEmailRuntime.js';
 import { env } from '../../config/env.js';
+import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import {
-  paramsSchema,
   bulkInvitationBodySchema,
   resolveQuerySchema,
   acceptBodySchema,
   cancelInvitationParamsSchema,
-  errorResponseSchema,
-} from './schemas.js';
-import { checkInviteRateLimit, ensureHouseholdPermission, maskEmail, sanitizeInvitation } from './utils.js';
+  checkInviteRateLimit,
+  maskEmail,
+  sanitizeInvitation,
+} from './invitationSchemas.js';
 import { handleDomainError } from '../errorHandler.js';
-import { getRequesterContext } from './utils.js';
+import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
 
 /**
  * Detects if the request is coming from a mobile device

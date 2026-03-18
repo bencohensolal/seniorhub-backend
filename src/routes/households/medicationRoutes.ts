@@ -5,7 +5,7 @@ import type { ListHouseholdMedicationsUseCase } from '../../domain/usecases/medi
 import type { CreateMedicationUseCase } from '../../domain/usecases/medications/CreateMedicationUseCase.js';
 import type { UpdateMedicationUseCase } from '../../domain/usecases/medications/UpdateMedicationUseCase.js';
 import type { DeleteMedicationUseCase } from '../../domain/usecases/medications/DeleteMedicationUseCase.js';
-import { paramsSchema, errorResponseSchema } from './schemas.js';
+import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
 import {
   createMedicationBodySchema,
   updateMedicationBodySchema,

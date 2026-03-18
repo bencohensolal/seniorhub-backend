@@ -11,7 +11,29 @@ import { AuthenticateDisplayTabletUseCase } from '../../domain/usecases/displayT
 import { RefreshDisplayTabletSessionUseCase } from '../../domain/usecases/displayTablets/RefreshDisplayTabletSessionUseCase.js';
 import { handleDomainError } from '../errorHandler.js';
 import { requireUserAuth } from '../../plugins/authContext.js';
-import { checkTabletAuthRateLimit } from './utils.js';
+
+// Tablet auth rate limiting (in-memory, per IP/tabletId)
+const tabletAuthRateState = new Map<string, { count: number; windowStartMs: number }>();
+const TABLET_AUTH_RATE_LIMIT = 8;
+const TABLET_AUTH_WINDOW_MS = 5 * 60_000;
+
+const checkTabletAuthRateLimit = (key: string): boolean => {
+  const now = Date.now();
+  const current = tabletAuthRateState.get(key);
+  if (!current) {
+    tabletAuthRateState.set(key, { count: 1, windowStartMs: now });
+    return true;
+  }
+  if (now - current.windowStartMs > TABLET_AUTH_WINDOW_MS) {
+    tabletAuthRateState.set(key, { count: 1, windowStartMs: now });
+    return true;
+  }
+  if (current.count >= TABLET_AUTH_RATE_LIMIT) {
+    return false;
+  }
+  current.count += 1;
+  return true;
+};
 
 // Schemas
 const householdParamsSchema = z.object({

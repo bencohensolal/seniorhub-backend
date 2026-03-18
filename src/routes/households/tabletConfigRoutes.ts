@@ -4,7 +4,7 @@ import type { HouseholdRepository } from '../../domain/repositories/HouseholdRep
 import { GetTabletConfigUseCase } from '../../domain/usecases/displayTablets/GetTabletConfigUseCase.js';
 import { handleDomainError } from '../errorHandler.js';
 import { requireUserAuth } from '../../plugins/authContext.js';
-import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletConfigSchemas.js';
+import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletSchemas.js';
 import { ValidationError } from '../../domain/errors/index.js';
 import { tabletConfigNotifier } from '../../domain/services/tabletConfigNotifier.js';
 
