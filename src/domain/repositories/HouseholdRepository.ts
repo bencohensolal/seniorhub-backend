@@ -221,6 +221,8 @@ export interface HouseholdRepository {
   createDocument(input: CreateDocumentInput): Promise<Document>;
   updateDocument(documentId: string, householdId: string, input: UpdateDocumentInput): Promise<Document>;
   softDeleteDocument(documentId: string, householdId: string): Promise<void>;
+  hardDeleteDocument(documentId: string, householdId: string): Promise<{ storageKey: string }>;
+  hardDeleteDocumentFolder(folderId: string, householdId: string): Promise<{ storageKeys: string[] }>;
   restoreDocument(documentId: string, householdId: string): Promise<void>;
   searchDocumentsAndFolders(householdId: string, query: string, folderId?: string | null): Promise<{
     folders: DocumentFolder[];

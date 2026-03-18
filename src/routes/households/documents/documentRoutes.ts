@@ -14,6 +14,7 @@ import type { SearchDocumentsUseCase } from '../../../domain/usecases/documents/
 import type { MoveToTrashUseCase } from '../../../domain/usecases/documents/MoveToTrashUseCase.js';
 import type { RestoreFromTrashUseCase } from '../../../domain/usecases/documents/RestoreFromTrashUseCase.js';
 import type { PurgeExpiredTrashUseCase } from '../../../domain/usecases/documents/PurgeExpiredTrashUseCase.js';
+import type { PermanentlyDeleteFromTrashUseCase } from '../../../domain/usecases/documents/PermanentlyDeleteFromTrashUseCase.js';
 import type { GetDocumentDownloadUrlUseCase } from '../../../domain/usecases/documents/GetDocumentDownloadUrlUseCase.js';
 import { createStorageService } from '../../../data/services/storage/createStorageService.js';
 import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
@@ -52,6 +53,7 @@ export function registerDocumentRoutes(
     moveToTrashUseCase: MoveToTrashUseCase;
     restoreFromTrashUseCase: RestoreFromTrashUseCase;
     purgeExpiredTrashUseCase: PurgeExpiredTrashUseCase;
+    permanentlyDeleteFromTrashUseCase: PermanentlyDeleteFromTrashUseCase;
     getDocumentDownloadUrlUseCase: GetDocumentDownloadUrlUseCase;
   },
 ): void {
@@ -656,6 +658,30 @@ export function registerDocumentRoutes(
       }
       try {
         await useCases.restoreFromTrashUseCase.execute({
+          householdId: paramsResult.data.householdId,
+          itemId: body.itemId,
+          itemType: body.itemType as 'folder' | 'document',
+          requester: getRequesterContext(request),
+        });
+        return reply.status(204).send({ status: 'success' });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/documents/trash/delete - Permanently delete a trashed item
+  fastify.post(
+    '/v1/households/:householdId/documents/trash/delete',
+    { preHandler: requireWritePermission },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      const body = request.body as { itemId?: string; itemType?: string };
+      if (!paramsResult.success || !body.itemId || !['folder', 'document'].includes(body.itemType ?? '')) {
+        return reply.status(400).send({ status: 'error', message: 'Invalid request payload.' });
+      }
+      try {
+        await useCases.permanentlyDeleteFromTrashUseCase.execute({
           householdId: paramsResult.data.householdId,
           itemId: body.itemId,
           itemType: body.itemType as 'folder' | 'document',

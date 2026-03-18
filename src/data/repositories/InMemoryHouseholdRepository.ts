@@ -1308,6 +1308,45 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     };
   }
 
+  async hardDeleteDocument(documentId: string, householdId: string): Promise<{ storageKey: string }> {
+    const index = documents.findIndex((doc) => doc.id === documentId && doc.householdId === householdId);
+    if (index === -1) throw new NotFoundError('Document not found.');
+    const storageKey = documents[index]!.storageKey;
+    documents.splice(index, 1);
+    return { storageKey };
+  }
+
+  async hardDeleteDocumentFolder(folderId: string, householdId: string): Promise<{ storageKeys: string[] }> {
+    // Collect subtree folder IDs (BFS)
+    const subtreeIds: string[] = [];
+    const queue = [folderId];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      subtreeIds.push(current);
+      const children = documentFolders.filter(
+        (f) => f.parentFolderId === current && f.householdId === householdId,
+      );
+      queue.push(...children.map((c) => c.id));
+    }
+    if (subtreeIds.length === 0) throw new NotFoundError('Folder not found.');
+
+    const storageKeys: string[] = [];
+    // Remove documents in subtree
+    for (let i = documents.length - 1; i >= 0; i--) {
+      if (subtreeIds.includes(documents[i]!.folderId) && documents[i]!.householdId === householdId) {
+        storageKeys.push(documents[i]!.storageKey);
+        documents.splice(i, 1);
+      }
+    }
+    // Remove folders in subtree
+    for (let i = documentFolders.length - 1; i >= 0; i--) {
+      if (subtreeIds.includes(documentFolders[i]!.id) && documentFolders[i]!.householdId === householdId) {
+        documentFolders.splice(i, 1);
+      }
+    }
+    return { storageKeys };
+  }
+
   async restoreDocument(documentId: string, householdId: string): Promise<void> {
     const index = documents.findIndex(
       (doc) => doc.id === documentId && doc.householdId === householdId && doc.deletedAt !== null

@@ -815,6 +815,53 @@ export class PostgresDocumentRepository {
     return this.deleteDocument(documentId, householdId);
   }
 
+  async hardDeleteDocument(documentId: string, householdId: string): Promise<{ storageKey: string }> {
+    const result = await this.pool.query<{ storage_key: string }>(
+      `DELETE FROM documents WHERE id = $1 AND household_id = $2 RETURNING storage_key`,
+      [documentId, householdId],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Document not found.');
+    }
+    return { storageKey: row.storage_key };
+  }
+
+  async hardDeleteDocumentFolder(folderId: string, householdId: string): Promise<{ storageKeys: string[] }> {
+    // Collect all descendant folder IDs (including the root)
+    const folderIdsResult = await this.pool.query<{ id: string }>(
+      `WITH RECURSIVE subtree AS (
+         SELECT id FROM document_folders WHERE id = $1 AND household_id = $2
+         UNION ALL
+         SELECT df.id FROM document_folders df
+         JOIN subtree s ON df.parent_folder_id = s.id
+         WHERE df.household_id = $2
+       )
+       SELECT id FROM subtree`,
+      [folderId, householdId],
+    );
+
+    const folderIds = folderIdsResult.rows.map((r) => r.id);
+    if (folderIds.length === 0) {
+      throw new NotFoundError('Folder not found.');
+    }
+
+    // Hard-delete all documents in the subtree, capture storage keys
+    const docsResult = await this.pool.query<{ storage_key: string }>(
+      `DELETE FROM documents WHERE folder_id = ANY($1) AND household_id = $2 RETURNING storage_key`,
+      [folderIds, householdId],
+    );
+    const storageKeys = docsResult.rows.map((r) => r.storage_key);
+
+    // Hard-delete all folders in the subtree
+    await this.pool.query(
+      `DELETE FROM document_folders WHERE id = ANY($1) AND household_id = $2`,
+      [folderIds, householdId],
+    );
+
+    return { storageKeys };
+  }
+
   async restoreDocument(documentId: string, householdId: string): Promise<void> {
     const now = nowIso();
     const result = await this.pool.query(
