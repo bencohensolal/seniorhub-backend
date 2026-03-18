@@ -45,8 +45,11 @@ import { BatchModifyOccurrencesUseCase } from '../../domain/usecases/appointment
 import { BatchCancelOccurrencesUseCase } from '../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
 import { RestoreOccurrenceUseCase } from '../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
 import { registerAppointmentRoutes } from './appointmentRoutes.js';
+import { registerOccurrenceRoutes } from './occurrenceRoutes.js';
+import { registerMemberRoutes } from './memberRoutes.js';
 import { registerTaskRoutes } from './taskRoutes.js';
 import { registerDisplayTabletRoutes } from './displayTabletRoutes.js';
+import { registerTabletConfigRoutes } from './tabletConfigRoutes.js';
 import { photoScreenRoutes } from './photoScreenRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
@@ -148,6 +151,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createHouseholdUseCase: useCases.createHouseholdUseCase,
     getHouseholdOverviewUseCase: useCases.getHouseholdOverviewUseCase,
     listUserHouseholdsUseCase: useCases.listUserHouseholdsUseCase,
+  });
+
+  registerMemberRoutes(fastify, repository, {
     listHouseholdMembersUseCase: useCases.listHouseholdMembersUseCase,
     removeHouseholdMemberUseCase: useCases.removeHouseholdMemberUseCase,
     updateHouseholdMemberRoleUseCase: useCases.updateHouseholdMemberRoleUseCase,
@@ -191,8 +197,11 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     createAppointmentReminderUseCase: useCases.createAppointmentReminderUseCase,
     updateAppointmentReminderUseCase: useCases.updateAppointmentReminderUseCase,
     deleteAppointmentReminderUseCase: useCases.deleteAppointmentReminderUseCase,
-    listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
     listUpcomingAppointmentsUseCase: useCases.listUpcomingAppointmentsUseCase,
+  });
+
+  registerOccurrenceRoutes(fastify, repository, {
+    listAppointmentOccurrencesUseCase: useCases.listAppointmentOccurrencesUseCase,
     modifyOccurrenceUseCase: useCases.modifyOccurrenceUseCase,
     cancelOccurrenceUseCase: useCases.cancelOccurrenceUseCase,
     batchModifyOccurrencesUseCase: useCases.batchModifyOccurrencesUseCase,
@@ -212,6 +221,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerDisplayTabletRoutes(fastify, repository);
+  registerTabletConfigRoutes(fastify, repository);
 
   registerDocumentRoutes(fastify, repository, {
     listDocumentRootsUseCase: useCases.listDocumentRootsUseCase,
