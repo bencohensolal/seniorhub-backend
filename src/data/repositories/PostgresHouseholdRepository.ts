@@ -17,7 +17,7 @@ import type { PrivacySettings, UpdatePrivacySettingsInput } from '../../domain/e
 import type { UserProfile, UpdateUserProfileInput } from '../../domain/entities/UserProfile.js';
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../../domain/entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../domain/entities/Document.js';
-import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../../domain/entities/DocumentFolder.js';
+import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../../domain/entities/DocumentFolder.js';
 import type { BulkInvitationResult, InvitationCandidate } from '../../domain/repositories/HouseholdRepository.js';
 import { PostgresHouseholdCoreRepository } from './postgres/PostgresHouseholdCoreRepository.js';
 import { PostgresMedicationRepository } from './postgres/PostgresMedicationRepository.js';
@@ -165,14 +165,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   // Documents
   getDocumentFolderById = (folderId: string, householdId: string): Promise<DocumentFolder | null> => this.documents.getDocumentFolderById(folderId, householdId);
-  listDocumentFoldersByParent = (householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]> => this.documents.listDocumentFoldersByParent(householdId, parentFolderId);
+  listDocumentFoldersByParent = (householdId: string, parentFolderId: string | null): Promise<DocumentFolderWithCounts[]> => this.documents.listDocumentFoldersByParent(householdId, parentFolderId);
   createDocumentFolder = (input: CreateDocumentFolderInput): Promise<DocumentFolder> => this.documents.createDocumentFolder(input);
   updateDocumentFolder = (folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder> => this.documents.updateDocumentFolder(folderId, householdId, input);
   softDeleteDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.softDeleteDocumentFolder(folderId, householdId);
   restoreDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.restoreDocumentFolder(folderId, householdId);
-  getSystemRootFolder = (householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
+  getSystemRootFolder = (householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
   ensureSystemRootsForHousehold = (householdId: string, userId: string): Promise<void> => this.documents.ensureSystemRootsForHousehold(householdId, userId);
-  listSeniorFolders = (householdId: string): Promise<DocumentFolder[]> => this.documents.listSeniorFolders(householdId);
+  listSeniorFolders = (householdId: string): Promise<DocumentFolderWithCounts[]> => this.documents.listSeniorFolders(householdId);
 
   getDocumentById = (documentId: string, householdId: string): Promise<Document | null> => this.documents.getDocumentById(documentId, householdId);
   listDocumentsByFolder = (householdId: string, folderId: string): Promise<Document[]> => this.documents.listDocumentsByFolder(folderId, householdId);

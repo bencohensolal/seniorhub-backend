@@ -17,7 +17,7 @@ import type { PrivacySettings, UpdatePrivacySettingsInput } from '../entities/Pr
 import type { UserProfile, UpdateUserProfileInput } from '../entities/UserProfile.js';
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../entities/Document.js';
-import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
+import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -201,14 +201,14 @@ export interface HouseholdRepository {
 
   // Documents
   getDocumentFolderById(folderId: string, householdId: string): Promise<DocumentFolder | null>;
-  listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]>;
+  listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolderWithCounts[]>;
   createDocumentFolder(input: CreateDocumentFolderInput): Promise<DocumentFolder>;
   updateDocumentFolder(folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder>;
   softDeleteDocumentFolder(folderId: string, householdId: string): Promise<void>;
   restoreDocumentFolder(folderId: string, householdId: string): Promise<void>;
-  getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null>;
+  getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null>;
   ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void>;
-  listSeniorFolders(householdId: string): Promise<DocumentFolder[]>;
+  listSeniorFolders(householdId: string): Promise<DocumentFolderWithCounts[]>;
 
   getDocumentById(documentId: string, householdId: string): Promise<Document | null>;
   listDocumentsByFolder(householdId: string, folderId: string): Promise<Document[]>;

@@ -21,7 +21,7 @@ import {
   getDefaultHouseholdMemberPermissions,
 } from '../../domain/entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../domain/entities/Document.js';
-import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput, DocumentFolderType, SystemRootType } from '../../domain/entities/DocumentFolder.js';
+import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput, DocumentFolderType, SystemRootType } from '../../domain/entities/DocumentFolder.js';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../domain/errors/index.js';
 import { nowIso, addHours, hashToken, normalizeEmail, normalizeName } from './postgres/helpers.js';
 
@@ -1019,13 +1019,17 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     ) ?? null;
   }
 
-  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]> {
+  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolderWithCounts[]> {
     return documentFolders.filter(
       (folder) =>
         folder.householdId === householdId &&
         folder.parentFolderId === parentFolderId &&
         !folder.deletedAt
-    ).sort((a, b) => a.name.localeCompare(b.name));
+    ).sort((a, b) => a.name.localeCompare(b.name)).map((folder) => ({
+      ...folder,
+      documentCount: documents.filter((d) => d.folderId === folder.id && !d.deletedAt).length,
+      folderCount: documentFolders.filter((f) => f.parentFolderId === folder.id && !f.deletedAt).length,
+    }));
   }
 
   async createDocumentFolder(input: CreateDocumentFolderInput): Promise<DocumentFolder> {
@@ -1142,14 +1146,20 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     };
   }
 
-  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null> {
-    return documentFolders.find(
-      (folder) =>
-        folder.householdId === householdId &&
-        folder.type === 'system_root' &&
-        folder.systemRootType === systemRootType &&
-        !folder.deletedAt
+  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null> {
+    const folder = documentFolders.find(
+      (f) =>
+        f.householdId === householdId &&
+        f.type === 'system_root' &&
+        f.systemRootType === systemRootType &&
+        !f.deletedAt
     ) ?? null;
+    if (!folder) return null;
+    return {
+      ...folder,
+      documentCount: documents.filter((d) => d.folderId === folder.id && !d.deletedAt).length,
+      folderCount: documentFolders.filter((f) => f.parentFolderId === folder.id && !f.deletedAt).length,
+    };
   }
 
   async ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void> {
@@ -1170,11 +1180,14 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     }
   }
 
-  async listSeniorFolders(householdId: string): Promise<DocumentFolder[]> {
-    // In-memory implementation: return folders with seniorId not null
+  async listSeniorFolders(householdId: string): Promise<DocumentFolderWithCounts[]> {
     return documentFolders.filter(
       (folder) => folder.householdId === householdId && folder.seniorId !== null && !folder.deletedAt
-    ).sort((a, b) => a.name.localeCompare(b.name));
+    ).sort((a, b) => a.name.localeCompare(b.name)).map((folder) => ({
+      ...folder,
+      documentCount: documents.filter((d) => d.folderId === folder.id && !d.deletedAt).length,
+      folderCount: documentFolders.filter((f) => f.parentFolderId === folder.id && !f.deletedAt).length,
+    }));
   }
 
   async getDocumentById(documentId: string, householdId: string): Promise<Document | null> {

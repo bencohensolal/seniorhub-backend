@@ -11,7 +11,7 @@ import type { TaskReminder } from '../../../domain/entities/TaskReminder.js';
 import type { DisplayTablet, DisplayTabletStatus } from '../../../domain/entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../../../domain/entities/TabletDisplayConfig.js';
 import type { Document } from '../../../domain/entities/Document.js';
-import type { DocumentFolder, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
+import type { DocumentFolderWithCounts, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -363,7 +363,9 @@ export const mapDocumentFolder = (row: {
   created_at: string | Date;
   updated_at: string | Date;
   deleted_at: string | Date | null;
-}): DocumentFolder => {
+  document_count?: number | string | null;
+  folder_count?: number | string | null;
+}): DocumentFolderWithCounts => {
   return {
     id: row.id,
     householdId: row.household_id,
@@ -377,5 +379,7 @@ export const mapDocumentFolder = (row: {
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
     deletedAt: row.deleted_at ? toIso(row.deleted_at) : null,
+    documentCount: Number(row.document_count ?? 0),
+    folderCount: Number(row.folder_count ?? 0),
   };
 };

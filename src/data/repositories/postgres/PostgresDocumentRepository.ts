@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../../domain/entities/Document.js';
-import type { DocumentFolder, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../../../domain/entities/DocumentFolder.js';
+import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../../../domain/entities/DocumentFolder.js';
 import {
   NotFoundError,
   ValidationError,
@@ -43,20 +43,23 @@ export class PostgresDocumentRepository {
     return row ? mapDocumentFolder(row) : null;
   }
 
-  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolder[]> {
+  async listDocumentFoldersByParent(householdId: string, parentFolderId: string | null): Promise<DocumentFolderWithCounts[]> {
+    const countsSql = `
+      (SELECT COUNT(*)::int FROM documents d WHERE d.folder_id = df.id AND d.deleted_at IS NULL) AS document_count,
+      (SELECT COUNT(*)::int FROM document_folders sf WHERE sf.parent_folder_id = df.id AND sf.deleted_at IS NULL) AS folder_count`;
     const query = parentFolderId === null
-      ? `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-                type, system_root_type, created_by_user_id,
-                created_at, updated_at, deleted_at
-         FROM document_folders
-         WHERE household_id = $1 AND parent_folder_id IS NULL AND deleted_at IS NULL
-         ORDER BY name ASC`
-      : `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-                type, system_root_type, created_by_user_id,
-                created_at, updated_at, deleted_at
-         FROM document_folders
-         WHERE household_id = $1 AND parent_folder_id = $2 AND deleted_at IS NULL
-         ORDER BY name ASC`;
+      ? `SELECT df.id, df.household_id, df.parent_folder_id, df.senior_id, df.name, df.description,
+                df.type, df.system_root_type, df.created_by_user_id,
+                df.created_at, df.updated_at, df.deleted_at, ${countsSql}
+         FROM document_folders df
+         WHERE df.household_id = $1 AND df.parent_folder_id IS NULL AND df.deleted_at IS NULL
+         ORDER BY df.name ASC`
+      : `SELECT df.id, df.household_id, df.parent_folder_id, df.senior_id, df.name, df.description,
+                df.type, df.system_root_type, df.created_by_user_id,
+                df.created_at, df.updated_at, df.deleted_at, ${countsSql}
+         FROM document_folders df
+         WHERE df.household_id = $1 AND df.parent_folder_id = $2 AND df.deleted_at IS NULL
+         ORDER BY df.name ASC`;
 
     const params = parentFolderId === null ? [householdId] : [householdId, parentFolderId];
     const result = await this.pool.query<{
@@ -72,6 +75,8 @@ export class PostgresDocumentRepository {
       created_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
+      document_count: number;
+      folder_count: number;
     }>(query, params);
 
     return result.rows.map(mapDocumentFolder);
@@ -397,7 +402,7 @@ export class PostgresDocumentRepository {
     }
   }
 
-  async listSeniorFolders(householdId: string): Promise<DocumentFolder[]> {
+  async listSeniorFolders(householdId: string): Promise<DocumentFolderWithCounts[]> {
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -411,13 +416,17 @@ export class PostgresDocumentRepository {
       created_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
+      document_count: number;
+      folder_count: number;
     }>(
-      `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              type, system_root_type, created_by_user_id,
-              created_at, updated_at, deleted_at
-       FROM document_folders
-       WHERE household_id = $1 AND senior_id IS NOT NULL AND deleted_at IS NULL
-       ORDER BY name ASC`,
+      `SELECT df.id, df.household_id, df.parent_folder_id, df.senior_id, df.name, df.description,
+              df.type, df.system_root_type, df.created_by_user_id,
+              df.created_at, df.updated_at, df.deleted_at,
+              (SELECT COUNT(*)::int FROM documents d WHERE d.folder_id = df.id AND d.deleted_at IS NULL) AS document_count,
+              (SELECT COUNT(*)::int FROM document_folders sf WHERE sf.parent_folder_id = df.id AND sf.deleted_at IS NULL) AS folder_count
+       FROM document_folders df
+       WHERE df.household_id = $1 AND df.senior_id IS NOT NULL AND df.deleted_at IS NULL
+       ORDER BY df.name ASC`,
       [householdId],
     );
 
@@ -532,7 +541,7 @@ export class PostgresDocumentRepository {
     }
   }
 
-  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolder | null> {
+  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null> {
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -546,12 +555,16 @@ export class PostgresDocumentRepository {
       created_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
+      document_count: number;
+      folder_count: number;
     }>(
-      `SELECT id, household_id, parent_folder_id, senior_id, name, description,
-              type, system_root_type, created_by_user_id,
-              created_at, updated_at, deleted_at
-       FROM document_folders
-       WHERE household_id = $1 AND type = 'system_root' AND system_root_type = $2 AND deleted_at IS NULL
+      `SELECT df.id, df.household_id, df.parent_folder_id, df.senior_id, df.name, df.description,
+              df.type, df.system_root_type, df.created_by_user_id,
+              df.created_at, df.updated_at, df.deleted_at,
+              (SELECT COUNT(*)::int FROM documents d WHERE d.folder_id = df.id AND d.deleted_at IS NULL) AS document_count,
+              (SELECT COUNT(*)::int FROM document_folders sf WHERE sf.parent_folder_id = df.id AND sf.deleted_at IS NULL) AS folder_count
+       FROM document_folders df
+       WHERE df.household_id = $1 AND df.type = 'system_root' AND df.system_root_type = $2 AND df.deleted_at IS NULL
        LIMIT 1`,
       [householdId, systemRootType],
     );

@@ -1,6 +1,6 @@
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
-import type { DocumentFolder } from '../../entities/DocumentFolder.js';
+import type { DocumentFolderWithCounts } from '../../entities/DocumentFolder.js';
 import type { Document } from '../../entities/Document.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
 
@@ -24,7 +24,7 @@ export class ListFolderContentUseCase {
     folderId: string | null; // null for root (system roots)
     requester: AuthenticatedRequester;
   }): Promise<{
-    folders: DocumentFolder[];
+    folders: DocumentFolderWithCounts[];
     documents: Document[];
   }> {
     // Validate member access and viewDocuments permission

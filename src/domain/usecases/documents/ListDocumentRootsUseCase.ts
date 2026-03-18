@@ -1,6 +1,6 @@
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
-import type { DocumentFolder } from '../../entities/DocumentFolder.js';
+import type { DocumentFolderWithCounts } from '../../entities/DocumentFolder.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
 import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 
@@ -24,9 +24,9 @@ export class ListDocumentRootsUseCase {
     householdId: string;
     requester: AuthenticatedRequester;
   }): Promise<{
-    medicalRoot: DocumentFolder;
-    administrativeRoot: DocumentFolder;
-    seniorFolders: DocumentFolder[];
+    medicalRoot: DocumentFolderWithCounts;
+    administrativeRoot: DocumentFolderWithCounts;
+    seniorFolders: DocumentFolderWithCounts[];
   }> {
     // Validate member access and viewDocuments permission
     await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
