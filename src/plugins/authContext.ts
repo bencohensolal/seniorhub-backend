@@ -30,26 +30,20 @@ const validateActiveTabletSession = async (
 };
 
 /**
- * Decode a JWT token (simple base64 decode for development)
- * In production, this should use proper JWT verification with a secret key
+ * Decodes the payload of a JWT without verifying the signature.
+ * Signature verification is delegated to the upstream auth provider (BFF/gateway).
+ * Returns null if the token is not a valid 3-part JWT.
  */
 const decodeJWT = (token: string): Record<string, unknown> | null => {
   try {
-    // Split the JWT into parts
     const parts = token.split('.');
     if (parts.length !== 3 || !parts[1]) {
-      console.log('[Auth] JWT does not have 3 parts, token:', token.substring(0, 50) + '...');
       return null;
     }
 
-    // Decode the payload (second part)
-    const payload = parts[1];
-    const decoded = Buffer.from(payload, 'base64').toString('utf-8');
-    const parsed = JSON.parse(decoded);
-    console.log('[Auth] JWT decoded successfully, claims:', Object.keys(parsed));
-    return parsed;
-  } catch (error) {
-    console.error('[Auth] JWT decode failed:', error);
+    const decoded = Buffer.from(parts[1], 'base64').toString('utf-8');
+    return JSON.parse(decoded);
+  } catch {
     return null;
   }
 };
@@ -140,19 +134,15 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
 
     // Method 1: Extract from Bearer token
     const authHeader = request.headers.authorization as string | undefined;
-    console.log('[Auth] Authorization header present:', !!authHeader);
     if (authHeader?.toLowerCase().startsWith('bearer ')) {
       const token = authHeader.substring(7);
-      console.log('[Auth] Bearer token length:', token.length);
       try {
         const decoded = decodeJWT(token);
         if (decoded) {
-          console.log('[Auth] JWT decoded successfully');
           const firstName = getStringClaim(decoded, 'firstName', 'given_name', 'first_name');
           const lastName = getStringClaim(decoded, 'lastName', 'family_name', 'last_name');
           const userId = getStringClaim(decoded, 'sub', 'userId', 'user_id');
           const email = getStringClaim(decoded, 'email');
-          console.log('[Auth] Extracted claims - userId:', userId, 'email:', email, 'firstName:', firstName, 'lastName:', lastName);
 
           userContext = {
             userId: userId || '',
@@ -160,27 +150,10 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
             ...(firstName !== undefined && { firstName }),
             ...(lastName !== undefined && { lastName }),
           };
-        } else {
-          console.log('[Auth] JWT decode returned null');
-          // Development fallback for Google OAuth tokens
-          // Google OAuth access tokens start with 'ya29.' and are not JWTs
-          if (token.startsWith('ya29.')) {
-            console.log('[Auth] Detected Google OAuth token, using development fallback');
-            // Use the test user that we added to in-memory database
-            // This matches the user from the mobile app logs
-            userContext = {
-              userId: '111325199791749121741',
-              email: 'ben.cohen.solal@gmail.com',
-              firstName: 'Ben',
-              lastName: 'Cohen Solal',
-            };
-          }
         }
-      } catch (error) {
-        console.error('[Auth] JWT verification failed:', error);
+      } catch {
+        // Non-JWT Bearer token — fall through to x-user-* headers
       }
-    } else if (authHeader) {
-      console.log('[Auth] Authorization header exists but not Bearer:', authHeader.substring(0, 50) + '...');
     }
 
     // Method 2: Fallback to x-user-* headers (if JWT absent or invalid)
@@ -197,24 +170,10 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
 
     // Verify that we have a valid user context
     if (!userContext?.userId || !userContext?.email) {
-      // Development bypass: if x-dev-user-id header is present, use it
-      const devUserId = normalize(request.headers['x-dev-user-id'] as string | undefined);
-      const devEmail = normalize(request.headers['x-dev-user-email'] as string | undefined);
-
-      if (devUserId && devEmail) {
-        console.log('[Auth] Using development bypass for user:', devUserId);
-        userContext = {
-          userId: devUserId,
-          email: devEmail,
-          firstName: normalize(request.headers['x-dev-user-first-name'] as string | undefined),
-          lastName: normalize(request.headers['x-dev-user-last-name'] as string | undefined),
-        };
-      } else {
-        return reply.status(401).send({
-          status: 'error',
-          message: 'Authentication required. Provide either Bearer token, x-user-* headers, or x-tablet-session-token.',
-        });
-      }
+      return reply.status(401).send({
+        status: 'error',
+        message: 'Authentication required. Provide either a Bearer token, x-user-* headers, or x-tablet-session-token.',
+      });
     }
 
     // Attach user context to request

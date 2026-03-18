@@ -117,13 +117,13 @@ export class HouseholdAccessValidator {
   async ensurePermission(userId: string, householdId: string, permission: HouseholdPermissionAction): Promise<void> {
     const member = await this.ensureMember(userId, householdId);
 
-    // Tablets have their own permission system, not household permissions
+    // Tablets are read-only devices: they can only view, never manage.
+    // All "manage*" permissions are write operations → always blocked for tablets.
     if (!member) {
-      // Tablet session: we'll need to decide if tablets can have document permissions
-      // For now, tablets have only 'read' permission, which might be insufficient
-      // We'll treat tablets as having viewDocuments permission (they can read)
-      // but not manageDocuments.
-      // This logic can be refined later.
+      const tabletAllowedPermissions: HouseholdPermissionAction[] = ['viewDocuments'];
+      if (!tabletAllowedPermissions.includes(permission)) {
+        throw new ForbiddenError('Tablets have read-only access. This operation requires user authentication.');
+      }
       return;
     }
 
