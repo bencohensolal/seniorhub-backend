@@ -1,18 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import type { MultipartFields } from '@fastify/multipart';
 import multipart from '@fastify/multipart';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListDocumentRootsUseCase } from '../../domain/usecases/documents/ListDocumentRootsUseCase.js';
-import type { ListFolderContentUseCase } from '../../domain/usecases/documents/ListFolderContentUseCase.js';
-import type { CreateFolderUseCase } from '../../domain/usecases/documents/CreateFolderUseCase.js';
-import type { UpdateFolderUseCase } from '../../domain/usecases/documents/UpdateFolderUseCase.js';
-import type { DeleteFolderUseCase } from '../../domain/usecases/documents/DeleteFolderUseCase.js';
-import type { CreateDocumentUseCase } from '../../domain/usecases/documents/CreateDocumentUseCase.js';
-import type { UpdateDocumentUseCase } from '../../domain/usecases/documents/UpdateDocumentUseCase.js';
-import type { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
-import type { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
-import { createStorageService } from '../../data/services/storage/createStorageService.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListDocumentRootsUseCase } from '../../../domain/usecases/documents/ListDocumentRootsUseCase.js';
+import type { ListFolderContentUseCase } from '../../../domain/usecases/documents/ListFolderContentUseCase.js';
+import type { CreateFolderUseCase } from '../../../domain/usecases/documents/CreateFolderUseCase.js';
+import type { UpdateFolderUseCase } from '../../../domain/usecases/documents/UpdateFolderUseCase.js';
+import type { DeleteFolderUseCase } from '../../../domain/usecases/documents/DeleteFolderUseCase.js';
+import type { CreateDocumentUseCase } from '../../../domain/usecases/documents/CreateDocumentUseCase.js';
+import type { UpdateDocumentUseCase } from '../../../domain/usecases/documents/UpdateDocumentUseCase.js';
+import type { DeleteDocumentUseCase } from '../../../domain/usecases/documents/DeleteDocumentUseCase.js';
+import type { SearchDocumentsUseCase } from '../../../domain/usecases/documents/SearchDocumentsUseCase.js';
+import { createStorageService } from '../../../data/services/storage/createStorageService.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
   createDocumentFolderBodySchema,
   updateDocumentFolderBodySchema,
@@ -28,9 +28,9 @@ import {
   documentRootsResponseSchema,
   searchDocumentsResponseSchema,
 } from './documentSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
-import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
 
 export function registerDocumentRoutes(
   fastify: FastifyInstance,

@@ -1,18 +1,18 @@
 import type { FastifyInstance } from 'fastify';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { AcceptInvitationUseCase } from '../../domain/usecases/invitations/AcceptInvitationUseCase.js';
-import type { CancelInvitationUseCase } from '../../domain/usecases/invitations/CancelInvitationUseCase.js';
-import type { CreateBulkInvitationsUseCase } from '../../domain/usecases/invitations/CreateBulkInvitationsUseCase.js';
-import type { EnsureHouseholdRoleUseCase } from '../../domain/usecases/households/EnsureHouseholdRoleUseCase.js';
-import type { ListPendingInvitationsUseCase } from '../../domain/usecases/invitations/ListPendingInvitationsUseCase.js';
-import type { ListHouseholdInvitationsUseCase } from '../../domain/usecases/invitations/ListHouseholdInvitationsUseCase.js';
-import type { ResolveInvitationUseCase } from '../../domain/usecases/invitations/ResolveInvitationUseCase.js';
-import type { ResendInvitationUseCase } from '../../domain/usecases/invitations/ResendInvitationUseCase.js';
-import type { AutoAcceptPendingInvitationsUseCase } from '../../domain/usecases/invitations/AutoAcceptPendingInvitationsUseCase.js';
-import type { ReactivateInvitationUseCase } from '../../domain/usecases/invitations/ReactivateInvitationUseCase.js';
-import { invitationEmailRuntime } from '../../data/services/email/invitationEmailRuntime.js';
-import { env } from '../../config/env.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { AcceptInvitationUseCase } from '../../../domain/usecases/invitations/AcceptInvitationUseCase.js';
+import type { CancelInvitationUseCase } from '../../../domain/usecases/invitations/CancelInvitationUseCase.js';
+import type { CreateBulkInvitationsUseCase } from '../../../domain/usecases/invitations/CreateBulkInvitationsUseCase.js';
+import type { EnsureHouseholdRoleUseCase } from '../../../domain/usecases/households/EnsureHouseholdRoleUseCase.js';
+import type { ListPendingInvitationsUseCase } from '../../../domain/usecases/invitations/ListPendingInvitationsUseCase.js';
+import type { ListHouseholdInvitationsUseCase } from '../../../domain/usecases/invitations/ListHouseholdInvitationsUseCase.js';
+import type { ResolveInvitationUseCase } from '../../../domain/usecases/invitations/ResolveInvitationUseCase.js';
+import type { ResendInvitationUseCase } from '../../../domain/usecases/invitations/ResendInvitationUseCase.js';
+import type { AutoAcceptPendingInvitationsUseCase } from '../../../domain/usecases/invitations/AutoAcceptPendingInvitationsUseCase.js';
+import type { ReactivateInvitationUseCase } from '../../../domain/usecases/invitations/ReactivateInvitationUseCase.js';
+import { invitationEmailRuntime } from '../../../data/services/email/invitationEmailRuntime.js';
+import { env } from '../../../config/env.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
   bulkInvitationBodySchema,
   resolveQuerySchema,
@@ -22,8 +22,8 @@ import {
   maskEmail,
   sanitizeInvitation,
 } from './invitationSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
 
 /**
  * Detects if the request is coming from a mobile device

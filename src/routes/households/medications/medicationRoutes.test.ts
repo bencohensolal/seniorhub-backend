@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { describe, expect, it } from 'vitest';
-import { registerAuthContext } from '../../plugins/authContext.js';
+import { registerAuthContext } from '../../../plugins/authContext.js';
 import { registerMedicationRoutes } from './medicationRoutes.js';
 
 type MedicationRouteRepository = Parameters<typeof registerMedicationRoutes>[1];

@@ -1,17 +1,17 @@
 import type { FastifyInstance } from 'fastify';
 import type { z } from 'zod';
-import type { CreateAppointmentInput, UpdateAppointmentInput } from '../../domain/entities/Appointment.js';
-import type { CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../domain/entities/AppointmentReminder.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListHouseholdAppointmentsUseCase } from '../../domain/usecases/appointments/ListHouseholdAppointmentsUseCase.js';
-import type { CreateAppointmentUseCase } from '../../domain/usecases/appointments/CreateAppointmentUseCase.js';
-import type { UpdateAppointmentUseCase } from '../../domain/usecases/appointments/UpdateAppointmentUseCase.js';
-import type { DeleteAppointmentUseCase } from '../../domain/usecases/appointments/DeleteAppointmentUseCase.js';
-import type { CreateAppointmentReminderUseCase } from '../../domain/usecases/appointments/CreateAppointmentReminderUseCase.js';
-import type { UpdateAppointmentReminderUseCase } from '../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
-import type { DeleteAppointmentReminderUseCase } from '../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
-import type { ListUpcomingAppointmentsUseCase } from '../../domain/usecases/appointments/ListUpcomingAppointmentsUseCase.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
+import type { CreateAppointmentInput, UpdateAppointmentInput } from '../../../domain/entities/Appointment.js';
+import type { CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../../domain/entities/AppointmentReminder.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListHouseholdAppointmentsUseCase } from '../../../domain/usecases/appointments/ListHouseholdAppointmentsUseCase.js';
+import type { CreateAppointmentUseCase } from '../../../domain/usecases/appointments/CreateAppointmentUseCase.js';
+import type { UpdateAppointmentUseCase } from '../../../domain/usecases/appointments/UpdateAppointmentUseCase.js';
+import type { DeleteAppointmentUseCase } from '../../../domain/usecases/appointments/DeleteAppointmentUseCase.js';
+import type { CreateAppointmentReminderUseCase } from '../../../domain/usecases/appointments/CreateAppointmentReminderUseCase.js';
+import type { UpdateAppointmentReminderUseCase } from '../../../domain/usecases/appointments/UpdateAppointmentReminderUseCase.js';
+import type { DeleteAppointmentReminderUseCase } from '../../../domain/usecases/appointments/DeleteAppointmentReminderUseCase.js';
+import type { ListUpcomingAppointmentsUseCase } from '../../../domain/usecases/appointments/ListUpcomingAppointmentsUseCase.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
   createAppointmentBodySchema,
   updateAppointmentBodySchema,
@@ -21,14 +21,14 @@ import {
   updateAppointmentReminderBodySchema,
   occurrenceQuerySchema,
 } from './appointmentSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
-import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
 import {
   assertRequesterCanShareHealthData,
   buildHouseholdPrivacyContext,
   filterAppointmentsByPrivacy,
-} from '../../domain/services/privacyFilter.js';
+} from '../../../domain/services/privacyFilter.js';
 
 export function registerAppointmentRoutes(
   fastify: FastifyInstance,

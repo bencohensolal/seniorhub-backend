@@ -1,16 +1,16 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import { ListHouseholdDisplayTabletsUseCase } from '../../domain/usecases/displayTablets/ListHouseholdDisplayTabletsUseCase.js';
-import { CreateDisplayTabletUseCase } from '../../domain/usecases/displayTablets/CreateDisplayTabletUseCase.js';
-import { UpdateDisplayTabletUseCase } from '../../domain/usecases/displayTablets/UpdateDisplayTabletUseCase.js';
-import { RevokeDisplayTabletUseCase } from '../../domain/usecases/displayTablets/RevokeDisplayTabletUseCase.js';
-import { DeleteDisplayTabletUseCase } from '../../domain/usecases/displayTablets/DeleteDisplayTabletUseCase.js';
-import { RegenerateDisplayTabletTokenUseCase } from '../../domain/usecases/displayTablets/RegenerateDisplayTabletTokenUseCase.js';
-import { AuthenticateDisplayTabletUseCase } from '../../domain/usecases/displayTablets/AuthenticateDisplayTabletUseCase.js';
-import { RefreshDisplayTabletSessionUseCase } from '../../domain/usecases/displayTablets/RefreshDisplayTabletSessionUseCase.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireUserAuth } from '../../plugins/authContext.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import { ListHouseholdDisplayTabletsUseCase } from '../../../domain/usecases/displayTablets/ListHouseholdDisplayTabletsUseCase.js';
+import { CreateDisplayTabletUseCase } from '../../../domain/usecases/displayTablets/CreateDisplayTabletUseCase.js';
+import { UpdateDisplayTabletUseCase } from '../../../domain/usecases/displayTablets/UpdateDisplayTabletUseCase.js';
+import { RevokeDisplayTabletUseCase } from '../../../domain/usecases/displayTablets/RevokeDisplayTabletUseCase.js';
+import { DeleteDisplayTabletUseCase } from '../../../domain/usecases/displayTablets/DeleteDisplayTabletUseCase.js';
+import { RegenerateDisplayTabletTokenUseCase } from '../../../domain/usecases/displayTablets/RegenerateDisplayTabletTokenUseCase.js';
+import { AuthenticateDisplayTabletUseCase } from '../../../domain/usecases/displayTablets/AuthenticateDisplayTabletUseCase.js';
+import { RefreshDisplayTabletSessionUseCase } from '../../../domain/usecases/displayTablets/RefreshDisplayTabletSessionUseCase.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireUserAuth } from '../../../plugins/authContext.js';
 
 // Tablet auth rate limiting (in-memory, per IP/tabletId)
 const tabletAuthRateState = new Map<string, { count: number; windowStartMs: number }>();

@@ -17,11 +17,11 @@ import { ResolveInvitationUseCase } from '../../domain/usecases/invitations/Reso
 import { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/households/UpdateHouseholdMemberRoleUseCase.js';
 import { AutoAcceptPendingInvitationsUseCase } from '../../domain/usecases/invitations/AutoAcceptPendingInvitationsUseCase.js';
 import { createHouseholdRepository } from '../../data/repositories/createHouseholdRepository.js';
-import { registerHouseholdRoutes } from './householdRoutes.js';
-import { registerInvitationRoutes } from './invitationRoutes.js';
+import { registerHouseholdRoutes } from './households/householdRoutes.js';
+import { registerInvitationRoutes } from './invitations/invitationRoutes.js';
 import { registerObservabilityRoutes } from './observabilityRoutes.js';
-import { registerMedicationRoutes } from './medicationRoutes.js';
-import { registerReminderRoutes } from './reminderRoutes.js';
+import { registerMedicationRoutes } from './medications/medicationRoutes.js';
+import { registerReminderRoutes } from './medications/reminderRoutes.js';
 import { ListHouseholdMedicationsUseCase } from '../../domain/usecases/medications/ListHouseholdMedicationsUseCase.js';
 import { CreateMedicationUseCase } from '../../domain/usecases/medications/CreateMedicationUseCase.js';
 import { UpdateMedicationUseCase } from '../../domain/usecases/medications/UpdateMedicationUseCase.js';
@@ -44,13 +44,13 @@ import { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/Canc
 import { BatchModifyOccurrencesUseCase } from '../../domain/usecases/appointments/BatchModifyOccurrencesUseCase.js';
 import { BatchCancelOccurrencesUseCase } from '../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
 import { RestoreOccurrenceUseCase } from '../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
-import { registerAppointmentRoutes } from './appointmentRoutes.js';
-import { registerOccurrenceRoutes } from './occurrenceRoutes.js';
-import { registerMemberRoutes } from './memberRoutes.js';
-import { registerTaskRoutes } from './taskRoutes.js';
-import { registerDisplayTabletRoutes } from './displayTabletRoutes.js';
-import { registerTabletConfigRoutes } from './tabletConfigRoutes.js';
-import { photoScreenRoutes } from './photoScreenRoutes.js';
+import { registerAppointmentRoutes } from './appointments/appointmentRoutes.js';
+import { registerOccurrenceRoutes } from './appointments/occurrenceRoutes.js';
+import { registerMemberRoutes } from './households/memberRoutes.js';
+import { registerTaskRoutes } from './tasks/taskRoutes.js';
+import { registerDisplayTabletRoutes } from './displayTablets/displayTabletRoutes.js';
+import { registerTabletConfigRoutes } from './displayTablets/tabletConfigRoutes.js';
+import { photoScreenRoutes } from './photoScreens/photoScreenRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
 import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
@@ -69,7 +69,7 @@ import { CreateDocumentUseCase } from '../../domain/usecases/documents/CreateDoc
 import { UpdateDocumentUseCase } from '../../domain/usecases/documents/UpdateDocumentUseCase.js';
 import { DeleteDocumentUseCase } from '../../domain/usecases/documents/DeleteDocumentUseCase.js';
 import { SearchDocumentsUseCase } from '../../domain/usecases/documents/SearchDocumentsUseCase.js';
-import { registerDocumentRoutes } from './documentRoutes.js';
+import { registerDocumentRoutes } from './documents/documentRoutes.js';
 
 /**
  * Households plugin

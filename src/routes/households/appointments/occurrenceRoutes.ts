@@ -1,13 +1,13 @@
 import type { FastifyInstance } from 'fastify';
-import type { OccurrenceOverrides } from '../../domain/entities/AppointmentOccurrence.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListAppointmentOccurrencesUseCase } from '../../domain/usecases/appointments/ListAppointmentOccurrencesUseCase.js';
-import type { ModifyOccurrenceUseCase } from '../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
-import type { CancelOccurrenceUseCase } from '../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
-import type { BatchModifyOccurrencesUseCase } from '../../domain/usecases/appointments/BatchModifyOccurrencesUseCase.js';
-import type { BatchCancelOccurrencesUseCase } from '../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
-import type { RestoreOccurrenceUseCase } from '../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
-import { errorResponseSchema } from './householdSchemas.js';
+import type { OccurrenceOverrides } from '../../../domain/entities/AppointmentOccurrence.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListAppointmentOccurrencesUseCase } from '../../../domain/usecases/appointments/ListAppointmentOccurrencesUseCase.js';
+import type { ModifyOccurrenceUseCase } from '../../../domain/usecases/appointments/ModifyOccurrenceUseCase.js';
+import type { CancelOccurrenceUseCase } from '../../../domain/usecases/appointments/CancelOccurrenceUseCase.js';
+import type { BatchModifyOccurrencesUseCase } from '../../../domain/usecases/appointments/BatchModifyOccurrencesUseCase.js';
+import type { BatchCancelOccurrencesUseCase } from '../../../domain/usecases/appointments/BatchCancelOccurrencesUseCase.js';
+import type { RestoreOccurrenceUseCase } from '../../../domain/usecases/appointments/RestoreOccurrenceUseCase.js';
+import { errorResponseSchema } from '../householdSchemas.js';
 import {
   appointmentParamsSchema,
   occurrenceParamsSchema,
@@ -16,15 +16,15 @@ import {
   batchModifyOccurrencesBodySchema,
   batchCancelOccurrencesBodySchema,
 } from './appointmentSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
-import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
 import {
   assertRequesterCanShareHealthData,
   buildHouseholdPrivacyContext,
   filterAppointmentsByPrivacy,
-} from '../../domain/services/privacyFilter.js';
-import { NotFoundError } from '../../domain/errors/index.js';
+} from '../../../domain/services/privacyFilter.js';
+import { NotFoundError } from '../../../domain/errors/index.js';
 
 export function registerOccurrenceRoutes(
   fastify: FastifyInstance,

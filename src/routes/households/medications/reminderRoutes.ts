@@ -1,26 +1,26 @@
 import type { FastifyInstance } from 'fastify';
-import type { UpdateReminderInput } from '../../domain/entities/MedicationReminder.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListMedicationRemindersUseCase } from '../../domain/usecases/reminders/ListMedicationRemindersUseCase.js';
-import type { CreateReminderUseCase } from '../../domain/usecases/reminders/CreateReminderUseCase.js';
-import type { UpdateReminderUseCase } from '../../domain/usecases/reminders/UpdateReminderUseCase.js';
-import type { DeleteReminderUseCase } from '../../domain/usecases/reminders/DeleteReminderUseCase.js';
-import { errorResponseSchema } from './householdSchemas.js';
+import type { UpdateReminderInput } from '../../../domain/entities/MedicationReminder.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListMedicationRemindersUseCase } from '../../../domain/usecases/reminders/ListMedicationRemindersUseCase.js';
+import type { CreateReminderUseCase } from '../../../domain/usecases/reminders/CreateReminderUseCase.js';
+import type { UpdateReminderUseCase } from '../../../domain/usecases/reminders/UpdateReminderUseCase.js';
+import type { DeleteReminderUseCase } from '../../../domain/usecases/reminders/DeleteReminderUseCase.js';
+import { errorResponseSchema } from '../householdSchemas.js';
 import {
   medicationParamsSchema,
   reminderParamsSchema,
   createReminderBodySchema,
   updateReminderBodySchema,
 } from './medicationSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
 import {
   assertRequesterCanShareHealthData,
   buildHouseholdPrivacyContext,
   filterMedicationsByPrivacy,
-} from '../../domain/services/privacyFilter.js';
-import { NotFoundError } from '../../domain/errors/index.js';
+} from '../../../domain/services/privacyFilter.js';
+import { NotFoundError } from '../../../domain/errors/index.js';
 
 export function registerReminderRoutes(
   fastify: FastifyInstance,

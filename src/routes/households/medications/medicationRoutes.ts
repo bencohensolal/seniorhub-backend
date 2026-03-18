@@ -1,25 +1,25 @@
 import type { FastifyInstance } from 'fastify';
-import type { UpdateMedicationInput } from '../../domain/entities/Medication.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListHouseholdMedicationsUseCase } from '../../domain/usecases/medications/ListHouseholdMedicationsUseCase.js';
-import type { CreateMedicationUseCase } from '../../domain/usecases/medications/CreateMedicationUseCase.js';
-import type { UpdateMedicationUseCase } from '../../domain/usecases/medications/UpdateMedicationUseCase.js';
-import type { DeleteMedicationUseCase } from '../../domain/usecases/medications/DeleteMedicationUseCase.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
+import type { UpdateMedicationInput } from '../../../domain/entities/Medication.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListHouseholdMedicationsUseCase } from '../../../domain/usecases/medications/ListHouseholdMedicationsUseCase.js';
+import type { CreateMedicationUseCase } from '../../../domain/usecases/medications/CreateMedicationUseCase.js';
+import type { UpdateMedicationUseCase } from '../../../domain/usecases/medications/UpdateMedicationUseCase.js';
+import type { DeleteMedicationUseCase } from '../../../domain/usecases/medications/DeleteMedicationUseCase.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
   createMedicationBodySchema,
   updateMedicationBodySchema,
   medicationParamsSchema,
   medicationResponseSchema,
 } from './medicationSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
-import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from './utils.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
 import {
   assertRequesterCanShareHealthData,
   buildHouseholdPrivacyContext,
   filterMedicationsByPrivacy,
-} from '../../domain/services/privacyFilter.js';
+} from '../../../domain/services/privacyFilter.js';
 
 export function registerMedicationRoutes(
   fastify: FastifyInstance,

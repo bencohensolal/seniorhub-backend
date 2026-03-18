@@ -1,12 +1,12 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import { GetTabletConfigUseCase } from '../../domain/usecases/displayTablets/GetTabletConfigUseCase.js';
-import { handleDomainError } from '../errorHandler.js';
-import { requireUserAuth } from '../../plugins/authContext.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import { GetTabletConfigUseCase } from '../../../domain/usecases/displayTablets/GetTabletConfigUseCase.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { requireUserAuth } from '../../../plugins/authContext.js';
 import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletSchemas.js';
-import { ValidationError } from '../../domain/errors/index.js';
-import { tabletConfigNotifier } from '../../domain/services/tabletConfigNotifier.js';
+import { ValidationError } from '../../../domain/errors/index.js';
+import { tabletConfigNotifier } from '../../../domain/services/tabletConfigNotifier.js';
 
 const householdTabletParamsSchema = z.object({
   householdId: z.string().uuid(),

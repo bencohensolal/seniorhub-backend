@@ -1,14 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListHouseholdMembersUseCase } from '../../domain/usecases/households/ListHouseholdMembersUseCase.js';
-import type { RemoveHouseholdMemberUseCase } from '../../domain/usecases/households/RemoveHouseholdMemberUseCase.js';
-import type { UpdateHouseholdMemberRoleUseCase } from '../../domain/usecases/households/UpdateHouseholdMemberRoleUseCase.js';
-import type { LeaveHouseholdUseCase } from '../../domain/usecases/households/LeaveHouseholdUseCase.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
-import { buildHouseholdPrivacyContext, filterMembersByPrivacy } from '../../domain/services/privacyFilter.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListHouseholdMembersUseCase } from '../../../domain/usecases/households/ListHouseholdMembersUseCase.js';
+import type { RemoveHouseholdMemberUseCase } from '../../../domain/usecases/households/RemoveHouseholdMemberUseCase.js';
+import type { UpdateHouseholdMemberRoleUseCase } from '../../../domain/usecases/households/UpdateHouseholdMemberRoleUseCase.js';
+import type { LeaveHouseholdUseCase } from '../../../domain/usecases/households/LeaveHouseholdUseCase.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { buildHouseholdPrivacyContext, filterMembersByPrivacy } from '../../../domain/services/privacyFilter.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
 
 export function registerMemberRoutes(
   fastify: FastifyInstance,

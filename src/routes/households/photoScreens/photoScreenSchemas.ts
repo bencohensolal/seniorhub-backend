@@ -3,7 +3,7 @@ import {
   MAX_PHOTO_SCREEN_NAME_LENGTH,
   MAX_PHOTO_CAPTION_LENGTH,
   MAX_PHOTOS_PER_SCREEN,
-} from '../../domain/entities/PhotoScreen.js';
+} from '../../../domain/entities/PhotoScreen.js';
 
 // Photo Screen schemas
 export const createPhotoScreenSchema = z.object({

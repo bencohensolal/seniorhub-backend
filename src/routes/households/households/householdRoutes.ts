@@ -1,18 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { CreateHouseholdUseCase } from '../../domain/usecases/households/CreateHouseholdUseCase.js';
-import type { GetHouseholdOverviewUseCase } from '../../domain/usecases/households/GetHouseholdOverviewUseCase.js';
-import type { ListUserHouseholdsUseCase } from '../../domain/usecases/households/ListUserHouseholdsUseCase.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from './householdSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { ensureHouseholdPermission, getRequesterContext } from './utils.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
+import type { CreateHouseholdUseCase } from '../../../domain/usecases/households/CreateHouseholdUseCase.js';
+import type { GetHouseholdOverviewUseCase } from '../../../domain/usecases/households/GetHouseholdOverviewUseCase.js';
+import type { ListUserHouseholdsUseCase } from '../../../domain/usecases/households/ListUserHouseholdsUseCase.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from '../householdSchemas.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
 import type {
   HouseholdMemberPermissions,
   HouseholdNotificationSettings,
   UpdateHouseholdSettingsInput,
-} from '../../domain/entities/HouseholdSettings.js';
+} from '../../../domain/entities/HouseholdSettings.js';
 
 const householdNotificationsSchema = z.object({
   enabled: z.boolean().optional(),

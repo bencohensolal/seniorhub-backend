@@ -1,17 +1,17 @@
 import type { FastifyInstance } from 'fastify';
 import type { z } from 'zod';
-import type { CompleteTaskInput, CreateTaskInput, TaskCategory, TaskRecurrence, TaskStatus, UpdateTaskInput } from '../../domain/entities/Task.js';
-import type { CreateTaskReminderInput, UpdateTaskReminderInput } from '../../domain/entities/TaskReminder.js';
-import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
-import type { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
-import type { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
-import type { UpdateTaskUseCase } from '../../domain/usecases/tasks/UpdateTaskUseCase.js';
-import type { DeleteTaskUseCase } from '../../domain/usecases/tasks/DeleteTaskUseCase.js';
-import type { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTaskUseCase.js';
-import type { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
-import type { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
-import type { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
-import { paramsSchema, errorResponseSchema } from './householdSchemas.js';
+import type { CompleteTaskInput, CreateTaskInput, TaskCategory, TaskRecurrence, TaskStatus, UpdateTaskInput } from '../../../domain/entities/Task.js';
+import type { CreateTaskReminderInput, UpdateTaskReminderInput } from '../../../domain/entities/TaskReminder.js';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListHouseholdTasksUseCase } from '../../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
+import type { CreateTaskUseCase } from '../../../domain/usecases/tasks/CreateTaskUseCase.js';
+import type { UpdateTaskUseCase } from '../../../domain/usecases/tasks/UpdateTaskUseCase.js';
+import type { DeleteTaskUseCase } from '../../../domain/usecases/tasks/DeleteTaskUseCase.js';
+import type { CompleteTaskUseCase } from '../../../domain/usecases/tasks/CompleteTaskUseCase.js';
+import type { CreateTaskReminderUseCase } from '../../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
+import type { UpdateTaskReminderUseCase } from '../../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
+import type { DeleteTaskReminderUseCase } from '../../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import {
   createTaskBodySchema,
   updateTaskBodySchema,
@@ -22,14 +22,14 @@ import {
   createTaskReminderBodySchema,
   updateTaskReminderBodySchema,
 } from './taskSchemas.js';
-import { handleDomainError } from '../errorHandler.js';
-import { ensureHouseholdPermission, getRequesterContext, verifyTabletHouseholdAccess } from './utils.js';
-import { requireWritePermission } from '../../plugins/authContext.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext, verifyTabletHouseholdAccess } from '../utils.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
 import {
   anonymizeTasksByPrivacy,
   assertRequesterCanShareActivityHistory,
   buildHouseholdPrivacyContext,
-} from '../../domain/services/privacyFilter.js';
+} from '../../../domain/services/privacyFilter.js';
 
 export function registerTaskRoutes(
   fastify: FastifyInstance,

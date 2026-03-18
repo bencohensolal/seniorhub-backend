@@ -1,21 +1,21 @@
 import type { FastifyInstance } from 'fastify';
 import type { MultipartFields } from '@fastify/multipart';
-import type { StorageService } from '../../data/services/storage/types.js';
+import type { StorageService } from '../../../data/services/storage/types.js';
 import type { z } from 'zod';
 import multipart from '@fastify/multipart';
-import { createHouseholdRepository } from '../../data/repositories/createHouseholdRepository.js';
-import { createStorageService } from '../../data/services/storage/createStorageService.js';
-import { getRequesterContext } from './utils.js';
-import { requireUserAuth } from '../../plugins/authContext.js';
-import { CreatePhotoScreenUseCase } from '../../domain/usecases/photoScreens/CreatePhotoScreenUseCase.js';
-import { UpdatePhotoScreenUseCase } from '../../domain/usecases/photoScreens/UpdatePhotoScreenUseCase.js';
-import { DeletePhotoScreenUseCase } from '../../domain/usecases/photoScreens/DeletePhotoScreenUseCase.js';
-import { ListPhotoScreensUseCase } from '../../domain/usecases/photoScreens/ListPhotoScreensUseCase.js';
-import { GetPhotoScreenUseCase } from '../../domain/usecases/photoScreens/GetPhotoScreenUseCase.js';
-import { UploadPhotoUseCase } from '../../domain/usecases/photos/UploadPhotoUseCase.js';
-import { UpdatePhotoUseCase } from '../../domain/usecases/photos/UpdatePhotoUseCase.js';
-import { DeletePhotoUseCase } from '../../domain/usecases/photos/DeletePhotoUseCase.js';
-import { ReorderPhotosUseCase } from '../../domain/usecases/photos/ReorderPhotosUseCase.js';
+import { createHouseholdRepository } from '../../../data/repositories/createHouseholdRepository.js';
+import { createStorageService } from '../../../data/services/storage/createStorageService.js';
+import { getRequesterContext } from '../utils.js';
+import { requireUserAuth } from '../../../plugins/authContext.js';
+import { CreatePhotoScreenUseCase } from '../../../domain/usecases/photoScreens/CreatePhotoScreenUseCase.js';
+import { UpdatePhotoScreenUseCase } from '../../../domain/usecases/photoScreens/UpdatePhotoScreenUseCase.js';
+import { DeletePhotoScreenUseCase } from '../../../domain/usecases/photoScreens/DeletePhotoScreenUseCase.js';
+import { ListPhotoScreensUseCase } from '../../../domain/usecases/photoScreens/ListPhotoScreensUseCase.js';
+import { GetPhotoScreenUseCase } from '../../../domain/usecases/photoScreens/GetPhotoScreenUseCase.js';
+import { UploadPhotoUseCase } from '../../../domain/usecases/photos/UploadPhotoUseCase.js';
+import { UpdatePhotoUseCase } from '../../../domain/usecases/photos/UpdatePhotoUseCase.js';
+import { DeletePhotoUseCase } from '../../../domain/usecases/photos/DeletePhotoUseCase.js';
+import { ReorderPhotosUseCase } from '../../../domain/usecases/photos/ReorderPhotosUseCase.js';
 import {
   createPhotoScreenSchema,
   updatePhotoScreenSchema,
@@ -24,7 +24,7 @@ import {
   photoScreenParamsSchema,
   photoParamsSchema,
 } from './photoScreenSchemas.js';
-import { MAX_PHOTO_SIZE_MB, MAX_PHOTO_CAPTION_LENGTH } from '../../domain/entities/PhotoScreen.js';
+import { MAX_PHOTO_SIZE_MB, MAX_PHOTO_CAPTION_LENGTH } from '../../../domain/entities/PhotoScreen.js';
 
 const MAX_FILE_SIZE = MAX_PHOTO_SIZE_MB * 1024 * 1024; // Convert to bytes
 const getMultipartFieldValue = (field: MultipartFields[string]): string | undefined => {
