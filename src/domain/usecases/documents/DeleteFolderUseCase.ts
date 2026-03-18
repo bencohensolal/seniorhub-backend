@@ -36,9 +36,9 @@ export class DeleteFolderUseCase {
       throw new ForbiddenError('Folder not found or does not belong to this household.');
     }
 
-    // Prevent deleting system roots
-    if (existingFolder.type === 'system_root') {
-      throw new ForbiddenError('Cannot delete system root folders.');
+    // Prevent deleting system root folders and senior folders
+    if (existingFolder.type === 'system_root' || existingFolder.type === 'senior_folder') {
+      throw new ForbiddenError('Cannot delete system folders.');
     }
 
     // Delete folder (soft delete)

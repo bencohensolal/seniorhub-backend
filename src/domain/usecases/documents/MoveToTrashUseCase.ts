@@ -37,8 +37,8 @@ export class MoveToTrashUseCase {
       if (!folder) {
         throw new NotFoundError('Folder not found or does not belong to this household.');
       }
-      if (folder.type === 'system_root') {
-        throw new ForbiddenError('Cannot move a system root folder to trash.');
+      if (folder.type === 'system_root' || folder.type === 'senior_folder') {
+        throw new ForbiddenError('Cannot move a system folder to trash.');
       }
       if (folder.trashedAt !== null) {
         throw new ForbiddenError('Folder is already in trash.');

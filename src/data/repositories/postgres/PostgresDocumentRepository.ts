@@ -222,18 +222,22 @@ export class PostgresDocumentRepository {
       folder_id: string;
       senior_id: string | null;
       name: string;
+      description: string | null;
       original_filename: string;
       storage_key: string;
       mime_type: string;
       file_size_bytes: number;
       extension: string;
+      event_date: string | Date | null;
+      category: string | null;
+      tags: string[] | null;
       uploaded_by_user_id: string;
       uploaded_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
     }>(
-      `SELECT id, household_id, folder_id, senior_id, name, original_filename,
-              storage_key, mime_type, file_size_bytes, extension,
+      `SELECT id, household_id, folder_id, senior_id, name, description, original_filename,
+              storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
               uploaded_by_user_id, uploaded_at, updated_at, deleted_at
        FROM documents
        WHERE id = $1 AND household_id = $2 AND deleted_at IS NULL
@@ -252,18 +256,22 @@ export class PostgresDocumentRepository {
       folder_id: string;
       senior_id: string | null;
       name: string;
+      description: string | null;
       original_filename: string;
       storage_key: string;
       mime_type: string;
       file_size_bytes: number;
       extension: string;
+      event_date: string | Date | null;
+      category: string | null;
+      tags: string[] | null;
       uploaded_by_user_id: string;
       uploaded_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
     }>(
-      `SELECT id, household_id, folder_id, senior_id, name, original_filename,
-              storage_key, mime_type, file_size_bytes, extension,
+      `SELECT id, household_id, folder_id, senior_id, name, description, original_filename,
+              storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
               uploaded_by_user_id, uploaded_at, updated_at, deleted_at
        FROM documents
        WHERE folder_id = $1 AND household_id = $2 AND deleted_at IS NULL
@@ -284,24 +292,28 @@ export class PostgresDocumentRepository {
       folder_id: string;
       senior_id: string | null;
       name: string;
+      description: string | null;
       original_filename: string;
       storage_key: string;
       mime_type: string;
       file_size_bytes: number;
       extension: string;
+      event_date: string | Date | null;
+      category: string | null;
+      tags: string[] | null;
       uploaded_by_user_id: string;
       uploaded_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
     }>(
       `INSERT INTO documents (
-         id, household_id, folder_id, senior_id, name, original_filename,
-         storage_key, mime_type, file_size_bytes, extension,
+         id, household_id, folder_id, senior_id, name, description, original_filename,
+         storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
          uploaded_by_user_id, uploaded_at, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
-       RETURNING id, household_id, folder_id, senior_id, name, original_filename,
-                 storage_key, mime_type, file_size_bytes, extension,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $16)
+       RETURNING id, household_id, folder_id, senior_id, name, description, original_filename,
+                 storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
                  uploaded_by_user_id, uploaded_at, updated_at, deleted_at`,
       [
         id,
@@ -309,11 +321,15 @@ export class PostgresDocumentRepository {
         input.folderId,
         input.seniorId ?? null,
         input.name,
+        input.description ?? null,
         input.originalFilename,
         input.storageKey,
         input.mimeType,
         input.fileSizeBytes,
         input.extension,
+        input.eventDate ?? null,
+        input.category ?? null,
+        input.tags ?? [],
         input.uploadedByUserId,
         now,
       ],
@@ -329,12 +345,16 @@ export class PostgresDocumentRepository {
 
   async updateDocument(documentId: string, householdId: string, input: UpdateDocumentInput): Promise<Document> {
     const updates: string[] = [];
-    const values: (string | number | null)[] = [];
+    const values: (string | number | null | string[])[] = [];
     let paramIndex = 1;
 
     if (input.name !== undefined) {
       updates.push(`name = $${paramIndex++}`);
       values.push(input.name);
+    }
+    if (input.description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(input.description);
     }
     if (input.folderId !== undefined) {
       updates.push(`folder_id = $${paramIndex++}`);
@@ -343,6 +363,18 @@ export class PostgresDocumentRepository {
     if (input.seniorId !== undefined) {
       updates.push(`senior_id = $${paramIndex++}`);
       values.push(input.seniorId);
+    }
+    if (input.eventDate !== undefined) {
+      updates.push(`event_date = $${paramIndex++}`);
+      values.push(input.eventDate);
+    }
+    if (input.category !== undefined) {
+      updates.push(`category = $${paramIndex++}`);
+      values.push(input.category);
+    }
+    if (input.tags !== undefined) {
+      updates.push(`tags = $${paramIndex++}`);
+      values.push(input.tags);
     }
 
     if (updates.length === 0) {
@@ -361,11 +393,15 @@ export class PostgresDocumentRepository {
       folder_id: string;
       senior_id: string | null;
       name: string;
+      description: string | null;
       original_filename: string;
       storage_key: string;
       mime_type: string;
       file_size_bytes: number;
       extension: string;
+      event_date: string | Date | null;
+      category: string | null;
+      tags: string[] | null;
       uploaded_by_user_id: string;
       uploaded_at: string | Date;
       updated_at: string | Date;
@@ -374,8 +410,8 @@ export class PostgresDocumentRepository {
       `UPDATE documents
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex - 1} AND household_id = $${paramIndex} AND deleted_at IS NULL
-       RETURNING id, household_id, folder_id, senior_id, name, original_filename,
-                 storage_key, mime_type, file_size_bytes, extension,
+       RETURNING id, household_id, folder_id, senior_id, name, description, original_filename,
+                 storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
                  uploaded_by_user_id, uploaded_at, updated_at, deleted_at`,
       values,
     );
@@ -472,22 +508,26 @@ export class PostgresDocumentRepository {
       folder_id: string;
       senior_id: string | null;
       name: string;
+      description: string | null;
       original_filename: string;
       storage_key: string;
       mime_type: string;
       file_size_bytes: number;
       extension: string;
+      event_date: string | Date | null;
+      category: string | null;
+      tags: string[] | null;
       uploaded_by_user_id: string;
       uploaded_at: string | Date;
       updated_at: string | Date;
       deleted_at: string | Date | null;
     }>(
-      `SELECT id, household_id, folder_id, senior_id, name, original_filename,
-              storage_key, mime_type, file_size_bytes, extension,
+      `SELECT id, household_id, folder_id, senior_id, name, description, original_filename,
+              storage_key, mime_type, file_size_bytes, extension, event_date, category, tags,
               uploaded_by_user_id, uploaded_at, updated_at, deleted_at
        FROM documents
        WHERE household_id = $1 AND deleted_at IS NULL
-         AND (name ILIKE $2 OR original_filename ILIKE $2)
+         AND (name ILIKE $2 OR original_filename ILIKE $2 OR description ILIKE $2)
        ORDER BY uploaded_at DESC`,
       [householdId, searchPattern],
     );

@@ -36,18 +36,26 @@ export const createDocumentBodySchema = z.object({
   folderId: z.string().uuid('Invalid folder ID format'),
   seniorId: z.string().uuid('Invalid senior ID format').nullable().optional(),
   name: z.string().min(1).max(200),
+  description: z.string().max(2000).nullable().optional(),
   originalFilename: z.string().min(1).max(500),
   storageKey: z.string().min(1).max(500),
   mimeType: z.string().min(1).max(100),
   fileSizeBytes: z.number().int().positive().max(100 * 1024 * 1024), // Max 100MB
   extension: z.string().max(20),
+  eventDate: z.string().date().nullable().optional(), // ISO date string YYYY-MM-DD
+  category: z.string().max(50).nullable().optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 // Schema for updating an existing document (all fields optional for partial update)
 export const updateDocumentBodySchema = z.object({
   name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).nullable().optional(),
   folderId: z.string().uuid('Invalid folder ID format').optional(),
   seniorId: z.string().uuid('Invalid senior ID format').nullable().optional(),
+  eventDate: z.string().date().nullable().optional(),
+  category: z.string().max(50).nullable().optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 // Schema for document URL parameters
@@ -88,11 +96,15 @@ export const documentResponseSchema = z.object({
   folderId: z.string().uuid(),
   seniorId: z.string().uuid().nullable(),
   name: z.string(),
+  description: z.string().nullable(),
   originalFilename: z.string(),
   storageKey: z.string(),
   mimeType: z.string(),
   fileSizeBytes: z.number().int(),
   extension: z.string(),
+  eventDate: z.string().nullable(),
+  category: z.string().nullable(),
+  tags: z.array(z.string()),
   uploadedByUserId: z.string().uuid(),
   uploadedAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

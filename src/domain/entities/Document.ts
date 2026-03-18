@@ -4,11 +4,15 @@ export interface Document {
   folderId: string;
   seniorId: string | null; // optional association with a senior
   name: string;
+  description: string | null; // optional user-provided description
   originalFilename: string;
   storageKey: string;
   mimeType: string;
   fileSizeBytes: number;
   extension: string;
+  eventDate: string | null; // optional date of related event (e.g., lab result date)
+  category: string | null; // optional category (e.g., prescription, lab_result, insurance)
+  tags: string[]; // optional tags for flexible categorization
   uploadedByUserId: string;
   uploadedAt: string;
   updatedAt: string;
@@ -22,18 +26,26 @@ export interface CreateDocumentInput {
   folderId: string;
   seniorId?: string | null | undefined;
   name: string;
+  description?: string | null | undefined;
   originalFilename: string;
   storageKey: string;
   mimeType: string;
   fileSizeBytes: number;
   extension: string;
+  eventDate?: string | null | undefined;
+  category?: string | null | undefined;
+  tags?: string[] | undefined;
   uploadedByUserId: string;
 }
 
 export interface UpdateDocumentInput {
   name?: string | undefined;
+  description?: string | null | undefined;
   folderId?: string | undefined; // moving document
   seniorId?: string | null | undefined;
+  eventDate?: string | null | undefined;
+  category?: string | null | undefined;
+  tags?: string[] | undefined;
 }
 
 export interface DocumentWithFolder extends Document {

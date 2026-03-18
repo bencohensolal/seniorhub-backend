@@ -39,9 +39,9 @@ export class UpdateFolderUseCase {
       throw new ForbiddenError('Folder not found or does not belong to this household.');
     }
 
-    // Prevent moving system roots
-    if (existingFolder.type === 'system_root' && input.updates.parentFolderId !== undefined) {
-      throw new ForbiddenError('Cannot move system root folders.');
+    // Prevent renaming or moving system root folders and senior folders
+    if (existingFolder.type === 'system_root' || existingFolder.type === 'senior_folder') {
+      throw new ForbiddenError('Cannot rename or move system folders.');
     }
 
     // Validate new parent folder exists and belongs to same household (if changing parent)

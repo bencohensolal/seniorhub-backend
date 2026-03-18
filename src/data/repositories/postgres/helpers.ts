@@ -324,11 +324,15 @@ export const mapDocument = (row: {
   folder_id: string;
   senior_id: string | null;
   name: string;
+  description: string | null;
   original_filename: string;
   storage_key: string;
   mime_type: string;
   file_size_bytes: number;
   extension: string;
+  event_date: string | Date | null;
+  category: string | null;
+  tags: string[] | null;
   uploaded_by_user_id: string;
   uploaded_at: string | Date;
   updated_at: string | Date;
@@ -341,11 +345,15 @@ export const mapDocument = (row: {
   folderId: row.folder_id,
   seniorId: row.senior_id,
   name: row.name,
+  description: row.description,
   originalFilename: row.original_filename,
   storageKey: row.storage_key,
   mimeType: row.mime_type,
   fileSizeBytes: row.file_size_bytes,
   extension: row.extension,
+  eventDate: row.event_date ? toIso(row.event_date).split('T')[0] : null,
+  category: row.category,
+  tags: row.tags ?? [],
   uploadedByUserId: row.uploaded_by_user_id,
   uploadedAt: toIso(row.uploaded_at),
   updatedAt: toIso(row.updated_at),
