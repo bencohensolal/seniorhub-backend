@@ -1067,6 +1067,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      trashedAt: null,
+      originalParentFolderId: null,
     };
     documentFolders.push(folder);
     return folder;
@@ -1093,6 +1095,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       createdAt: folder.createdAt,
       updatedAt: nowIso(),
       deletedAt: folder.deletedAt,
+      trashedAt: folder.trashedAt,
+      originalParentFolderId: folder.originalParentFolderId,
     };
     documentFolders[index] = updated;
     return updated;
@@ -1119,6 +1123,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       createdAt: folder.createdAt,
       updatedAt: nowIso(),
       deletedAt: nowIso(),
+      trashedAt: folder.trashedAt,
+      originalParentFolderId: folder.originalParentFolderId,
     };
   }
 
@@ -1143,10 +1149,12 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       createdAt: folder.createdAt,
       updatedAt: nowIso(),
       deletedAt: null,
+      trashedAt: folder.trashedAt,
+      originalParentFolderId: folder.originalParentFolderId,
     };
   }
 
-  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null> {
+  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> {
     const folder = documentFolders.find(
       (f) =>
         f.householdId === householdId &&
@@ -1219,6 +1227,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       uploadedAt: now,
       updatedAt: now,
       deletedAt: null,
+      trashedAt: null,
+      originalFolderId: null,
     };
     documents.push(document);
     return document;
@@ -1247,6 +1257,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       uploadedAt: doc.uploadedAt,
       updatedAt: nowIso(),
       deletedAt: doc.deletedAt,
+      trashedAt: doc.trashedAt,
+      originalFolderId: doc.originalFolderId,
     };
     documents[index] = updated;
     return updated;
@@ -1275,6 +1287,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       uploadedAt: doc.uploadedAt,
       updatedAt: nowIso(),
       deletedAt: nowIso(),
+      trashedAt: doc.trashedAt,
+      originalFolderId: doc.originalFolderId,
     };
   }
 
@@ -1301,7 +1315,58 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       uploadedAt: doc.uploadedAt,
       updatedAt: nowIso(),
       deletedAt: null,
+      trashedAt: doc.trashedAt,
+      originalFolderId: doc.originalFolderId,
     };
+  }
+
+  async moveDocumentFolderToTrash(folderId: string, householdId: string, trashFolderId: string): Promise<void> {
+    const index = documentFolders.findIndex((f) => f.id === folderId && f.householdId === householdId && !f.deletedAt);
+    if (index === -1) throw new NotFoundError('Document folder not found.');
+    const folder = documentFolders[index]!;
+    documentFolders[index] = { ...folder, parentFolderId: trashFolderId, trashedAt: nowIso(), originalParentFolderId: folder.parentFolderId, updatedAt: nowIso() };
+  }
+
+  async moveDocumentToTrash(documentId: string, householdId: string, trashFolderId: string): Promise<void> {
+    const index = documents.findIndex((d) => d.id === documentId && d.householdId === householdId && !d.deletedAt);
+    if (index === -1) throw new NotFoundError('Document not found.');
+    const doc = documents[index]!;
+    documents[index] = { ...doc, folderId: trashFolderId, trashedAt: nowIso(), originalFolderId: doc.folderId, updatedAt: nowIso() };
+  }
+
+  async restoreDocumentFolderFromTrash(folderId: string, householdId: string): Promise<void> {
+    const index = documentFolders.findIndex((f) => f.id === folderId && f.householdId === householdId && f.trashedAt !== null);
+    if (index === -1) throw new NotFoundError('Trashed document folder not found.');
+    const folder = documentFolders[index]!;
+    documentFolders[index] = { ...folder, parentFolderId: folder.originalParentFolderId, trashedAt: null, originalParentFolderId: null, updatedAt: nowIso() };
+  }
+
+  async restoreDocumentFromTrash(documentId: string, householdId: string): Promise<void> {
+    const index = documents.findIndex((d) => d.id === documentId && d.householdId === householdId && d.trashedAt !== null);
+    if (index === -1) throw new NotFoundError('Trashed document not found.');
+    const doc = documents[index]!;
+    documents[index] = { ...doc, folderId: doc.originalFolderId ?? doc.folderId, trashedAt: null, originalFolderId: null, updatedAt: nowIso() };
+  }
+
+  async purgeExpiredTrashItems(householdId: string, retentionDays: number): Promise<{ folders: number; documents: number }> {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
+    let folders = 0;
+    let docs = 0;
+    for (let i = 0; i < documentFolders.length; i++) {
+      const f = documentFolders[i]!;
+      if (f.householdId === householdId && f.trashedAt && f.trashedAt < cutoff && !f.deletedAt) {
+        documentFolders[i] = { ...f, deletedAt: nowIso() };
+        folders++;
+      }
+    }
+    for (let i = 0; i < documents.length; i++) {
+      const d = documents[i]!;
+      if (d.householdId === householdId && d.trashedAt && d.trashedAt < cutoff && !d.deletedAt) {
+        documents[i] = { ...d, deletedAt: nowIso() };
+        docs++;
+      }
+    }
+    return { folders, documents: docs };
   }
 
   async searchDocumentsAndFolders(householdId: string, query: string): Promise<{

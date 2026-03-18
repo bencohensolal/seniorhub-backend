@@ -170,12 +170,17 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   updateDocumentFolder = (folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder> => this.documents.updateDocumentFolder(folderId, householdId, input);
   softDeleteDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.softDeleteDocumentFolder(folderId, householdId);
   restoreDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.restoreDocumentFolder(folderId, householdId);
-  getSystemRootFolder = (householdId: string, systemRootType: 'medical' | 'administrative'): Promise<DocumentFolderWithCounts | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
+  getSystemRootFolder = (householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
   ensureSystemRootsForHousehold = (householdId: string, userId: string): Promise<void> => this.documents.ensureSystemRootsForHousehold(householdId, userId);
   listSeniorFolders = (householdId: string): Promise<DocumentFolderWithCounts[]> => this.documents.listSeniorFolders(householdId);
+  moveDocumentFolderToTrash = (folderId: string, householdId: string, trashFolderId: string): Promise<void> => this.documents.moveDocumentFolderToTrash(folderId, householdId, trashFolderId);
+  moveDocumentToTrash = (documentId: string, householdId: string, trashFolderId: string): Promise<void> => this.documents.moveDocumentToTrash(documentId, householdId, trashFolderId);
+  restoreDocumentFolderFromTrash = (folderId: string, householdId: string): Promise<void> => this.documents.restoreDocumentFolderFromTrash(folderId, householdId);
+  restoreDocumentFromTrash = (documentId: string, householdId: string): Promise<void> => this.documents.restoreDocumentFromTrash(documentId, householdId);
+  purgeExpiredTrashItems = (householdId: string, retentionDays: number): Promise<{ folders: number; documents: number }> => this.documents.purgeExpiredTrashItems(householdId, retentionDays);
 
   getDocumentById = (documentId: string, householdId: string): Promise<Document | null> => this.documents.getDocumentById(documentId, householdId);
-  listDocumentsByFolder = (householdId: string, folderId: string): Promise<Document[]> => this.documents.listDocumentsByFolder(folderId, householdId);
+  listDocumentsByFolder = (householdId: string, folderId: string): Promise<Document[]> => this.documents.listDocumentsByFolder(householdId, folderId);
   createDocument = (input: CreateDocumentInput): Promise<Document> => this.documents.createDocument(input);
   updateDocument = (documentId: string, householdId: string, input: UpdateDocumentInput): Promise<Document> => this.documents.updateDocument(documentId, householdId, input);
   softDeleteDocument = (documentId: string, householdId: string): Promise<void> => this.documents.softDeleteDocument(documentId, householdId);
