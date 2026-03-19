@@ -59,8 +59,7 @@ export class PostgresNotificationRepository {
       FROM medication_reminders mr
       JOIN medications m ON m.id = mr.medication_id
       JOIN household_members hm_senior
-        ON hm_senior.household_id = m.household_id
-        AND hm_senior.user_id = m.senior_id
+        ON hm_senior.id = m.senior_id
         AND hm_senior.status = 'active'
       CROSS JOIN local_now
       WHERE mr.enabled = true
