@@ -380,13 +380,16 @@ export class PostgresMedicationRepository {
     const now = nowIso();
 
     // Idempotence : si un log existe déjà pour ce (medication_id, scheduled_date, scheduled_time), le retourner
+    // Normalise scheduledTime to "HH:MM" (5 chars max) — l'API peut renvoyer "HH:MM:SS"
+    const scheduledTime = input.scheduledTime ? input.scheduledTime.slice(0, 5) : null;
+
     const existing = await this.pool.query<{ id: string }>(
       `SELECT id FROM medication_logs
        WHERE medication_id = $1
          AND scheduled_date = $2
          AND (scheduled_time = $3 OR (scheduled_time IS NULL AND $3 IS NULL))
        LIMIT 1`,
-      [input.medicationId, input.scheduledDate, input.scheduledTime ?? null],
+      [input.medicationId, input.scheduledDate, scheduledTime],
     );
     if (existing.rows[0]) {
       const row = await this.pool.query(
@@ -406,7 +409,7 @@ export class PostgresMedicationRepository {
         input.medicationId,
         input.householdId,
         input.scheduledDate,
-        input.scheduledTime ?? null,
+        scheduledTime,
         input.takenAt,
         input.takenByUserId ?? null,
         input.note ?? null,
