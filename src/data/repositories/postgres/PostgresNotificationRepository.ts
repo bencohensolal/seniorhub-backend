@@ -54,7 +54,7 @@ export class PostgresNotificationRepository {
         m.id          AS medication_id,
         m.name        AS medication_name,
         m.household_id,
-        LEFT(mr.time, 5) AS scheduled_time,
+        LEFT(mr.time::text, 5) AS scheduled_time,
         hm_senior.first_name AS senior_first_name
       FROM medication_reminders mr
       JOIN medications m ON m.id = mr.medication_id
@@ -75,14 +75,14 @@ export class PostgresNotificationRepository {
           SELECT 1 FROM medication_logs ml
           WHERE ml.medication_id = m.id
             AND ml.scheduled_date = local_now.today
-            AND ml.scheduled_time = LEFT(mr.time, 5)
+            AND ml.scheduled_time = LEFT(mr.time::text, 5)
         )
         -- Alert not already sent today for this reminder slot
         AND NOT EXISTS (
           SELECT 1 FROM caregiver_medication_alerts ca
           WHERE ca.medication_id = m.id
             AND ca.scheduled_date = local_now.today
-            AND ca.scheduled_time = LEFT(mr.time, 5)
+            AND ca.scheduled_time = LEFT(mr.time::text, 5)
         )`,
       [graceMinutes],
     );
