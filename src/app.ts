@@ -5,8 +5,15 @@ import { householdsRoutes } from './routes/households/index.js';
 import { registerPublicMedicationRoutes } from './routes/medicationRoutes.js';
 import { registerPrivacySettingsRoutes } from './routes/privacySettingsRoutes.js';
 import { registerUserProfileRoutes } from './routes/userProfileRoutes.js';
+import { registerPushTokenRoutes } from './routes/me/pushTokenRoutes.js';
 import { registerAuthContext } from './plugins/authContext.js';
 import { createHouseholdRepository } from './data/repositories/createHouseholdRepository.js';
+import { getPostgresPool } from './data/db/postgres.js';
+import { PostgresNotificationRepository } from './data/repositories/postgres/PostgresNotificationRepository.js';
+import { ExpoPushService } from './services/ExpoPushService.js';
+import { CheckMissedMedicationsUseCase } from './domain/usecases/notifications/CheckMissedMedicationsUseCase.js';
+import { startMedicationAlertScheduler } from './scheduler/medicationAlertScheduler.js';
+import { registerInternalRoutes } from './routes/internal/triggerRoutes.js';
 import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
 import { UpdateUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/UpdateUserPrivacySettingsUseCase.js';
 
@@ -72,13 +79,26 @@ export const buildApp = () => {
   app.register(householdsRoutes);
   registerPublicMedicationRoutes(app);
 
-  // Privacy settings routes
+  // Privacy settings + user profile routes
   const repository = createHouseholdRepository();
   registerPrivacySettingsRoutes(app, {
     getUserPrivacySettingsUseCase: new GetUserPrivacySettingsUseCase(repository),
     updateUserPrivacySettingsUseCase: new UpdateUserPrivacySettingsUseCase(repository),
   });
   registerUserProfileRoutes(app, repository);
+
+  // Push token registration
+  const pool = getPostgresPool();
+  const notifRepo = new PostgresNotificationRepository(pool);
+  registerPushTokenRoutes(app, notifRepo);
+
+  // Caregiver missed-medication alert scheduler
+  const pushService = new ExpoPushService();
+  const checkMissedUseCase = new CheckMissedMedicationsUseCase(notifRepo, pushService);
+  startMedicationAlertScheduler(checkMissedUseCase);
+
+  // Internal routes (manual trigger for testing)
+  registerInternalRoutes(app, checkMissedUseCase);
 
   return app;
 };
