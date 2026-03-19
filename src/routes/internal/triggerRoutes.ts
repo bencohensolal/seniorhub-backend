@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { CheckMissedMedicationsUseCase } from '../../domain/usecases/notifications/CheckMissedMedicationsUseCase.js';
+import type { PostgresNotificationRepository } from '../../data/repositories/postgres/PostgresNotificationRepository.js';
 
 /**
  * Internal routes for manual triggering — useful for testing.
@@ -8,6 +9,7 @@ import type { CheckMissedMedicationsUseCase } from '../../domain/usecases/notifi
 export function registerInternalRoutes(
   fastify: FastifyInstance,
   checkMissedUseCase: CheckMissedMedicationsUseCase,
+  notifRepo: PostgresNotificationRepository,
 ): void {
   fastify.post(
     '/internal/trigger-missed-medication-check',
@@ -18,6 +20,7 @@ export function registerInternalRoutes(
           type: 'object',
           properties: {
             graceMinutes: { type: 'integer', minimum: 0, default: 0 },
+            force: { type: 'boolean', default: false },
           },
         },
         response: {
@@ -43,14 +46,19 @@ export function registerInternalRoutes(
       },
     },
     async (request, reply) => {
-      const query = request.query as { graceMinutes?: number };
+      const query = request.query as { graceMinutes?: number; force?: boolean };
       const graceMinutes = query.graceMinutes ?? 0;
+      const force = query.force ?? false;
 
       try {
+        let cleared = 0;
+        if (force) {
+          cleared = await notifRepo.clearTodayAlerts();
+        }
           const result = await checkMissedUseCase.execute(graceMinutes);
         return reply.status(200).send({
           status: 'ok',
-          message: `Check completed with graceMinutes=${graceMinutes}`,
+          message: `Check completed with graceMinutes=${graceMinutes}${force ? ` (force: cleared ${cleared} alert(s))` : ''}`,
           ...result,
         });
       } catch (err) {

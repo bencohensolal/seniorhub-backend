@@ -116,6 +116,16 @@ export class PostgresNotificationRepository {
     );
   }
 
+  /** Delete all caregiver alerts sent today (dev/test only). */
+  async clearTodayAlerts(): Promise<number> {
+    const result = await this.pool.query<{ count: string }>(
+      `DELETE FROM caregiver_medication_alerts
+       WHERE scheduled_date = (NOW() AT TIME ZONE 'Europe/Paris')::date
+       RETURNING id`,
+    );
+    return result.rowCount ?? 0;
+  }
+
   /** Get today's date in Europe/Paris timezone (YYYY-MM-DD). */
   async getTodayParis(): Promise<string> {
     const result = await this.pool.query<{ today: string }>(

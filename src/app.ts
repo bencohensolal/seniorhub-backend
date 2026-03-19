@@ -98,7 +98,7 @@ export const buildApp = () => {
   startMedicationAlertScheduler(checkMissedUseCase);
 
   // Internal routes (manual trigger for testing)
-  registerInternalRoutes(app, checkMissedUseCase);
+  registerInternalRoutes(app, checkMissedUseCase, notifRepo);
 
   return app;
 };
