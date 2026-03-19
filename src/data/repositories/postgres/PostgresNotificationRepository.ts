@@ -122,6 +122,6 @@ export class PostgresNotificationRepository {
     const result = await this.pool.query<{ today: string }>(
       `SELECT (NOW() AT TIME ZONE 'Europe/Paris')::date::text AS today`,
     );
-    return result.rows[0].today;
+    return result.rows[0]!.today;
   }
 }
