@@ -26,6 +26,10 @@ export function registerInternalRoutes(
             properties: {
               status: { type: 'string' },
               message: { type: 'string' },
+              missedCount: { type: 'integer' },
+              alertsSent: { type: 'integer' },
+              skippedNoCaregiver: { type: 'integer' },
+              skippedNoToken: { type: 'integer' },
             },
           },
           '5xx': {
@@ -43,10 +47,11 @@ export function registerInternalRoutes(
       const graceMinutes = query.graceMinutes ?? 0;
 
       try {
-        await checkMissedUseCase.execute(graceMinutes);
+          const result = await checkMissedUseCase.execute(graceMinutes);
         return reply.status(200).send({
           status: 'ok',
           message: `Check completed with graceMinutes=${graceMinutes}`,
+          ...result,
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
