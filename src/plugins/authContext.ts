@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import crypto from 'crypto';
 import { verifyTabletSessionToken } from '../domain/security/displayTabletSession.js';
+import { verifySeniorDeviceSessionToken } from '../domain/security/seniorDeviceSession.js';
 import { createHouseholdRepository } from '../data/repositories/createHouseholdRepository.js';
 
 const normalize = (value: string | undefined): string => (value && value.trim().length > 0 ? value.trim() : '');
@@ -65,6 +66,8 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/households/invitations/accept',
       '/v1/display-tablets/authenticate', // Tablet setup authentication endpoint
       '/v1/display-tablets/session/refresh',
+      '/v1/senior-devices/authenticate', // Senior device pairing endpoint
+      '/v1/senior-devices/session/refresh',
       '/internal/', // Internal dev/test routes — no auth required
     ];
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
@@ -125,6 +128,58 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       }
     }
 
+    // Try senior device authentication (Method 2: via senior session token)
+    const seniorSessionToken = normalize(request.headers['x-senior-session-token'] as string | undefined);
+
+    if (seniorSessionToken) {
+      const seniorPayload = verifySeniorDeviceSessionToken(seniorSessionToken);
+
+      if (seniorPayload) {
+        const repository = createHouseholdRepository();
+        const device = await repository.getSeniorDeviceById(seniorPayload.deviceId, seniorPayload.householdId);
+
+        if (!device || device.status !== 'active' || device.revokedAt !== null) {
+          fastify.log.warn({
+            deviceId: seniorPayload.deviceId,
+            householdId: seniorPayload.householdId,
+            path: request.url,
+          }, 'Rejected senior device session token for inactive or revoked device');
+
+          return reply.status(401).send({
+            status: 'error',
+            message: 'Senior device session is no longer valid.',
+          });
+        }
+
+        // Valid senior device session - set requester context (read+write access)
+        request.requester = {
+          userId: seniorPayload.userId,
+          email: '',
+          firstName: '',
+          lastName: '',
+        };
+
+        fastify.log.info({
+          deviceId: seniorPayload.deviceId,
+          householdId: seniorPayload.householdId,
+          memberId: seniorPayload.memberId,
+          path: request.url,
+        }, 'Senior device authenticated via session token');
+
+        return;
+      } else {
+        fastify.log.warn({
+          token: seniorSessionToken.substring(0, 20) + '...',
+          path: request.url,
+        }, 'Invalid senior device session token');
+
+        return reply.status(401).send({
+          status: 'error',
+          message: 'Invalid or expired senior device session token.',
+        });
+      }
+    }
+
     // Fall back to user authentication
     let userContext: {
       userId: string;
@@ -164,16 +219,16 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       const firstName = normalize(request.headers['x-user-first-name'] as string | undefined);
       const lastName = normalize(request.headers['x-user-last-name'] as string | undefined);
 
-      if (userId && email) {
-        userContext = { userId, email, firstName, lastName };
+      if (userId) {
+        userContext = { userId, email: email || '', firstName, lastName };
       }
     }
 
-    // Verify that we have a valid user context
-    if (!userContext?.userId || !userContext?.email) {
+    // Verify that we have a valid user context (email is optional for proxy/device users)
+    if (!userContext?.userId) {
       return reply.status(401).send({
         status: 'error',
-        message: 'Authentication required. Provide either a Bearer token, x-user-* headers, or x-tablet-session-token.',
+        message: 'Authentication required. Provide either a Bearer token, x-user-* headers, x-tablet-session-token, or x-senior-session-token.',
       });
     }
 

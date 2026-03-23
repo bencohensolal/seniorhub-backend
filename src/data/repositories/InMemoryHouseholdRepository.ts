@@ -57,6 +57,8 @@ const members: Member[] = [
     status: 'active',
     joinedAt: nowIso(),
     createdAt: nowIso(),
+    authProvider: 'google',
+    phoneNumber: null,
   },
   {
     id: 'member-2',
@@ -69,6 +71,8 @@ const members: Member[] = [
     status: 'active',
     joinedAt: nowIso(),
     createdAt: nowIso(),
+    authProvider: 'google',
+    phoneNumber: null,
   },
   {
     id: 'member-3',
@@ -81,6 +85,8 @@ const members: Member[] = [
     status: 'active',
     joinedAt: nowIso(),
     createdAt: nowIso(),
+    authProvider: 'google',
+    phoneNumber: null,
   },
 ];
 
@@ -224,6 +230,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       status: 'active',
       joinedAt: createdAt,
       createdAt,
+      authProvider: 'google',
+      phoneNumber: null,
     });
 
     householdSettingsStore.set(
@@ -265,7 +273,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       const activeMember = members.find(
         (member) =>
           member.householdId === input.householdId &&
-          normalizeEmail(member.email) === email &&
+          member.email !== null && normalizeEmail(member.email) === email &&
           member.status === 'active',
       );
 
@@ -461,6 +469,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
         status: 'active',
         joinedAt: nowIso(),
         createdAt: nowIso(),
+        authProvider: 'google',
+        phoneNumber: null,
       });
     }
 
@@ -646,7 +656,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
 
     return {
       userId: member.userId,
-      email: member.email,
+      email: member.email ?? '',
       firstName: member.firstName,
       lastName: member.lastName,
       updatedAt: member.joinedAt,
@@ -1504,4 +1514,14 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async deleteEmergencyContact(_contactId: string, _householdId: string): Promise<void> {}
   async reorderEmergencyContacts(_householdId: string, _orderedIds: string[]): Promise<void> {}
   async getCaregiverPushTokens(_householdId: string): Promise<string[]> { return []; }
+
+  // Senior Devices (stubs for in-memory)
+  async listHouseholdSeniorDevices(_householdId: string): Promise<any[]> { return []; }
+  async getSeniorDeviceById(_deviceId: string, _householdId: string): Promise<any> { return null; }
+  async createSeniorDevice(_input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async authenticateSeniorDevice(_deviceId: string, _setupToken: string, _refreshToken: string, _refreshTokenExpiresAt: string): Promise<any> { return null; }
+  async refreshSeniorDeviceSession(_deviceId: string, _refreshToken: string, _nextRefreshToken: string, _nextRefreshTokenExpiresAt: string): Promise<any> { return null; }
+  async revokeSeniorDevice(_deviceId: string, _householdId: string, _revokedBy: string): Promise<void> {}
+  async countActiveSeniorDevices(_householdId: string): Promise<number> { return 0; }
+  async createProxyMember(_input: any): Promise<{ id: string }> { throw new Error('Not implemented in-memory'); }
 }

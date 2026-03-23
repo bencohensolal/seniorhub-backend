@@ -20,6 +20,7 @@ import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../enti
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
 import type { MedicationLog, CreateMedicationLogInput } from '../entities/MedicationLog.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
+import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../entities/SeniorDevice.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -252,4 +253,40 @@ export interface HouseholdRepository {
   deleteEmergencyContact(contactId: string, householdId: string): Promise<void>;
   reorderEmergencyContacts(householdId: string, orderedIds: string[]): Promise<void>;
   getCaregiverPushTokens(householdId: string): Promise<string[]>;
+
+  // Senior Devices
+  listHouseholdSeniorDevices(householdId: string): Promise<SeniorDevice[]>;
+  getSeniorDeviceById(deviceId: string, householdId: string): Promise<SeniorDevice | null>;
+  createSeniorDevice(input: CreateSeniorDeviceInput): Promise<SeniorDeviceWithToken>;
+  authenticateSeniorDevice(
+    deviceId: string,
+    setupToken: string,
+    refreshToken: string,
+    refreshTokenExpiresAt: string,
+  ): Promise<SeniorDeviceAuthInfo | null>;
+  refreshSeniorDeviceSession(
+    deviceId: string,
+    refreshToken: string,
+    nextRefreshToken: string,
+    nextRefreshTokenExpiresAt: string,
+  ): Promise<SeniorDeviceAuthInfo | null>;
+  revokeSeniorDevice(deviceId: string, householdId: string, revokedBy: string): Promise<void>;
+  countActiveSeniorDevices(householdId: string): Promise<number>;
+  createProxyMember(input: {
+    householdId: string;
+    userId: string;
+    firstName: string;
+    lastName: string;
+    role: HouseholdRole;
+    phoneNumber?: string | undefined;
+    permissions: {
+      manageMedications: boolean;
+      manageAppointments: boolean;
+      manageTasks: boolean;
+      manageMembers: boolean;
+      viewSensitiveInfo: boolean;
+      viewDocuments: boolean;
+      manageDocuments: boolean;
+    };
+  }): Promise<{ id: string }>;
 }

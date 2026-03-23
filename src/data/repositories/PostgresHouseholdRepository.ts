@@ -29,7 +29,9 @@ import { PostgresDocumentRepository } from './postgres/PostgresDocumentRepositor
 import { PostgresPhotoScreenRepository } from './postgres/PostgresPhotoScreenRepository.js';
 import { PostgresPrivacyRepository } from './postgres/PostgresPrivacyRepository.js';
 import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergencyContactRepository.js';
+import { PostgresSeniorDeviceRepository } from './postgres/PostgresSeniorDeviceRepository.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
+import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../../domain/entities/SeniorDevice.js';
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly core: PostgresHouseholdCoreRepository;
@@ -41,6 +43,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly photoScreens: PostgresPhotoScreenRepository;
   private readonly privacy: PostgresPrivacyRepository;
   private readonly emergencyContacts: PostgresEmergencyContactRepository;
+  private readonly seniorDevices: PostgresSeniorDeviceRepository;
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
@@ -52,6 +55,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.photoScreens = new PostgresPhotoScreenRepository(pool);
     this.privacy = new PostgresPrivacyRepository(pool);
     this.emergencyContacts = new PostgresEmergencyContactRepository(pool);
+    this.seniorDevices = new PostgresSeniorDeviceRepository(pool);
   }
 
   // Core — households, members, settings, invitations
@@ -209,4 +213,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   deleteEmergencyContact = (contactId: string, householdId: string) => this.emergencyContacts.deleteEmergencyContact(contactId, householdId);
   reorderEmergencyContacts = (householdId: string, orderedIds: string[]) => this.emergencyContacts.reorderEmergencyContacts(householdId, orderedIds);
   getCaregiverPushTokens = (householdId: string) => this.emergencyContacts.getCaregiverPushTokens(householdId);
+
+  // Senior Devices
+  listHouseholdSeniorDevices = (householdId: string): Promise<SeniorDevice[]> => this.seniorDevices.listHouseholdSeniorDevices(householdId);
+  getSeniorDeviceById = (deviceId: string, householdId: string): Promise<SeniorDevice | null> => this.seniorDevices.getSeniorDeviceById(deviceId, householdId);
+  createSeniorDevice = (input: CreateSeniorDeviceInput): Promise<SeniorDeviceWithToken> => this.seniorDevices.createSeniorDevice(input);
+  authenticateSeniorDevice = (deviceId: string, setupToken: string, refreshToken: string, refreshTokenExpiresAt: string): Promise<SeniorDeviceAuthInfo | null> => this.seniorDevices.authenticateSeniorDevice(deviceId, setupToken, refreshToken, refreshTokenExpiresAt);
+  refreshSeniorDeviceSession = (deviceId: string, refreshToken: string, nextRefreshToken: string, nextRefreshTokenExpiresAt: string): Promise<SeniorDeviceAuthInfo | null> => this.seniorDevices.refreshSeniorDeviceSession(deviceId, refreshToken, nextRefreshToken, nextRefreshTokenExpiresAt);
+  revokeSeniorDevice = (deviceId: string, householdId: string, revokedBy: string): Promise<void> => this.seniorDevices.revokeSeniorDevice(deviceId, householdId, revokedBy);
+  countActiveSeniorDevices = (householdId: string): Promise<number> => this.seniorDevices.countActiveSeniorDevices(householdId);
+  createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
 }

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { HouseholdRole, Member } from '../../../domain/entities/Member.js';
+import type { AuthProvider, HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
 import type { Medication, MedicationForm } from '../../../domain/entities/Medication.js';
 import type { MedicationReminder } from '../../../domain/entities/MedicationReminder.js';
@@ -13,6 +13,7 @@ import type { TabletDisplayConfig } from '../../../domain/entities/TabletDisplay
 import type { Document } from '../../../domain/entities/Document.js';
 import type { DocumentFolderWithCounts, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
 import type { MedicationLog } from '../../../domain/entities/MedicationLog.js';
+import type { SeniorDevice, SeniorDeviceStatus } from '../../../domain/entities/SeniorDevice.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -37,13 +38,15 @@ export const mapMember = (row: {
   id: string;
   household_id: string;
   user_id: string;
-  email: string;
+  email: string | null;
   first_name: string;
   last_name: string;
   role: HouseholdRole;
   status: 'active' | 'pending';
   joined_at: string | Date;
   created_at: string | Date;
+  auth_provider?: string;
+  phone_number?: string | null;
 }): Member => ({
   id: row.id,
   householdId: row.household_id,
@@ -55,6 +58,8 @@ export const mapMember = (row: {
   status: row.status,
   joinedAt: toIso(row.joined_at),
   createdAt: toIso(row.created_at),
+  authProvider: (row.auth_provider as AuthProvider) ?? 'google',
+  phoneNumber: row.phone_number ?? null,
 });
 
 export const mapInvitation = (row: {
@@ -426,3 +431,29 @@ export const mapDocumentFolder = (row: {
     folderCount: Number(row.folder_count ?? 0),
   };
 };
+
+export const mapSeniorDevice = (row: {
+  id: string;
+  household_id: string;
+  member_id: string;
+  name: string;
+  token_hash: string;
+  status: SeniorDeviceStatus;
+  created_by: string;
+  created_at: string | Date;
+  last_active_at: string | Date | null;
+  revoked_at: string | Date | null;
+  revoked_by: string | null;
+}): SeniorDevice => ({
+  id: row.id,
+  householdId: row.household_id,
+  memberId: row.member_id,
+  name: row.name,
+  tokenHash: row.token_hash,
+  status: row.status,
+  createdBy: row.created_by,
+  createdAt: toIso(row.created_at),
+  lastActiveAt: row.last_active_at ? toIso(row.last_active_at) : null,
+  revokedAt: row.revoked_at ? toIso(row.revoked_at) : null,
+  revokedBy: row.revoked_by,
+});

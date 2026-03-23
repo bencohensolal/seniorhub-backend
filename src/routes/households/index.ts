@@ -85,6 +85,7 @@ import { DeleteEmergencyContactUseCase } from '../../domain/usecases/emergencyCo
 import { ReorderEmergencyContactsUseCase } from '../../domain/usecases/emergencyContacts/ReorderEmergencyContactsUseCase.js';
 import { TriggerEmergencyAlertUseCase } from '../../domain/usecases/emergencyContacts/TriggerEmergencyAlertUseCase.js';
 import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyContactRoutes.js';
+import { registerSeniorDeviceRoutes } from './seniorDevices/seniorDeviceRoutes.js';
 import { expoPushService } from '../../services/ExpoPushService.js';
 import { createSmsService } from '../../services/SmsService.js';
 
@@ -280,6 +281,8 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     reorderEmergencyContactsUseCase: useCases.reorderEmergencyContactsUseCase,
     triggerEmergencyAlertUseCase: useCases.triggerEmergencyAlertUseCase,
   });
+
+  registerSeniorDeviceRoutes(fastify, repository);
 
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });
