@@ -271,7 +271,9 @@ export interface HouseholdRepository {
     nextRefreshTokenExpiresAt: string,
   ): Promise<SeniorDeviceAuthInfo | null>;
   revokeSeniorDevice(deviceId: string, householdId: string, revokedBy: string): Promise<void>;
+  revokeAllSeniorDevicesForMember(memberId: string, householdId: string, revokedBy: string): Promise<void>;
   countActiveSeniorDevices(householdId: string): Promise<number>;
+  archiveMember(memberId: string, householdId: string): Promise<void>;
   createProxyMember(input: {
     householdId: string;
     userId: string;

@@ -1522,6 +1522,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async authenticateSeniorDevice(_deviceId: string, _setupToken: string, _refreshToken: string, _refreshTokenExpiresAt: string): Promise<any> { return null; }
   async refreshSeniorDeviceSession(_deviceId: string, _refreshToken: string, _nextRefreshToken: string, _nextRefreshTokenExpiresAt: string): Promise<any> { return null; }
   async revokeSeniorDevice(_deviceId: string, _householdId: string, _revokedBy: string): Promise<void> {}
+  async revokeAllSeniorDevicesForMember(_memberId: string, _householdId: string, _revokedBy: string): Promise<void> {}
   async countActiveSeniorDevices(_householdId: string): Promise<number> { return 0; }
+  async archiveMember(_memberId: string, _householdId: string): Promise<void> {}
   async createProxyMember(_input: any): Promise<{ id: string }> { throw new Error('Not implemented in-memory'); }
 }

@@ -1,5 +1,5 @@
 export type HouseholdRole = 'senior' | 'caregiver' | 'family' | 'intervenant';
-export type HouseholdMemberStatus = 'active' | 'pending';
+export type HouseholdMemberStatus = 'active' | 'pending' | 'archived';
 export type AuthProvider = 'google' | 'device' | 'phone' | 'apple';
 
 export interface Member {

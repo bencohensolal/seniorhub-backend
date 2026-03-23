@@ -221,6 +221,8 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   authenticateSeniorDevice = (deviceId: string, setupToken: string, refreshToken: string, refreshTokenExpiresAt: string): Promise<SeniorDeviceAuthInfo | null> => this.seniorDevices.authenticateSeniorDevice(deviceId, setupToken, refreshToken, refreshTokenExpiresAt);
   refreshSeniorDeviceSession = (deviceId: string, refreshToken: string, nextRefreshToken: string, nextRefreshTokenExpiresAt: string): Promise<SeniorDeviceAuthInfo | null> => this.seniorDevices.refreshSeniorDeviceSession(deviceId, refreshToken, nextRefreshToken, nextRefreshTokenExpiresAt);
   revokeSeniorDevice = (deviceId: string, householdId: string, revokedBy: string): Promise<void> => this.seniorDevices.revokeSeniorDevice(deviceId, householdId, revokedBy);
+  revokeAllSeniorDevicesForMember = (memberId: string, householdId: string, revokedBy: string): Promise<void> => this.seniorDevices.revokeAllSeniorDevicesForMember(memberId, householdId, revokedBy);
   countActiveSeniorDevices = (householdId: string): Promise<number> => this.seniorDevices.countActiveSeniorDevices(householdId);
+  archiveMember = (memberId: string, householdId: string): Promise<void> => this.core.archiveMember(memberId, householdId);
   createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
 }

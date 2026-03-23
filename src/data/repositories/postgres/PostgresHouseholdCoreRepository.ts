@@ -1087,6 +1087,19 @@ export class PostgresHouseholdCoreRepository {
     );
   }
 
+  async archiveMember(memberId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `UPDATE household_members
+       SET status = 'archived'
+       WHERE id = $1 AND household_id = $2 AND status = 'active'`,
+      [memberId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Member not found or already archived.');
+    }
+  }
+
   async updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member> {
     const rolePerms = this.permissionsForRole(newRole);
     const result = await this.pool.query<{

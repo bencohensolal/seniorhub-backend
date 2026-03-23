@@ -6,6 +6,7 @@ import { CreateSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevice
 import { AuthenticateSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevices/AuthenticateSeniorDeviceUseCase.js';
 import { RefreshSeniorDeviceSessionUseCase } from '../../../domain/usecases/seniorDevices/RefreshSeniorDeviceSessionUseCase.js';
 import { RevokeSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevices/RevokeSeniorDeviceUseCase.js';
+import { ArchiveSeniorUseCase } from '../../../domain/usecases/seniorDevices/ArchiveSeniorUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
 
@@ -62,6 +63,11 @@ const refreshDeviceSessionBodySchema = z.object({
 const revokeDeviceParamsSchema = z.object({
   householdId: z.string().uuid(),
   deviceId: z.string().uuid(),
+});
+
+const archiveMemberParamsSchema = z.object({
+  householdId: z.string().uuid(),
+  memberId: z.string().uuid(),
 });
 
 export const registerSeniorDeviceRoutes = (
@@ -324,6 +330,53 @@ export const registerSeniorDeviceRoutes = (
         return reply.status(200).send({
           status: 'success',
           data: result,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // 6. POST /v1/households/:householdId/members/:memberId/archive - Archive a senior member
+  fastify.post(
+    '/v1/households/:householdId/members/:memberId/archive',
+    {
+      preHandler: requireUserAuth,
+      schema: {
+        tags: ['Senior Devices'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            memberId: { type: 'string' },
+          },
+          required: ['householdId', 'memberId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = archiveMemberParamsSchema.parse(request.params);
+        const useCase = new ArchiveSeniorUseCase(repository);
+
+        await useCase.execute({
+          householdId: params.householdId,
+          memberId: params.memberId,
+          requesterUserId: request.requester!.userId,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          message: 'Senior archived and devices revoked successfully.',
         });
       } catch (error) {
         return handleDomainError(error, reply);

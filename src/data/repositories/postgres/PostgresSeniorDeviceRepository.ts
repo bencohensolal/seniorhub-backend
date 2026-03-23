@@ -231,6 +231,16 @@ export class PostgresSeniorDeviceRepository {
     }
   }
 
+  async revokeAllSeniorDevicesForMember(memberId: string, householdId: string, revokedBy: string): Promise<void> {
+    const now = nowIso();
+    await this.pool.query(
+      `UPDATE senior_devices
+       SET status = 'revoked', revoked_at = $3, revoked_by = $4
+       WHERE member_id = $1 AND household_id = $2 AND status = 'active'`,
+      [memberId, householdId, now, revokedBy],
+    );
+  }
+
   async countActiveSeniorDevices(householdId: string): Promise<number> {
     const result = await this.pool.query<{ count: string }>(
       `SELECT COUNT(*) AS count
