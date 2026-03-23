@@ -86,6 +86,7 @@ import { ReorderEmergencyContactsUseCase } from '../../domain/usecases/emergency
 import { TriggerEmergencyAlertUseCase } from '../../domain/usecases/emergencyContacts/TriggerEmergencyAlertUseCase.js';
 import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyContactRoutes.js';
 import { expoPushService } from '../../services/ExpoPushService.js';
+import { createSmsService } from '../../services/SmsService.js';
 
 /**
  * Households plugin
@@ -172,7 +173,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     updateEmergencyContactUseCase: new UpdateEmergencyContactUseCase(repository),
     deleteEmergencyContactUseCase: new DeleteEmergencyContactUseCase(repository),
     reorderEmergencyContactsUseCase: new ReorderEmergencyContactsUseCase(repository),
-    triggerEmergencyAlertUseCase: new TriggerEmergencyAlertUseCase(repository, expoPushService),
+    triggerEmergencyAlertUseCase: new TriggerEmergencyAlertUseCase(repository, expoPushService, createSmsService()),
   };
 
   // Register route modules

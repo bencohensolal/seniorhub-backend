@@ -18,6 +18,20 @@ const errorResponseSchema = {
   required: ['status', 'message'],
 };
 
+const emergencyContactSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    householdId: { type: 'string' },
+    name: { type: 'string' },
+    phone: { type: 'string' },
+    relationship: { type: ['string', 'null'] },
+    priorityOrder: { type: 'integer' },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+  },
+};
+
 export function registerEmergencyContactRoutes(
   fastify: FastifyInstance,
   _repository: HouseholdRepository,
@@ -93,7 +107,7 @@ export function registerEmergencyContactRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: emergencyContactSchema,
             },
             required: ['status', 'data'],
           },
@@ -206,7 +220,7 @@ export function registerEmergencyContactRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: emergencyContactSchema,
             },
             required: ['status', 'data'],
           },
@@ -306,8 +320,9 @@ export function registerEmergencyContactRoutes(
             properties: {
               status: { type: 'string', enum: ['ok'] },
               tokensSent: { type: 'integer' },
+              smsSent: { type: 'integer' },
             },
-            required: ['status', 'tokensSent'],
+            required: ['status', 'tokensSent', 'smsSent'],
           },
           403: errorResponseSchema,
           500: errorResponseSchema,

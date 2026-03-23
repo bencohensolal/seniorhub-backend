@@ -27,6 +27,14 @@ const envSchema = z
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
 
+    // SMS configuration
+    SMS_PROVIDER: z.enum(['console', 'ovh']).default('console'),
+    OVH_APP_KEY: z.string().optional(),
+    OVH_APP_SECRET: z.string().optional(),
+    OVH_CONSUMER_KEY: z.string().optional(),
+    OVH_SMS_SERVICE: z.string().optional(),   // e.g. "sms-ab12345-1"
+    OVH_SMS_SENDER: z.string().optional(),    // optional sender name (pre-registered with OVH)
+
     // Google Cloud Storage Configuration (only storage provider)
     GCS_BUCKET_NAME: z.string().optional(),
     GCS_PROJECT_ID: z.string().optional(),
@@ -81,6 +89,17 @@ const envSchema = z
           path: ['EMAIL_FROM'],
           message: 'EMAIL_FROM is required when EMAIL_PROVIDER=gmail.',
         });
+      }
+    }
+    if (value.SMS_PROVIDER === 'ovh') {
+      for (const key of ['OVH_APP_KEY', 'OVH_APP_SECRET', 'OVH_CONSUMER_KEY', 'OVH_SMS_SERVICE'] as const) {
+        if (!value[key]) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `${key} is required when SMS_PROVIDER=ovh.`,
+          });
+        }
       }
     }
   });
