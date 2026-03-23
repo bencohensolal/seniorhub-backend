@@ -18,32 +18,40 @@ UPDATE household_members SET
   perm_view_documents      = (role IN ('caregiver', 'family', 'intervenant', 'senior')),
   perm_manage_documents    = (role IN ('caregiver', 'intervenant'));
 
--- 3. Backfill customised permissions from household_settings JSONB (overrides role defaults)
+-- 3. Backfill customised permissions from household_settings JSONB (only if column still exists)
 DO $$
 DECLARE
   r RECORD;
   mp JSONB;
+  col_exists BOOLEAN;
 BEGIN
-  FOR r IN
-    SELECT hm.id, hs.member_permissions
-    FROM household_members hm
-    JOIN household_settings hs ON hs.household_id = hm.household_id
-    WHERE hs.member_permissions IS NOT NULL
-      AND hs.member_permissions != '{}'::jsonb
-  LOOP
-    mp := r.member_permissions -> r.id::text;
-    IF mp IS NOT NULL THEN
-      UPDATE household_members SET
-        perm_manage_medications  = COALESCE((mp->>'manageMedications')::boolean,  perm_manage_medications),
-        perm_manage_appointments = COALESCE((mp->>'manageAppointments')::boolean, perm_manage_appointments),
-        perm_manage_tasks        = COALESCE((mp->>'manageTasks')::boolean,        perm_manage_tasks),
-        perm_manage_members      = COALESCE((mp->>'manageMembers')::boolean,      perm_manage_members),
-        perm_view_sensitive_info = COALESCE((mp->>'viewSensitiveInfo')::boolean,  perm_view_sensitive_info),
-        perm_manage_documents    = COALESCE((mp->>'manageDocuments')::boolean,    perm_manage_documents),
-        perm_view_documents      = COALESCE((mp->>'viewDocuments')::boolean,      perm_view_documents)
-      WHERE id = r.id;
-    END IF;
-  END LOOP;
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'household_settings' AND column_name = 'member_permissions'
+  ) INTO col_exists;
+
+  IF col_exists THEN
+    FOR r IN
+      SELECT hm.id, hs.member_permissions
+      FROM household_members hm
+      JOIN household_settings hs ON hs.household_id = hm.household_id
+      WHERE hs.member_permissions IS NOT NULL
+        AND hs.member_permissions != '{}'::jsonb
+    LOOP
+      mp := r.member_permissions -> r.id::text;
+      IF mp IS NOT NULL THEN
+        UPDATE household_members SET
+          perm_manage_medications  = COALESCE((mp->>'manageMedications')::boolean,  perm_manage_medications),
+          perm_manage_appointments = COALESCE((mp->>'manageAppointments')::boolean, perm_manage_appointments),
+          perm_manage_tasks        = COALESCE((mp->>'manageTasks')::boolean,        perm_manage_tasks),
+          perm_manage_members      = COALESCE((mp->>'manageMembers')::boolean,      perm_manage_members),
+          perm_view_sensitive_info = COALESCE((mp->>'viewSensitiveInfo')::boolean,  perm_view_sensitive_info),
+          perm_manage_documents    = COALESCE((mp->>'manageDocuments')::boolean,    perm_manage_documents),
+          perm_view_documents      = COALESCE((mp->>'viewDocuments')::boolean,      perm_view_documents)
+        WHERE id = r.id;
+      END IF;
+    END LOOP;
+  END IF;
 END $$;
 
 -- 4. Drop the now-redundant JSONB column
