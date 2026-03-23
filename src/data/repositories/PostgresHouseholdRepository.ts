@@ -28,6 +28,8 @@ import { PostgresDisplayTabletRepository } from './postgres/PostgresDisplayTable
 import { PostgresDocumentRepository } from './postgres/PostgresDocumentRepository.js';
 import { PostgresPhotoScreenRepository } from './postgres/PostgresPhotoScreenRepository.js';
 import { PostgresPrivacyRepository } from './postgres/PostgresPrivacyRepository.js';
+import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergencyContactRepository.js';
+import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly core: PostgresHouseholdCoreRepository;
@@ -38,6 +40,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly documents: PostgresDocumentRepository;
   private readonly photoScreens: PostgresPhotoScreenRepository;
   private readonly privacy: PostgresPrivacyRepository;
+  private readonly emergencyContacts: PostgresEmergencyContactRepository;
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
@@ -48,6 +51,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.documents = new PostgresDocumentRepository(pool);
     this.photoScreens = new PostgresPhotoScreenRepository(pool);
     this.privacy = new PostgresPrivacyRepository(pool);
+    this.emergencyContacts = new PostgresEmergencyContactRepository(pool);
   }
 
   // Core — households, members, settings, invitations
@@ -196,4 +200,13 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   restoreDocument = (documentId: string, householdId: string): Promise<void> => this.documents.restoreDocument(documentId, householdId);
   searchDocumentsAndFolders = (householdId: string, query: string, folderId?: string | null): Promise<{ folders: DocumentFolder[]; documents: Document[] }> => this.documents.searchDocumentsAndFolders(householdId, query, folderId);
   getStorageStats = (householdId: string): Promise<{ usedBytes: number; quotaBytes: number }> => this.documents.getStorageStats(householdId);
+
+  // Emergency Contacts
+  listEmergencyContacts = (householdId: string) => this.emergencyContacts.listEmergencyContacts(householdId);
+  getEmergencyContactById = (contactId: string, householdId: string) => this.emergencyContacts.getEmergencyContactById(contactId, householdId);
+  createEmergencyContact = (input: CreateEmergencyContactInput) => this.emergencyContacts.createEmergencyContact(input);
+  updateEmergencyContact = (contactId: string, householdId: string, input: UpdateEmergencyContactInput) => this.emergencyContacts.updateEmergencyContact(contactId, householdId, input);
+  deleteEmergencyContact = (contactId: string, householdId: string) => this.emergencyContacts.deleteEmergencyContact(contactId, householdId);
+  reorderEmergencyContacts = (householdId: string, orderedIds: string[]) => this.emergencyContacts.reorderEmergencyContacts(householdId, orderedIds);
+  getCaregiverPushTokens = (householdId: string) => this.emergencyContacts.getCaregiverPushTokens(householdId);
 }

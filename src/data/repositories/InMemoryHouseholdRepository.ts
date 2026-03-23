@@ -21,6 +21,7 @@ import {
   getDefaultHouseholdMemberPermissions,
 } from '../../domain/entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../domain/entities/Document.js';
+import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput, DocumentFolderType, SystemRootType } from '../../domain/entities/DocumentFolder.js';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../domain/errors/index.js';
 import { nowIso, addHours, hashToken, normalizeEmail, normalizeName } from './postgres/helpers.js';
@@ -1496,4 +1497,18 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
       documents: filteredDocuments,
     };
   }
+
+  // Emergency Contacts (in-memory stubs)
+  async listEmergencyContacts(_householdId: string): Promise<EmergencyContact[]> { return []; }
+  async getEmergencyContactById(_contactId: string, _householdId: string): Promise<EmergencyContact | null> { return null; }
+  async createEmergencyContact(input: CreateEmergencyContactInput): Promise<EmergencyContact> {
+    const now = new Date().toISOString();
+    return { id: randomUUID(), ...input, relationship: input.relationship ?? null, createdAt: now, updatedAt: now };
+  }
+  async updateEmergencyContact(contactId: string, _householdId: string, _input: UpdateEmergencyContactInput): Promise<EmergencyContact> {
+    throw new NotFoundError(`EmergencyContact ${contactId} not found`);
+  }
+  async deleteEmergencyContact(_contactId: string, _householdId: string): Promise<void> {}
+  async reorderEmergencyContacts(_householdId: string, _orderedIds: string[]): Promise<void> {}
+  async getCaregiverPushTokens(_householdId: string): Promise<string[]> { return []; }
 }

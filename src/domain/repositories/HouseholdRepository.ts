@@ -19,6 +19,7 @@ import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entitie
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../entities/Document.js';
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
 import type { MedicationLog, CreateMedicationLogInput } from '../entities/MedicationLog.js';
+import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -242,4 +243,13 @@ export interface HouseholdRepository {
   getHouseholdSettings(householdId: string): Promise<HouseholdSettings>;
   updateHouseholdSettings(householdId: string, input: UpdateHouseholdSettingsInput): Promise<HouseholdSettings>;
   updateHouseholdName(householdId: string, name: string): Promise<Household>;
+
+  // Emergency Contacts
+  listEmergencyContacts(householdId: string): Promise<EmergencyContact[]>;
+  getEmergencyContactById(contactId: string, householdId: string): Promise<EmergencyContact | null>;
+  createEmergencyContact(input: CreateEmergencyContactInput): Promise<EmergencyContact>;
+  updateEmergencyContact(contactId: string, householdId: string, input: UpdateEmergencyContactInput): Promise<EmergencyContact>;
+  deleteEmergencyContact(contactId: string, householdId: string): Promise<void>;
+  reorderEmergencyContacts(householdId: string, orderedIds: string[]): Promise<void>;
+  getCaregiverPushTokens(householdId: string): Promise<string[]>;
 }

@@ -78,6 +78,14 @@ import { PermanentlyDeleteFromTrashUseCase } from '../../domain/usecases/documen
 import { GetStorageStatsUseCase } from '../../domain/usecases/documents/GetStorageStatsUseCase.js';
 import { createStorageService } from '../../data/services/storage/createStorageService.js';
 import { registerDocumentRoutes } from './documents/documentRoutes.js';
+import { ListEmergencyContactsUseCase } from '../../domain/usecases/emergencyContacts/ListEmergencyContactsUseCase.js';
+import { CreateEmergencyContactUseCase } from '../../domain/usecases/emergencyContacts/CreateEmergencyContactUseCase.js';
+import { UpdateEmergencyContactUseCase } from '../../domain/usecases/emergencyContacts/UpdateEmergencyContactUseCase.js';
+import { DeleteEmergencyContactUseCase } from '../../domain/usecases/emergencyContacts/DeleteEmergencyContactUseCase.js';
+import { ReorderEmergencyContactsUseCase } from '../../domain/usecases/emergencyContacts/ReorderEmergencyContactsUseCase.js';
+import { TriggerEmergencyAlertUseCase } from '../../domain/usecases/emergencyContacts/TriggerEmergencyAlertUseCase.js';
+import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyContactRoutes.js';
+import { expoPushService } from '../../services/ExpoPushService.js';
 
 /**
  * Households plugin
@@ -159,6 +167,12 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     getDocumentDownloadUrlUseCase: new GetDocumentDownloadUrlUseCase(repository, createStorageService()),
     permanentlyDeleteFromTrashUseCase: new PermanentlyDeleteFromTrashUseCase(repository, createStorageService()),
     getStorageStatsUseCase: new GetStorageStatsUseCase(repository),
+    listEmergencyContactsUseCase: new ListEmergencyContactsUseCase(repository),
+    createEmergencyContactUseCase: new CreateEmergencyContactUseCase(repository),
+    updateEmergencyContactUseCase: new UpdateEmergencyContactUseCase(repository),
+    deleteEmergencyContactUseCase: new DeleteEmergencyContactUseCase(repository),
+    reorderEmergencyContactsUseCase: new ReorderEmergencyContactsUseCase(repository),
+    triggerEmergencyAlertUseCase: new TriggerEmergencyAlertUseCase(repository, expoPushService),
   };
 
   // Register route modules
@@ -255,6 +269,15 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     permanentlyDeleteFromTrashUseCase: useCases.permanentlyDeleteFromTrashUseCase,
     getStorageStatsUseCase: useCases.getStorageStatsUseCase,
     getDocumentDownloadUrlUseCase: useCases.getDocumentDownloadUrlUseCase,
+  });
+
+  registerEmergencyContactRoutes(fastify, repository, {
+    listEmergencyContactsUseCase: useCases.listEmergencyContactsUseCase,
+    createEmergencyContactUseCase: useCases.createEmergencyContactUseCase,
+    updateEmergencyContactUseCase: useCases.updateEmergencyContactUseCase,
+    deleteEmergencyContactUseCase: useCases.deleteEmergencyContactUseCase,
+    reorderEmergencyContactsUseCase: useCases.reorderEmergencyContactsUseCase,
+    triggerEmergencyAlertUseCase: useCases.triggerEmergencyAlertUseCase,
   });
 
   // Register photo screen routes with v1 prefix
