@@ -107,10 +107,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     );
 
     const memberPermissions = householdMembers.reduce<HouseholdSettings['memberPermissions']>((acc, member) => {
-      acc[member.id] = {
-        ...getDefaultHouseholdMemberPermissions(member.role),
-        ...(existing?.memberPermissions[member.id] ?? {}),
-      };
+      acc[member.id] = getDefaultHouseholdMemberPermissions(member.role);
       return acc;
     }, {});
 
@@ -1007,19 +1004,14 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     const current = await this.getHouseholdSettings(householdId);
     const updatedAt = nowIso();
 
+    // memberPermissions updates are ignored in memory — derived purely from member roles.
     const next: HouseholdSettings = {
       ...current,
-      memberPermissions: Object.entries(current.memberPermissions).reduce<HouseholdSettings['memberPermissions']>((acc, [memberId, permissions]) => {
-        acc[memberId] = {
-          ...permissions,
-          ...(input.memberPermissions?.[memberId] ?? {}),
-        };
-        return acc;
-      }, {}),
       notifications: {
         ...current.notifications,
         ...(input.notifications ?? {}),
       },
+      seniorMenuPin: input.seniorMenuPin !== undefined ? input.seniorMenuPin : current.seniorMenuPin ?? null,
       updatedAt,
     };
 

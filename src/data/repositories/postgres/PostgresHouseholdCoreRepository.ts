@@ -49,17 +49,12 @@ export class PostgresHouseholdCoreRepository {
         .query(`
           CREATE TABLE IF NOT EXISTS household_settings (
             household_id UUID PRIMARY KEY REFERENCES households(id) ON DELETE CASCADE,
-            member_permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
             notifications JSONB NOT NULL DEFAULT '{"enabled": true, "memberUpdates": true, "invitations": true}'::jsonb,
+            senior_menu_pin TEXT,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
           )
         `)
-        .then(() =>
-          this.pool.query(`
-            ALTER TABLE household_settings ADD COLUMN IF NOT EXISTS senior_menu_pin TEXT;
-          `),
-        )
         .then(() => undefined);
     }
 
@@ -68,24 +63,17 @@ export class PostgresHouseholdCoreRepository {
 
   private normalizeHouseholdSettings(
     householdId: string,
-    members: Member[],
     stored: {
-      memberPermissions?: Record<string, Partial<HouseholdMemberPermissions>>;
       notifications?: Partial<HouseholdNotificationSettings>;
       seniorMenuPin?: string | null;
       createdAt?: string;
       updatedAt?: string;
     },
+    memberPermissions: Record<string, HouseholdMemberPermissions>,
   ): HouseholdSettings {
     return {
       householdId,
-      memberPermissions: members.reduce<Record<string, HouseholdMemberPermissions>>((acc, member) => {
-        acc[member.id] = {
-          ...getDefaultHouseholdMemberPermissions(member.role),
-          ...(stored.memberPermissions?.[member.id] ?? {}),
-        };
-        return acc;
-      }, {}),
+      memberPermissions,
       notifications: {
         ...DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS,
         ...(stored.notifications ?? {}),
@@ -94,6 +82,10 @@ export class PostgresHouseholdCoreRepository {
       createdAt: stored.createdAt ?? nowIso(),
       updatedAt: stored.updatedAt ?? nowIso(),
     };
+  }
+
+  private permissionsForRole(role: HouseholdRole): HouseholdMemberPermissions {
+    return getDefaultHouseholdMemberPermissions(role);
   }
 
   async getOverviewById(householdId: string): Promise<HouseholdOverview | null> {
@@ -250,124 +242,129 @@ export class PostgresHouseholdCoreRepository {
   async getHouseholdSettings(householdId: string): Promise<HouseholdSettings> {
     await this.ensureHouseholdSettingsTable();
 
-    const members = await this.listHouseholdMembers(householdId);
-    const result = await this.pool.query<{
-      household_id: string;
-      member_permissions: Record<string, Partial<HouseholdMemberPermissions>> | null;
+    const settingsResult = await this.pool.query<{
       notifications: Partial<HouseholdNotificationSettings> | null;
       senior_menu_pin: string | null;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at
+      `SELECT notifications, senior_menu_pin, created_at, updated_at
        FROM household_settings
        WHERE household_id = $1
        LIMIT 1`,
       [householdId],
     );
 
-    const row = result.rows[0];
-    if (!row) {
-      const defaults = this.normalizeHouseholdSettings(householdId, members, {});
+    let settingsRow = settingsResult.rows[0];
+    if (!settingsRow) {
       const inserted = await this.pool.query<{
-        household_id: string;
-        member_permissions: Record<string, Partial<HouseholdMemberPermissions>>;
         notifications: HouseholdNotificationSettings;
         senior_menu_pin: string | null;
         created_at: string | Date;
         updated_at: string | Date;
       }>(
-        `INSERT INTO household_settings (household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at)
-         VALUES ($1, $2::jsonb, $3::jsonb, $4, $5, $5)
+        `INSERT INTO household_settings (household_id, notifications, senior_menu_pin, created_at, updated_at)
+         VALUES ($1, $2::jsonb, NULL, NOW(), NOW())
          ON CONFLICT (household_id) DO UPDATE
-         SET member_permissions = household_settings.member_permissions
-         RETURNING household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at`,
-        [
-          householdId,
-          JSON.stringify(defaults.memberPermissions),
-          JSON.stringify(defaults.notifications),
-          null,
-          defaults.createdAt,
-        ],
+         SET updated_at = household_settings.updated_at
+         RETURNING notifications, senior_menu_pin, created_at, updated_at`,
+        [householdId, JSON.stringify(DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS)],
       );
-
-      const insertedRow = inserted.rows[0]!;
-      return this.normalizeHouseholdSettings(householdId, members, {
-        memberPermissions: insertedRow.member_permissions,
-        notifications: insertedRow.notifications,
-        seniorMenuPin: insertedRow.senior_menu_pin ?? null,
-        createdAt: toIso(insertedRow.created_at),
-        updatedAt: toIso(insertedRow.updated_at),
-      });
+      settingsRow = inserted.rows[0]!;
     }
 
-    const normalized = this.normalizeHouseholdSettings(householdId, members, {
-      memberPermissions: row.member_permissions ?? {},
-      notifications: row.notifications ?? {},
-      seniorMenuPin: row.senior_menu_pin ?? null,
-      createdAt: toIso(row.created_at),
-      updatedAt: toIso(row.updated_at),
-    });
-
-    // Keep storage aligned with current members/defaults.
-    await this.pool.query(
-      `UPDATE household_settings
-       SET member_permissions = $2::jsonb,
-           notifications = $3::jsonb,
-           updated_at = $4
-       WHERE household_id = $1`,
-      [
-        householdId,
-        JSON.stringify(normalized.memberPermissions),
-        JSON.stringify(normalized.notifications),
-        normalized.updatedAt,
-      ],
+    const membersResult = await this.pool.query<{
+      id: string;
+      perm_manage_medications: boolean;
+      perm_manage_appointments: boolean;
+      perm_manage_tasks: boolean;
+      perm_manage_members: boolean;
+      perm_view_sensitive_info: boolean;
+      perm_view_documents: boolean;
+      perm_manage_documents: boolean;
+    }>(
+      `SELECT id, perm_manage_medications, perm_manage_appointments,
+              perm_manage_tasks, perm_manage_members, perm_view_sensitive_info,
+              perm_view_documents, perm_manage_documents
+       FROM household_members
+       WHERE household_id = $1 AND status = 'active'`,
+      [householdId],
     );
 
-    return normalized;
+    const memberPermissions: Record<string, HouseholdMemberPermissions> = {};
+    for (const row of membersResult.rows) {
+      memberPermissions[row.id] = {
+        manageMedications: row.perm_manage_medications,
+        manageAppointments: row.perm_manage_appointments,
+        manageTasks: row.perm_manage_tasks,
+        manageMembers: row.perm_manage_members,
+        viewSensitiveInfo: row.perm_view_sensitive_info,
+        viewDocuments: row.perm_view_documents,
+        manageDocuments: row.perm_manage_documents,
+      };
+    }
+
+    return this.normalizeHouseholdSettings(
+      householdId,
+      {
+        notifications: settingsRow.notifications ?? {},
+        seniorMenuPin: settingsRow.senior_menu_pin ?? null,
+        createdAt: toIso(settingsRow.created_at),
+        updatedAt: toIso(settingsRow.updated_at),
+      },
+      memberPermissions,
+    );
   }
 
   async updateHouseholdSettings(householdId: string, input: UpdateHouseholdSettingsInput): Promise<HouseholdSettings> {
     await this.ensureHouseholdSettingsTable();
 
     const current = await this.getHouseholdSettings(householdId);
-    const updatedAt = nowIso();
-    const next: HouseholdSettings = {
-      ...current,
-      memberPermissions: Object.entries(current.memberPermissions).reduce<Record<string, HouseholdMemberPermissions>>((acc, [memberId, permissions]) => {
-        acc[memberId] = {
-          ...permissions,
-          ...(input.memberPermissions?.[memberId] ?? {}),
-        };
-        return acc;
-      }, {}),
-      notifications: {
-        ...current.notifications,
-        ...(input.notifications ?? {}),
-      },
-      seniorMenuPin: input.seniorMenuPin !== undefined ? input.seniorMenuPin : current.seniorMenuPin ?? null,
-      updatedAt,
+
+    if (input.memberPermissions) {
+      for (const [memberId, perms] of Object.entries(input.memberPermissions)) {
+        await this.pool.query(
+          `UPDATE household_members SET
+            perm_manage_medications  = COALESCE($2, perm_manage_medications),
+            perm_manage_appointments = COALESCE($3, perm_manage_appointments),
+            perm_manage_tasks        = COALESCE($4, perm_manage_tasks),
+            perm_manage_members      = COALESCE($5, perm_manage_members),
+            perm_view_sensitive_info = COALESCE($6, perm_view_sensitive_info),
+            perm_view_documents      = COALESCE($7, perm_view_documents),
+            perm_manage_documents    = COALESCE($8, perm_manage_documents)
+           WHERE id = $1 AND household_id = $9`,
+          [
+            memberId,
+            perms.manageMedications ?? null,
+            perms.manageAppointments ?? null,
+            perms.manageTasks ?? null,
+            perms.manageMembers ?? null,
+            perms.viewSensitiveInfo ?? null,
+            perms.viewDocuments ?? null,
+            perms.manageDocuments ?? null,
+            householdId,
+          ],
+        );
+      }
+    }
+
+    const nextNotifications = {
+      ...current.notifications,
+      ...(input.notifications ?? {}),
     };
+    const nextSeniorMenuPin = input.seniorMenuPin !== undefined ? input.seniorMenuPin : current.seniorMenuPin ?? null;
 
     await this.pool.query(
-      `INSERT INTO household_settings (household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at)
-       VALUES ($1, $2::jsonb, $3::jsonb, $4, $5, $6)
+      `INSERT INTO household_settings (household_id, notifications, senior_menu_pin, created_at, updated_at)
+       VALUES ($1, $2::jsonb, $3, NOW(), NOW())
        ON CONFLICT (household_id) DO UPDATE
-       SET member_permissions = EXCLUDED.member_permissions,
-           notifications = EXCLUDED.notifications,
+       SET notifications = EXCLUDED.notifications,
            senior_menu_pin = EXCLUDED.senior_menu_pin,
-           updated_at = EXCLUDED.updated_at`,
-      [
-        householdId,
-        JSON.stringify(next.memberPermissions),
-        JSON.stringify(next.notifications),
-        next.seniorMenuPin,
-        current.createdAt,
-        updatedAt,
-      ],
+           updated_at = NOW()`,
+      [householdId, JSON.stringify(nextNotifications), nextSeniorMenuPin],
     );
 
-    return next;
+    return this.getHouseholdSettings(householdId);
   }
 
   async createHousehold(name: string, requester: AuthenticatedRequester): Promise<Household> {
@@ -385,10 +382,13 @@ export class PostgresHouseholdCoreRepository {
         [householdId, name.trim(), requester.userId, createdAt],
       );
 
+      const caregiverPerms = this.permissionsForRole('caregiver');
       await client.query(
         `INSERT INTO household_members
-         (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 'caregiver', 'active', $7, $7)`,
+         (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
+          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_members,
+          perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
+         VALUES ($1, $2, $3, $4, $5, $6, 'caregiver', 'active', $7, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [
           memberId,
           householdId,
@@ -397,6 +397,13 @@ export class PostgresHouseholdCoreRepository {
           normalizeName(requester.firstName),
           normalizeName(requester.lastName),
           createdAt,
+          caregiverPerms.manageMedications,
+          caregiverPerms.manageAppointments,
+          caregiverPerms.manageTasks,
+          caregiverPerms.manageMembers,
+          caregiverPerms.viewSensitiveInfo,
+          caregiverPerms.viewDocuments,
+          caregiverPerms.manageDocuments,
         ],
       );
 
@@ -729,10 +736,13 @@ export class PostgresHouseholdCoreRepository {
         [invitation.id, acceptedAt],
       );
 
+      const invitePerms = this.permissionsForRole(invitation.assigned_role);
       await client.query(
         `INSERT INTO household_members
-         (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $8)
+         (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
+          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_members,
+          perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $8, $9, $10, $11, $12, $13, $14, $15)
          ON CONFLICT (household_id, user_id)
          DO UPDATE SET
            email = EXCLUDED.email,
@@ -740,7 +750,14 @@ export class PostgresHouseholdCoreRepository {
            last_name = EXCLUDED.last_name,
            role = EXCLUDED.role,
            status = 'active',
-           joined_at = EXCLUDED.joined_at`,
+           joined_at = EXCLUDED.joined_at,
+           perm_manage_medications  = EXCLUDED.perm_manage_medications,
+           perm_manage_appointments = EXCLUDED.perm_manage_appointments,
+           perm_manage_tasks        = EXCLUDED.perm_manage_tasks,
+           perm_manage_members      = EXCLUDED.perm_manage_members,
+           perm_view_sensitive_info = EXCLUDED.perm_view_sensitive_info,
+           perm_view_documents      = EXCLUDED.perm_view_documents,
+           perm_manage_documents    = EXCLUDED.perm_manage_documents`,
         [
           randomUUID(),
           invitation.household_id,
@@ -750,6 +767,13 @@ export class PostgresHouseholdCoreRepository {
           normalizeName(input.requester.lastName),
           invitation.assigned_role,
           acceptedAt,
+          invitePerms.manageMedications,
+          invitePerms.manageAppointments,
+          invitePerms.manageTasks,
+          invitePerms.manageMembers,
+          invitePerms.viewSensitiveInfo,
+          invitePerms.viewDocuments,
+          invitePerms.manageDocuments,
         ],
       );
 
@@ -1064,6 +1088,7 @@ export class PostgresHouseholdCoreRepository {
   }
 
   async updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member> {
+    const rolePerms = this.permissionsForRole(newRole);
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -1077,10 +1102,27 @@ export class PostgresHouseholdCoreRepository {
       created_at: string | Date;
     }>(
       `UPDATE household_members
-       SET role = $2
+       SET role = $2,
+           perm_manage_medications  = $3,
+           perm_manage_appointments = $4,
+           perm_manage_tasks        = $5,
+           perm_manage_members      = $6,
+           perm_view_sensitive_info = $7,
+           perm_view_documents      = $8,
+           perm_manage_documents    = $9
        WHERE id = $1 AND status = 'active'
        RETURNING id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at`,
-      [memberId, newRole],
+      [
+        memberId,
+        newRole,
+        rolePerms.manageMedications,
+        rolePerms.manageAppointments,
+        rolePerms.manageTasks,
+        rolePerms.manageMembers,
+        rolePerms.viewSensitiveInfo,
+        rolePerms.viewDocuments,
+        rolePerms.manageDocuments,
+      ],
     );
 
     const row = result.rows[0];
