@@ -55,6 +55,11 @@ export class PostgresHouseholdCoreRepository {
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
           )
         `)
+        .then(() =>
+          this.pool.query(`
+            ALTER TABLE household_settings ADD COLUMN IF NOT EXISTS senior_menu_pin TEXT;
+          `),
+        )
         .then(() => undefined);
     }
 
@@ -67,6 +72,7 @@ export class PostgresHouseholdCoreRepository {
     stored: {
       memberPermissions?: Record<string, Partial<HouseholdMemberPermissions>>;
       notifications?: Partial<HouseholdNotificationSettings>;
+      seniorMenuPin?: string | null;
       createdAt?: string;
       updatedAt?: string;
     },
@@ -84,6 +90,7 @@ export class PostgresHouseholdCoreRepository {
         ...DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS,
         ...(stored.notifications ?? {}),
       },
+      seniorMenuPin: stored.seniorMenuPin ?? null,
       createdAt: stored.createdAt ?? nowIso(),
       updatedAt: stored.updatedAt ?? nowIso(),
     };
@@ -248,10 +255,11 @@ export class PostgresHouseholdCoreRepository {
       household_id: string;
       member_permissions: Record<string, Partial<HouseholdMemberPermissions>> | null;
       notifications: Partial<HouseholdNotificationSettings> | null;
+      senior_menu_pin: string | null;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT household_id, member_permissions, notifications, created_at, updated_at
+      `SELECT household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at
        FROM household_settings
        WHERE household_id = $1
        LIMIT 1`,
@@ -265,18 +273,20 @@ export class PostgresHouseholdCoreRepository {
         household_id: string;
         member_permissions: Record<string, Partial<HouseholdMemberPermissions>>;
         notifications: HouseholdNotificationSettings;
+        senior_menu_pin: string | null;
         created_at: string | Date;
         updated_at: string | Date;
       }>(
-        `INSERT INTO household_settings (household_id, member_permissions, notifications, created_at, updated_at)
-         VALUES ($1, $2::jsonb, $3::jsonb, $4, $4)
+        `INSERT INTO household_settings (household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at)
+         VALUES ($1, $2::jsonb, $3::jsonb, $4, $5, $5)
          ON CONFLICT (household_id) DO UPDATE
          SET member_permissions = household_settings.member_permissions
-         RETURNING household_id, member_permissions, notifications, created_at, updated_at`,
+         RETURNING household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at`,
         [
           householdId,
           JSON.stringify(defaults.memberPermissions),
           JSON.stringify(defaults.notifications),
+          null,
           defaults.createdAt,
         ],
       );
@@ -285,6 +295,7 @@ export class PostgresHouseholdCoreRepository {
       return this.normalizeHouseholdSettings(householdId, members, {
         memberPermissions: insertedRow.member_permissions,
         notifications: insertedRow.notifications,
+        seniorMenuPin: insertedRow.senior_menu_pin ?? null,
         createdAt: toIso(insertedRow.created_at),
         updatedAt: toIso(insertedRow.updated_at),
       });
@@ -293,6 +304,7 @@ export class PostgresHouseholdCoreRepository {
     const normalized = this.normalizeHouseholdSettings(householdId, members, {
       memberPermissions: row.member_permissions ?? {},
       notifications: row.notifications ?? {},
+      seniorMenuPin: row.senior_menu_pin ?? null,
       createdAt: toIso(row.created_at),
       updatedAt: toIso(row.updated_at),
     });
@@ -333,20 +345,23 @@ export class PostgresHouseholdCoreRepository {
         ...current.notifications,
         ...(input.notifications ?? {}),
       },
+      seniorMenuPin: input.seniorMenuPin !== undefined ? input.seniorMenuPin : current.seniorMenuPin ?? null,
       updatedAt,
     };
 
     await this.pool.query(
-      `INSERT INTO household_settings (household_id, member_permissions, notifications, created_at, updated_at)
-       VALUES ($1, $2::jsonb, $3::jsonb, $4, $5)
+      `INSERT INTO household_settings (household_id, member_permissions, notifications, senior_menu_pin, created_at, updated_at)
+       VALUES ($1, $2::jsonb, $3::jsonb, $4, $5, $6)
        ON CONFLICT (household_id) DO UPDATE
        SET member_permissions = EXCLUDED.member_permissions,
            notifications = EXCLUDED.notifications,
+           senior_menu_pin = EXCLUDED.senior_menu_pin,
            updated_at = EXCLUDED.updated_at`,
       [
         householdId,
         JSON.stringify(next.memberPermissions),
         JSON.stringify(next.notifications),
+        next.seniorMenuPin,
         current.createdAt,
         updatedAt,
       ],

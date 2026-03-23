@@ -29,6 +29,7 @@ export interface HouseholdSettings {
   householdId: string;
   memberPermissions: Record<string, HouseholdMemberPermissions>;
   notifications: HouseholdNotificationSettings;
+  seniorMenuPin: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +37,7 @@ export interface HouseholdSettings {
 export interface UpdateHouseholdSettingsInput {
   memberPermissions?: Record<string, Partial<HouseholdMemberPermissions>>;
   notifications?: Partial<HouseholdNotificationSettings>;
+  seniorMenuPin?: string | null;
 }
 
 export const DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS: HouseholdNotificationSettings = {

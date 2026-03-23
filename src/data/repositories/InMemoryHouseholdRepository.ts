@@ -121,6 +121,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
         ...DEFAULT_HOUSEHOLD_NOTIFICATION_SETTINGS,
         ...(existing?.notifications ?? {}),
       },
+      seniorMenuPin: existing?.seniorMenuPin ?? null,
       createdAt: existing?.createdAt ?? timestamp,
       updatedAt: existing?.updatedAt ?? timestamp,
     };

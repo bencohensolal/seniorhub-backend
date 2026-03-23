@@ -31,6 +31,7 @@ const memberPermissionsSchema = z.object({
 const updateHouseholdSettingsBodySchema = z.object({
   notifications: householdNotificationsSchema.optional(),
   memberPermissions: z.record(z.string(), memberPermissionsSchema).optional(),
+  seniorMenuPin: z.string().nullable().optional(),
 });
 
 export const registerHouseholdRoutes = (
@@ -443,6 +444,7 @@ export const registerHouseholdRoutes = (
               },
             },
             memberPermissions: { type: 'object', additionalProperties: true },
+            seniorMenuPin: { type: ['string', 'null'] },
           },
         },
         response: {
@@ -497,6 +499,9 @@ export const registerHouseholdRoutes = (
           }),
           ...(bodyResult.data.memberPermissions && {
             memberPermissions: bodyResult.data.memberPermissions as Record<string, Partial<HouseholdMemberPermissions>>,
+          }),
+          ...(bodyResult.data.seniorMenuPin !== undefined && {
+            seniorMenuPin: bodyResult.data.seniorMenuPin,
           }),
         };
         const settings = await repository.updateHouseholdSettings(paramsResult.data.householdId, payload);
