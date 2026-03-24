@@ -48,8 +48,18 @@ export class PostgresAppointmentRepository {
               description, professional_name, preparation, documents_to_take,
               transport_arrangement, recurrence::text, status, notes,
               created_at, updated_at
-       FROM appointments
-       WHERE household_id = $1
+       FROM appointments a
+       WHERE a.household_id = $1
+         AND (
+           jsonb_array_length(a.senior_ids::jsonb) = 0
+           OR EXISTS (
+             SELECT 1 FROM household_members hm
+             WHERE hm.id::text = ANY(
+               SELECT jsonb_array_elements_text(a.senior_ids::jsonb)
+             )
+             AND hm.status != 'archived'
+           )
+         )
        ORDER BY date ASC, time ASC`,
       [householdId],
     );

@@ -35,12 +35,14 @@ export class PostgresMedicationRepository {
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, household_id, senior_id, name, dosage, form, frequency,
-              prescribed_by, prescription_date, start_date, end_date, instructions,
-              created_by_user_id, created_at, updated_at
-       FROM medications
-       WHERE household_id = $1
-       ORDER BY name ASC`,
+      `SELECT m.id, m.household_id, m.senior_id, m.name, m.dosage, m.form, m.frequency,
+              m.prescribed_by, m.prescription_date, m.start_date, m.end_date, m.instructions,
+              m.created_by_user_id, m.created_at, m.updated_at
+       FROM medications m
+       LEFT JOIN household_members hm ON hm.id::text = m.senior_id::text
+       WHERE m.household_id = $1
+         AND (m.senior_id IS NULL OR hm.status IS NULL OR hm.status != 'archived')
+       ORDER BY m.name ASC`,
       [householdId],
     );
 
@@ -421,9 +423,13 @@ export class PostgresMedicationRepository {
 
   async getMedicationLogs(householdId: string, date: string): Promise<MedicationLog[]> {
     const result = await this.pool.query(
-      `SELECT * FROM medication_logs
-       WHERE household_id = $1 AND scheduled_date = $2
-       ORDER BY taken_at ASC`,
+      `SELECT ml.*
+       FROM medication_logs ml
+       JOIN medications m ON m.id = ml.medication_id
+       LEFT JOIN household_members hm ON hm.id::text = m.senior_id::text
+       WHERE ml.household_id = $1 AND ml.scheduled_date = $2
+         AND (m.senior_id IS NULL OR hm.status IS NULL OR hm.status != 'archived')
+       ORDER BY ml.taken_at ASC`,
       [householdId, date],
     );
     return result.rows.map(mapMedicationLog);

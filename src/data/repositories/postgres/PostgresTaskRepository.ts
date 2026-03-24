@@ -23,42 +23,44 @@ export class PostgresTaskRepository {
     toDate?: string;
   }): Promise<TaskWithReminders[]> {
     let query = `
-      SELECT id, household_id, senior_id, caregiver_id, title, description,
-             category, priority, status, due_date, due_time, duration, recurrence::text,
-             completed_at, completed_by, created_at, updated_at, created_by
-      FROM tasks
-      WHERE household_id = $1
+      SELECT t.id, t.household_id, t.senior_id, t.caregiver_id, t.title, t.description,
+             t.category, t.priority, t.status, t.due_date, t.due_time, t.duration, t.recurrence::text,
+             t.completed_at, t.completed_by, t.created_at, t.updated_at, t.created_by
+      FROM tasks t
+      LEFT JOIN household_members hm ON hm.id::text = t.senior_id::text
+      WHERE t.household_id = $1
+        AND (t.senior_id IS NULL OR hm.status IS NULL OR hm.status != 'archived')
     `;
 
     const params: unknown[] = [householdId];
     let paramIndex = 2;
 
     if (filters?.status) {
-      query += ` AND status = $${paramIndex++}`;
+      query += ` AND t.status = $${paramIndex++}`;
       params.push(filters.status);
     }
 
     if (filters?.seniorId) {
-      query += ` AND senior_id = $${paramIndex++}`;
+      query += ` AND t.senior_id = $${paramIndex++}`;
       params.push(filters.seniorId);
     }
 
     if (filters?.category) {
-      query += ` AND category = $${paramIndex++}`;
+      query += ` AND t.category = $${paramIndex++}`;
       params.push(filters.category);
     }
 
     if (filters?.fromDate) {
-      query += ` AND due_date >= $${paramIndex++}`;
+      query += ` AND t.due_date >= $${paramIndex++}`;
       params.push(filters.fromDate);
     }
 
     if (filters?.toDate) {
-      query += ` AND due_date <= $${paramIndex++}`;
+      query += ` AND t.due_date <= $${paramIndex++}`;
       params.push(filters.toDate);
     }
 
-    query += ` ORDER BY due_date ASC NULLS LAST, priority DESC, created_at DESC`;
+    query += ` ORDER BY t.due_date ASC NULLS LAST, t.priority DESC, t.created_at DESC`;
 
     const tasksResult = await this.pool.query<{
       id: string;
