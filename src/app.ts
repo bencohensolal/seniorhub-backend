@@ -14,6 +14,7 @@ import { ExpoPushService } from './services/ExpoPushService.js';
 import { CheckMissedMedicationsUseCase } from './domain/usecases/notifications/CheckMissedMedicationsUseCase.js';
 import { startMedicationAlertScheduler } from './scheduler/medicationAlertScheduler.js';
 import { registerInternalRoutes } from './routes/internal/triggerRoutes.js';
+import { registerEmailAuthRoutes } from './routes/auth/emailAuthRoutes.js';
 import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
 import { UpdateUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/UpdateUserPrivacySettingsUseCase.js';
 
@@ -86,6 +87,9 @@ export const buildApp = () => {
     updateUserPrivacySettingsUseCase: new UpdateUserPrivacySettingsUseCase(repository),
   });
   registerUserProfileRoutes(app, repository);
+
+  // Email + password authentication (for users without Google accounts)
+  registerEmailAuthRoutes(app, repository);
 
   // Push token registration
   const pool = getPostgresPool();

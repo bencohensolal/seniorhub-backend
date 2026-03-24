@@ -21,6 +21,7 @@ import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInpu
 import type { MedicationLog, CreateMedicationLogInput } from '../entities/MedicationLog.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../entities/SeniorDevice.js';
+import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../entities/EmailAccount.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -291,4 +292,13 @@ export interface HouseholdRepository {
       manageDocuments: boolean;
     };
   }): Promise<{ id: string }>;
+
+  // Email + password authentication
+  findEmailAccountById(id: string): Promise<EmailAccount | null>;
+  findEmailAccountByEmail(email: string): Promise<EmailAccountWithHash | null>;
+  findEmailAccountByUserId(userId: string): Promise<EmailAccount | null>;
+  createEmailAccount(input: { email: string; passwordHash: string; firstName: string; lastName: string }): Promise<EmailAccount>;
+  createEmailAuthSession(accountId: string): Promise<{ refreshToken: string }>;
+  findEmailAuthSession(refreshToken: string): Promise<EmailAuthSessionRecord | null>;
+  rotateEmailAuthSession(sessionId: string, accountId: string): Promise<{ refreshToken: string }>;
 }

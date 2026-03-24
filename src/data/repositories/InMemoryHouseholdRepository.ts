@@ -1526,4 +1526,13 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async countActiveSeniorDevices(_householdId: string): Promise<number> { return 0; }
   async archiveMember(_memberId: string, _householdId: string): Promise<void> {}
   async createProxyMember(_input: any): Promise<{ id: string }> { throw new Error('Not implemented in-memory'); }
+
+  // Email auth stubs
+  async findEmailAccountById(_id: string) { return null; }
+  async findEmailAccountByEmail(_email: string) { return null; }
+  async findEmailAccountByUserId(_userId: string) { return null; }
+  async createEmailAccount(_input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async createEmailAuthSession(_accountId: string): Promise<{ refreshToken: string }> { throw new Error('Not implemented in-memory'); }
+  async findEmailAuthSession(_refreshToken: string) { return null; }
+  async rotateEmailAuthSession(_sessionId: string, _accountId: string): Promise<{ refreshToken: string }> { throw new Error('Not implemented in-memory'); }
 }

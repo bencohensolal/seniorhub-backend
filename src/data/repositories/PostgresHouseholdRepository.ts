@@ -30,8 +30,10 @@ import { PostgresPhotoScreenRepository } from './postgres/PostgresPhotoScreenRep
 import { PostgresPrivacyRepository } from './postgres/PostgresPrivacyRepository.js';
 import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergencyContactRepository.js';
 import { PostgresSeniorDeviceRepository } from './postgres/PostgresSeniorDeviceRepository.js';
+import { PostgresEmailAuthRepository } from './postgres/PostgresEmailAuthRepository.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../../domain/entities/SeniorDevice.js';
+import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../../domain/entities/EmailAccount.js';
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly core: PostgresHouseholdCoreRepository;
@@ -44,6 +46,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly privacy: PostgresPrivacyRepository;
   private readonly emergencyContacts: PostgresEmergencyContactRepository;
   private readonly seniorDevices: PostgresSeniorDeviceRepository;
+  private readonly emailAuth: PostgresEmailAuthRepository;
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
@@ -56,6 +59,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.privacy = new PostgresPrivacyRepository(pool);
     this.emergencyContacts = new PostgresEmergencyContactRepository(pool);
     this.seniorDevices = new PostgresSeniorDeviceRepository(pool);
+    this.emailAuth = new PostgresEmailAuthRepository(pool);
   }
 
   // Core — households, members, settings, invitations
@@ -224,5 +228,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   revokeAllSeniorDevicesForMember = (memberId: string, householdId: string, revokedBy: string): Promise<void> => this.seniorDevices.revokeAllSeniorDevicesForMember(memberId, householdId, revokedBy);
   countActiveSeniorDevices = (householdId: string): Promise<number> => this.seniorDevices.countActiveSeniorDevices(householdId);
   archiveMember = (memberId: string, householdId: string): Promise<void> => this.core.archiveMember(memberId, householdId);
+
+  // Email auth
+  findEmailAccountById = (id: string): Promise<EmailAccount | null> => this.emailAuth.findEmailAccountById(id);
+  findEmailAccountByEmail = (email: string): Promise<EmailAccountWithHash | null> => this.emailAuth.findEmailAccountByEmail(email);
+  findEmailAccountByUserId = (userId: string): Promise<EmailAccount | null> => this.emailAuth.findEmailAccountByUserId(userId);
+  createEmailAccount = (input: { email: string; passwordHash: string; firstName: string; lastName: string }): Promise<EmailAccount> => this.emailAuth.createEmailAccount(input);
+  createEmailAuthSession = (accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.createEmailAuthSession(accountId);
+  findEmailAuthSession = (refreshToken: string): Promise<EmailAuthSessionRecord | null> => this.emailAuth.findEmailAuthSession(refreshToken);
+  rotateEmailAuthSession = (sessionId: string, accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.rotateEmailAuthSession(sessionId, accountId);
   createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
 }

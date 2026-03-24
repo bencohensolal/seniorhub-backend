@@ -68,6 +68,9 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/display-tablets/session/refresh',
       '/v1/senior-devices/authenticate', // Senior device pairing endpoint
       '/v1/senior-devices/session/refresh',
+      '/v1/auth/email/register',          // Email + password registration
+      '/v1/auth/email/login',             // Email + password login
+      '/v1/auth/email/session/refresh',   // Email session refresh
       '/internal/', // Internal dev/test routes — no auth required
     ];
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
