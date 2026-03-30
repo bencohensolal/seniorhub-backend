@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { ScreenSettings } from '../../../domain/entities/TabletDisplayConfig.js';
 
 // Screen type enum
-const screenTypeSchema = z.enum(['summary', 'datetime', 'appointments', 'tasks', 'weekCalendar', 'monthCalendar', 'photoGallery']);
+const screenTypeSchema = z.enum(['summary', 'datetime', 'appointments', 'tasks', 'weekCalendar', 'monthCalendar', 'photoGallery', 'textScreen']);
 
 // Screen settings schemas
 const summaryScreenSettingsSchema = z.object({
@@ -65,6 +65,22 @@ const photoGalleryScreenSettingsSchema = z.object({
   slideshowTransition: z.enum(['fade', 'slide', 'none']).optional(),
   slideshowOrder: z.enum(['sequential', 'random']).optional(),
   showCaptions: z.boolean(),
+});
+
+const textScreenSettingsSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1).max(100),
+  body: z.string().max(2000).nullable(),
+  fontFamily: z.enum(['sans-serif', 'serif', 'monospace']),
+  fontSize: z.enum(['small', 'medium', 'large', 'xlarge']),
+  textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  textAlign: z.enum(['left', 'center', 'right']),
+  backgroundType: z.enum(['solid', 'gradient']),
+  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  backgroundColorEnd: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable(),
+  gradientDirection: z.enum(['to-bottom', 'to-right', 'to-bottom-right']),
+  icon: z.string().max(50).nullable(),
+  animation: z.enum(['none', 'fade-in', 'slide-up', 'zoom-in']),
 });
 
 // Screen configuration schema
@@ -133,6 +149,9 @@ export function validateScreenSettings(screen: { type: string; settings?: Screen
         break;
       case 'photoGallery':
         photoGalleryScreenSettingsSchema.parse(screen.settings);
+        break;
+      case 'textScreen':
+        textScreenSettingsSchema.parse(screen.settings);
         break;
       default:
         return false;
