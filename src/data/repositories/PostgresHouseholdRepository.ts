@@ -11,6 +11,7 @@ import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppoint
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../../domain/entities/AppointmentOccurrence.js';
 import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, CompleteTaskInput } from '../../domain/entities/Task.js';
 import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../../domain/entities/TaskReminder.js';
+import type { CaregiverTodo, CaregiverTodoWithComments, CaregiverTodoComment, CreateCaregiverTodoInput, UpdateCaregiverTodoInput } from '../../domain/entities/CaregiverTodo.js';
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../../domain/entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../../domain/entities/TabletDisplayConfig.js';
 import type { CreatePhotoInput, CreatePhotoScreenInput, Photo, PhotoScreen, PhotoScreenWithPhotos, UpdatePhotoInput, UpdatePhotoScreenInput } from '../../domain/entities/PhotoScreen.js';
@@ -31,6 +32,7 @@ import { PostgresPrivacyRepository } from './postgres/PostgresPrivacyRepository.
 import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergencyContactRepository.js';
 import { PostgresSeniorDeviceRepository } from './postgres/PostgresSeniorDeviceRepository.js';
 import { PostgresEmailAuthRepository } from './postgres/PostgresEmailAuthRepository.js';
+import { PostgresCaregiverTodoRepository } from './postgres/PostgresCaregiverTodoRepository.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../../domain/entities/SeniorDevice.js';
 import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../../domain/entities/EmailAccount.js';
@@ -47,6 +49,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly emergencyContacts: PostgresEmergencyContactRepository;
   private readonly seniorDevices: PostgresSeniorDeviceRepository;
   private readonly emailAuth: PostgresEmailAuthRepository;
+  private readonly caregiverTodos: PostgresCaregiverTodoRepository;
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
@@ -60,6 +63,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.emergencyContacts = new PostgresEmergencyContactRepository(pool);
     this.seniorDevices = new PostgresSeniorDeviceRepository(pool);
     this.emailAuth = new PostgresEmailAuthRepository(pool);
+    this.caregiverTodos = new PostgresCaregiverTodoRepository(pool);
   }
 
   // Core — households, members, settings, invitations
@@ -229,6 +233,16 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   countActiveSeniorDevices = (householdId: string): Promise<number> => this.seniorDevices.countActiveSeniorDevices(householdId);
   archiveMember = (memberId: string, householdId: string): Promise<void> => this.core.archiveMember(memberId, householdId);
 
+  // Caregiver Todos
+  listCaregiverTodos = (householdId: string, filters?: { status?: string; assignedTo?: string }): Promise<CaregiverTodoWithComments[]> => this.caregiverTodos.listCaregiverTodos(householdId, filters);
+  getCaregiverTodoById = (todoId: string, householdId: string): Promise<CaregiverTodoWithComments | null> => this.caregiverTodos.getCaregiverTodoById(todoId, householdId);
+  createCaregiverTodo = (input: CreateCaregiverTodoInput): Promise<CaregiverTodo> => this.caregiverTodos.createCaregiverTodo(input);
+  updateCaregiverTodo = (todoId: string, householdId: string, input: UpdateCaregiverTodoInput): Promise<CaregiverTodo> => this.caregiverTodos.updateCaregiverTodo(todoId, householdId, input);
+  deleteCaregiverTodo = (todoId: string, householdId: string): Promise<void> => this.caregiverTodos.deleteCaregiverTodo(todoId, householdId);
+  completeCaregiverTodo = (todoId: string, householdId: string, completedBy: string): Promise<CaregiverTodo> => this.caregiverTodos.completeCaregiverTodo(todoId, householdId, completedBy);
+  nudgeCaregiverTodo = (todoId: string, householdId: string): Promise<CaregiverTodo> => this.caregiverTodos.nudgeCaregiverTodo(todoId, householdId);
+  addCaregiverTodoComment = (input: { todoId: string; authorId: string; content: string }): Promise<CaregiverTodoComment> => this.caregiverTodos.addCaregiverTodoComment(input);
+
   // Email auth
   findEmailAccountById = (id: string): Promise<EmailAccount | null> => this.emailAuth.findEmailAccountById(id);
   findEmailAccountByEmail = (email: string): Promise<EmailAccountWithHash | null> => this.emailAuth.findEmailAccountByEmail(email);
@@ -237,5 +251,5 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   createEmailAuthSession = (accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.createEmailAuthSession(accountId);
   findEmailAuthSession = (refreshToken: string): Promise<EmailAuthSessionRecord | null> => this.emailAuth.findEmailAuthSession(refreshToken);
   rotateEmailAuthSession = (sessionId: string, accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.rotateEmailAuthSession(sessionId, accountId);
-  createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
+  createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageCaregiverTodos: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
 }

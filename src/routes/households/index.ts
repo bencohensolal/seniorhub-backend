@@ -86,6 +86,14 @@ import { ReorderEmergencyContactsUseCase } from '../../domain/usecases/emergency
 import { TriggerEmergencyAlertUseCase } from '../../domain/usecases/emergencyContacts/TriggerEmergencyAlertUseCase.js';
 import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyContactRoutes.js';
 import { registerSeniorDeviceRoutes } from './seniorDevices/seniorDeviceRoutes.js';
+import { registerCaregiverTodoRoutes } from './caregiverTodos/caregiverTodoRoutes.js';
+import { ListCaregiverTodosUseCase } from '../../domain/usecases/caregiverTodos/ListCaregiverTodosUseCase.js';
+import { CreateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CreateCaregiverTodoUseCase.js';
+import { UpdateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/UpdateCaregiverTodoUseCase.js';
+import { DeleteCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/DeleteCaregiverTodoUseCase.js';
+import { CompleteCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CompleteCaregiverTodoUseCase.js';
+import { NudgeCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/NudgeCaregiverTodoUseCase.js';
+import { AddCaregiverTodoCommentUseCase } from '../../domain/usecases/caregiverTodos/AddCaregiverTodoCommentUseCase.js';
 import { expoPushService } from '../../services/ExpoPushService.js';
 import { createSmsService } from '../../services/SmsService.js';
 
@@ -175,6 +183,13 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     deleteEmergencyContactUseCase: new DeleteEmergencyContactUseCase(repository),
     reorderEmergencyContactsUseCase: new ReorderEmergencyContactsUseCase(repository),
     triggerEmergencyAlertUseCase: new TriggerEmergencyAlertUseCase(repository, expoPushService, createSmsService()),
+    listCaregiverTodosUseCase: new ListCaregiverTodosUseCase(repository),
+    createCaregiverTodoUseCase: new CreateCaregiverTodoUseCase(repository),
+    updateCaregiverTodoUseCase: new UpdateCaregiverTodoUseCase(repository),
+    deleteCaregiverTodoUseCase: new DeleteCaregiverTodoUseCase(repository),
+    completeCaregiverTodoUseCase: new CompleteCaregiverTodoUseCase(repository),
+    nudgeCaregiverTodoUseCase: new NudgeCaregiverTodoUseCase(repository),
+    addCaregiverTodoCommentUseCase: new AddCaregiverTodoCommentUseCase(repository),
   };
 
   // Register route modules
@@ -280,6 +295,16 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     deleteEmergencyContactUseCase: useCases.deleteEmergencyContactUseCase,
     reorderEmergencyContactsUseCase: useCases.reorderEmergencyContactsUseCase,
     triggerEmergencyAlertUseCase: useCases.triggerEmergencyAlertUseCase,
+  });
+
+  registerCaregiverTodoRoutes(fastify, repository, {
+    listCaregiverTodosUseCase: useCases.listCaregiverTodosUseCase,
+    createCaregiverTodoUseCase: useCases.createCaregiverTodoUseCase,
+    updateCaregiverTodoUseCase: useCases.updateCaregiverTodoUseCase,
+    deleteCaregiverTodoUseCase: useCases.deleteCaregiverTodoUseCase,
+    completeCaregiverTodoUseCase: useCases.completeCaregiverTodoUseCase,
+    nudgeCaregiverTodoUseCase: useCases.nudgeCaregiverTodoUseCase,
+    addCaregiverTodoCommentUseCase: useCases.addCaregiverTodoCommentUseCase,
   });
 
   registerSeniorDeviceRoutes(fastify, repository);

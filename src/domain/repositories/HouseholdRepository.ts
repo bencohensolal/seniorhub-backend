@@ -10,6 +10,7 @@ import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppoint
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
 import type { Task, TaskWithReminders, CreateTaskInput, UpdateTaskInput, CompleteTaskInput } from '../entities/Task.js';
 import type { TaskReminder, CreateTaskReminderInput, UpdateTaskReminderInput } from '../entities/TaskReminder.js';
+import type { CaregiverTodo, CaregiverTodoWithComments, CaregiverTodoComment, CreateCaregiverTodoInput, UpdateCaregiverTodoInput } from '../entities/CaregiverTodo.js';
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../entities/TabletDisplayConfig.js';
 import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput, UpdatePhotoScreenInput, CreatePhotoInput, UpdatePhotoInput } from '../entities/PhotoScreen.js';
@@ -286,12 +287,26 @@ export interface HouseholdRepository {
       manageMedications: boolean;
       manageAppointments: boolean;
       manageTasks: boolean;
+      manageCaregiverTodos: boolean;
       manageMembers: boolean;
       viewSensitiveInfo: boolean;
       viewDocuments: boolean;
       manageDocuments: boolean;
     };
   }): Promise<{ id: string }>;
+
+  // Caregiver Todos
+  listCaregiverTodos(householdId: string, filters?: {
+    status?: string;
+    assignedTo?: string;
+  }): Promise<CaregiverTodoWithComments[]>;
+  getCaregiverTodoById(todoId: string, householdId: string): Promise<CaregiverTodoWithComments | null>;
+  createCaregiverTodo(input: CreateCaregiverTodoInput): Promise<CaregiverTodo>;
+  updateCaregiverTodo(todoId: string, householdId: string, input: UpdateCaregiverTodoInput): Promise<CaregiverTodo>;
+  deleteCaregiverTodo(todoId: string, householdId: string): Promise<void>;
+  completeCaregiverTodo(todoId: string, householdId: string, completedBy: string): Promise<CaregiverTodo>;
+  nudgeCaregiverTodo(todoId: string, householdId: string): Promise<CaregiverTodo>;
+  addCaregiverTodoComment(input: { todoId: string; authorId: string; content: string }): Promise<CaregiverTodoComment>;
 
   // Email + password authentication
   findEmailAccountById(id: string): Promise<EmailAccount | null>;

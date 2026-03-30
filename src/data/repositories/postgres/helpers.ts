@@ -14,6 +14,7 @@ import type { Document } from '../../../domain/entities/Document.js';
 import type { DocumentFolderWithCounts, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
 import type { MedicationLog } from '../../../domain/entities/MedicationLog.js';
 import type { SeniorDevice, SeniorDeviceStatus } from '../../../domain/entities/SeniorDevice.js';
+import type { CaregiverTodo, CaregiverTodoStatus, CaregiverTodoPriority, CaregiverTodoComment } from '../../../domain/entities/CaregiverTodo.js';
 
 // Date and time helpers
 export const nowIso = (): string => new Date().toISOString();
@@ -456,4 +457,52 @@ export const mapSeniorDevice = (row: {
   lastActiveAt: row.last_active_at ? toIso(row.last_active_at) : null,
   revokedAt: row.revoked_at ? toIso(row.revoked_at) : null,
   revokedBy: row.revoked_by,
+});
+
+export const mapCaregiverTodo = (row: {
+  id: string;
+  household_id: string;
+  title: string;
+  description: string | null;
+  priority: CaregiverTodoPriority;
+  status: CaregiverTodoStatus;
+  assigned_to: string | null;
+  due_date: string | Date | null;
+  completed_at: string | Date | null;
+  completed_by: string | null;
+  last_nudged_at: string | Date | null;
+  nudge_count: number;
+  created_at: string | Date;
+  updated_at: string | Date;
+  created_by: string;
+}): CaregiverTodo => ({
+  id: row.id,
+  householdId: row.household_id,
+  title: row.title,
+  description: row.description,
+  priority: row.priority,
+  status: row.status,
+  assignedTo: row.assigned_to,
+  dueDate: row.due_date ? (toIso(row.due_date).split('T')[0] || null) : null,
+  completedAt: row.completed_at ? toIso(row.completed_at) : null,
+  completedBy: row.completed_by,
+  lastNudgedAt: row.last_nudged_at ? toIso(row.last_nudged_at) : null,
+  nudgeCount: row.nudge_count,
+  createdAt: toIso(row.created_at),
+  updatedAt: toIso(row.updated_at),
+  createdBy: row.created_by,
+});
+
+export const mapCaregiverTodoComment = (row: {
+  id: string;
+  todo_id: string;
+  author_id: string;
+  content: string;
+  created_at: string | Date;
+}): CaregiverTodoComment => ({
+  id: row.id,
+  todoId: row.todo_id,
+  authorId: row.author_id,
+  content: row.content,
+  createdAt: toIso(row.created_at),
 });

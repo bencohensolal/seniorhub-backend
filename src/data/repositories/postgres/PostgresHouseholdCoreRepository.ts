@@ -278,14 +278,15 @@ export class PostgresHouseholdCoreRepository {
       perm_manage_medications: boolean;
       perm_manage_appointments: boolean;
       perm_manage_tasks: boolean;
+      perm_manage_caregiver_todos: boolean;
       perm_manage_members: boolean;
       perm_view_sensitive_info: boolean;
       perm_view_documents: boolean;
       perm_manage_documents: boolean;
     }>(
       `SELECT id, perm_manage_medications, perm_manage_appointments,
-              perm_manage_tasks, perm_manage_members, perm_view_sensitive_info,
-              perm_view_documents, perm_manage_documents
+              perm_manage_tasks, perm_manage_caregiver_todos, perm_manage_members,
+              perm_view_sensitive_info, perm_view_documents, perm_manage_documents
        FROM household_members
        WHERE household_id = $1 AND status = 'active'`,
       [householdId],
@@ -297,6 +298,7 @@ export class PostgresHouseholdCoreRepository {
         manageMedications: row.perm_manage_medications,
         manageAppointments: row.perm_manage_appointments,
         manageTasks: row.perm_manage_tasks,
+        manageCaregiverTodos: row.perm_manage_caregiver_todos,
         manageMembers: row.perm_manage_members,
         viewSensitiveInfo: row.perm_view_sensitive_info,
         viewDocuments: row.perm_view_documents,
@@ -325,19 +327,21 @@ export class PostgresHouseholdCoreRepository {
       for (const [memberId, perms] of Object.entries(input.memberPermissions)) {
         await this.pool.query(
           `UPDATE household_members SET
-            perm_manage_medications  = COALESCE($2, perm_manage_medications),
-            perm_manage_appointments = COALESCE($3, perm_manage_appointments),
-            perm_manage_tasks        = COALESCE($4, perm_manage_tasks),
-            perm_manage_members      = COALESCE($5, perm_manage_members),
-            perm_view_sensitive_info = COALESCE($6, perm_view_sensitive_info),
-            perm_view_documents      = COALESCE($7, perm_view_documents),
-            perm_manage_documents    = COALESCE($8, perm_manage_documents)
-           WHERE id = $1 AND household_id = $9`,
+            perm_manage_medications     = COALESCE($2, perm_manage_medications),
+            perm_manage_appointments    = COALESCE($3, perm_manage_appointments),
+            perm_manage_tasks           = COALESCE($4, perm_manage_tasks),
+            perm_manage_caregiver_todos = COALESCE($5, perm_manage_caregiver_todos),
+            perm_manage_members         = COALESCE($6, perm_manage_members),
+            perm_view_sensitive_info    = COALESCE($7, perm_view_sensitive_info),
+            perm_view_documents         = COALESCE($8, perm_view_documents),
+            perm_manage_documents       = COALESCE($9, perm_manage_documents)
+           WHERE id = $1 AND household_id = $10`,
           [
             memberId,
             perms.manageMedications ?? null,
             perms.manageAppointments ?? null,
             perms.manageTasks ?? null,
+            perms.manageCaregiverTodos ?? null,
             perms.manageMembers ?? null,
             perms.viewSensitiveInfo ?? null,
             perms.viewDocuments ?? null,
@@ -386,9 +390,9 @@ export class PostgresHouseholdCoreRepository {
       await client.query(
         `INSERT INTO household_members
          (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
-          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_members,
-          perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
-         VALUES ($1, $2, $3, $4, $5, $6, 'caregiver', 'active', $7, $7, $8, $9, $10, $11, $12, $13, $14)`,
+          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+          perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
+         VALUES ($1, $2, $3, $4, $5, $6, 'caregiver', 'active', $7, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         [
           memberId,
           householdId,
@@ -400,6 +404,7 @@ export class PostgresHouseholdCoreRepository {
           caregiverPerms.manageMedications,
           caregiverPerms.manageAppointments,
           caregiverPerms.manageTasks,
+          caregiverPerms.manageCaregiverTodos,
           caregiverPerms.manageMembers,
           caregiverPerms.viewSensitiveInfo,
           caregiverPerms.viewDocuments,
@@ -740,9 +745,9 @@ export class PostgresHouseholdCoreRepository {
       await client.query(
         `INSERT INTO household_members
          (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
-          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_members,
-          perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $8, $9, $10, $11, $12, $13, $14, $15)
+          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+          perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          ON CONFLICT (household_id, user_id)
          DO UPDATE SET
            email = EXCLUDED.email,
@@ -751,13 +756,14 @@ export class PostgresHouseholdCoreRepository {
            role = EXCLUDED.role,
            status = 'active',
            joined_at = EXCLUDED.joined_at,
-           perm_manage_medications  = EXCLUDED.perm_manage_medications,
-           perm_manage_appointments = EXCLUDED.perm_manage_appointments,
-           perm_manage_tasks        = EXCLUDED.perm_manage_tasks,
-           perm_manage_members      = EXCLUDED.perm_manage_members,
-           perm_view_sensitive_info = EXCLUDED.perm_view_sensitive_info,
-           perm_view_documents      = EXCLUDED.perm_view_documents,
-           perm_manage_documents    = EXCLUDED.perm_manage_documents`,
+           perm_manage_medications     = EXCLUDED.perm_manage_medications,
+           perm_manage_appointments    = EXCLUDED.perm_manage_appointments,
+           perm_manage_tasks           = EXCLUDED.perm_manage_tasks,
+           perm_manage_caregiver_todos = EXCLUDED.perm_manage_caregiver_todos,
+           perm_manage_members         = EXCLUDED.perm_manage_members,
+           perm_view_sensitive_info    = EXCLUDED.perm_view_sensitive_info,
+           perm_view_documents         = EXCLUDED.perm_view_documents,
+           perm_manage_documents       = EXCLUDED.perm_manage_documents`,
         [
           randomUUID(),
           invitation.household_id,
@@ -770,6 +776,7 @@ export class PostgresHouseholdCoreRepository {
           invitePerms.manageMedications,
           invitePerms.manageAppointments,
           invitePerms.manageTasks,
+          invitePerms.manageCaregiverTodos,
           invitePerms.manageMembers,
           invitePerms.viewSensitiveInfo,
           invitePerms.viewDocuments,
@@ -1116,13 +1123,14 @@ export class PostgresHouseholdCoreRepository {
     }>(
       `UPDATE household_members
        SET role = $2,
-           perm_manage_medications  = $3,
-           perm_manage_appointments = $4,
-           perm_manage_tasks        = $5,
-           perm_manage_members      = $6,
-           perm_view_sensitive_info = $7,
-           perm_view_documents      = $8,
-           perm_manage_documents    = $9
+           perm_manage_medications     = $3,
+           perm_manage_appointments    = $4,
+           perm_manage_tasks           = $5,
+           perm_manage_caregiver_todos = $6,
+           perm_manage_members         = $7,
+           perm_view_sensitive_info    = $8,
+           perm_view_documents         = $9,
+           perm_manage_documents       = $10
        WHERE id = $1 AND status = 'active'
        RETURNING id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at`,
       [
@@ -1131,6 +1139,7 @@ export class PostgresHouseholdCoreRepository {
         rolePerms.manageMedications,
         rolePerms.manageAppointments,
         rolePerms.manageTasks,
+        rolePerms.manageCaregiverTodos,
         rolePerms.manageMembers,
         rolePerms.viewSensitiveInfo,
         rolePerms.viewDocuments,

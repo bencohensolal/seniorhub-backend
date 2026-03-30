@@ -4,6 +4,7 @@ export type HouseholdPermissionAction =
   | 'manageMedications'
   | 'manageAppointments'
   | 'manageTasks'
+  | 'manageCaregiverTodos'
   | 'manageMembers'
   | 'viewSensitiveInfo'
   | 'viewDocuments'
@@ -13,6 +14,7 @@ export interface HouseholdMemberPermissions {
   manageMedications: boolean;
   manageAppointments: boolean;
   manageTasks: boolean;
+  manageCaregiverTodos: boolean;
   manageMembers: boolean;
   viewSensitiveInfo: boolean;
   viewDocuments: boolean;
@@ -55,6 +57,7 @@ export const getDefaultHouseholdMemberPermissions = (
         manageMedications: true,
         manageAppointments: true,
         manageTasks: true,
+        manageCaregiverTodos: true,
         manageMembers: true,
         viewSensitiveInfo: true,
         viewDocuments: true,
@@ -65,6 +68,7 @@ export const getDefaultHouseholdMemberPermissions = (
         manageMedications: false,
         manageAppointments: true,
         manageTasks: true,
+        manageCaregiverTodos: true,
         manageMembers: false,
         viewSensitiveInfo: false,
         viewDocuments: true,
@@ -75,6 +79,7 @@ export const getDefaultHouseholdMemberPermissions = (
         manageMedications: true,
         manageAppointments: true,
         manageTasks: false,
+        manageCaregiverTodos: false,
         manageMembers: false,
         viewSensitiveInfo: true,
         viewDocuments: true,
@@ -86,6 +91,7 @@ export const getDefaultHouseholdMemberPermissions = (
         manageMedications: false,
         manageAppointments: false,
         manageTasks: false,
+        manageCaregiverTodos: false,
         manageMembers: false,
         viewSensitiveInfo: true,
         viewDocuments: true,

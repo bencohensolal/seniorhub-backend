@@ -276,11 +276,11 @@ export class PostgresSeniorDeviceRepository {
       `INSERT INTO household_members
        (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
         auth_provider, phone_number,
-        perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_members,
-        perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
+        perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+        perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
        VALUES ($1, $2, $3, NULL, $4, $5, $6, 'active', $7, $7,
         'device', $8,
-        $9, $10, $11, $12, $13, $14, $15)`,
+        $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         id,
         input.householdId,
@@ -293,6 +293,7 @@ export class PostgresSeniorDeviceRepository {
         input.permissions.manageMedications,
         input.permissions.manageAppointments,
         input.permissions.manageTasks,
+        input.permissions.manageCaregiverTodos,
         input.permissions.manageMembers,
         input.permissions.viewSensitiveInfo,
         input.permissions.viewDocuments,
