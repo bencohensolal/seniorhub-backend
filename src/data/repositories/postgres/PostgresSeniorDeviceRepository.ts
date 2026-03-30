@@ -263,6 +263,7 @@ export class PostgresSeniorDeviceRepository {
       manageMedications: boolean;
       manageAppointments: boolean;
       manageTasks: boolean;
+      manageCaregiverTodos: boolean;
       manageMembers: boolean;
       viewSensitiveInfo: boolean;
       viewDocuments: boolean;

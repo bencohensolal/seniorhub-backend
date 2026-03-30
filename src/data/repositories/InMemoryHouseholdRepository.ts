@@ -1527,6 +1527,16 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async archiveMember(_memberId: string, _householdId: string): Promise<void> {}
   async createProxyMember(_input: any): Promise<{ id: string }> { throw new Error('Not implemented in-memory'); }
 
+  // Caregiver Todos stubs
+  async listCaregiverTodos(_householdId: string, _filters?: any): Promise<any[]> { return []; }
+  async getCaregiverTodoById(_todoId: string, _householdId: string) { return null; }
+  async createCaregiverTodo(_input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async updateCaregiverTodo(_todoId: string, _householdId: string, _input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async deleteCaregiverTodo(_todoId: string, _householdId: string): Promise<void> { throw new Error('Not implemented in-memory'); }
+  async completeCaregiverTodo(_todoId: string, _householdId: string, _completedBy: string): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async nudgeCaregiverTodo(_todoId: string, _householdId: string): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async addCaregiverTodoComment(_input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+
   // Email auth stubs
   async findEmailAccountById(_id: string) { return null; }
   async findEmailAccountByEmail(_email: string) { return null; }

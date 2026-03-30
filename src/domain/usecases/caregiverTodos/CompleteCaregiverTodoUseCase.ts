@@ -2,7 +2,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { CaregiverTodo } from '../../entities/CaregiverTodo.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
-import { NotFoundError } from '../../errors/index.js';
+import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 
 /**
  * Marks a caregiver todo as completed.
@@ -22,6 +22,9 @@ export class CompleteCaregiverTodoUseCase {
   }): Promise<CaregiverTodo> {
     // Validate member access (any member can complete)
     const member = await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
+    if (!member) {
+      throw new ForbiddenError('Only household members can complete todos.');
+    }
 
     // Verify todo exists
     const todo = await this.repository.getCaregiverTodoById(input.todoId, input.householdId);

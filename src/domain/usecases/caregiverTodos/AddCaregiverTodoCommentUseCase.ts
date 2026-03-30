@@ -2,7 +2,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { CaregiverTodoComment } from '../../entities/CaregiverTodo.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
-import { NotFoundError } from '../../errors/index.js';
+import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 
 /**
  * Adds a comment to a caregiver todo.
@@ -23,6 +23,9 @@ export class AddCaregiverTodoCommentUseCase {
   }): Promise<CaregiverTodoComment> {
     // Validate member access
     const member = await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
+    if (!member) {
+      throw new ForbiddenError('Only household members can add comments.');
+    }
 
     // Validate todo exists
     const todo = await this.repository.getCaregiverTodoById(input.todoId, input.householdId);
