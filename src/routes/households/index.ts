@@ -52,6 +52,7 @@ import { registerTaskRoutes } from './tasks/taskRoutes.js';
 import { registerDisplayTabletRoutes } from './displayTablets/displayTabletRoutes.js';
 import { registerTabletConfigRoutes } from './displayTablets/tabletConfigRoutes.js';
 import { photoScreenRoutes } from './photoScreens/photoScreenRoutes.js';
+import { textScreenRoutes } from './textScreens/textScreenRoutes.js';
 import { HouseholdAccessValidator } from '../../domain/usecases/shared/HouseholdAccessValidator.js';
 import { ListHouseholdTasksUseCase } from '../../domain/usecases/tasks/ListHouseholdTasksUseCase.js';
 import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase.js';
@@ -311,4 +312,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });
+
+  // Register text screen routes with v1 prefix
+  await fastify.register(textScreenRoutes, { prefix: '/v1' });
 };

@@ -14,6 +14,7 @@ import type { CaregiverTodo, CaregiverTodoWithComments, CaregiverTodoComment, Cr
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../entities/TabletDisplayConfig.js';
 import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput, UpdatePhotoScreenInput, CreatePhotoInput, UpdatePhotoInput } from '../entities/PhotoScreen.js';
+import type { TextScreen, CreateTextScreenInput, UpdateTextScreenInput } from '../entities/TextScreen.js';
 import type { PrivacySettings, UpdatePrivacySettingsInput } from '../entities/PrivacySettings.js';
 import type { UserProfile, UpdateUserProfileInput } from '../entities/UserProfile.js';
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
@@ -198,6 +199,14 @@ export interface HouseholdRepository {
   deletePhoto(photoId: string, photoScreenId: string, householdId: string): Promise<void>;
   countPhotos(photoScreenId: string): Promise<number>;
   reorderPhotos(photoScreenId: string, householdId: string, photoOrders: Array<{ id: string; order: number }>): Promise<Photo[]>;
+
+  // Text Screens
+  listTextScreens(tabletId: string, householdId: string): Promise<TextScreen[]>;
+  getTextScreenById(textScreenId: string, tabletId: string, householdId: string): Promise<TextScreen | null>;
+  createTextScreen(input: CreateTextScreenInput): Promise<TextScreen>;
+  updateTextScreen(textScreenId: string, tabletId: string, householdId: string, input: UpdateTextScreenInput): Promise<TextScreen>;
+  deleteTextScreen(textScreenId: string, tabletId: string, householdId: string): Promise<void>;
+  countTextScreens(tabletId: string, householdId: string): Promise<number>;
 
   // Privacy Settings
   getUserPrivacySettings(userId: string): Promise<PrivacySettings | null>;

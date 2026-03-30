@@ -1,5 +1,6 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
-import type { TabletDisplayConfig, ScreenConfig, PhotoGalleryScreenSettings } from '../../entities/TabletDisplayConfig.js';
+import type { TabletDisplayConfig, ScreenConfig, PhotoGalleryScreenSettings, TextScreenSettings } from '../../entities/TabletDisplayConfig.js';
+import type { TextScreen } from '../../entities/TextScreen.js';
 import { NotFoundError } from '../../errors/DomainErrors.js';
 
 interface GetTabletConfigInput {
@@ -92,10 +93,75 @@ export class GetTabletConfigUseCase {
         };
       });
 
-      // Combine all screens
+      // Combine all screens (photo galleries added, text screens added below)
       config = {
         ...baseConfig,
         screens: [...nonPhotoScreens, ...photoGalleryScreens],
+      };
+    }
+
+    // 5. Get all text screens for this tablet
+    const textScreens = await this.repository.listTextScreens(tabletId, householdId);
+
+    if (textScreens.length > 0) {
+      if (!config) {
+        config = {
+          slideDuration: 10000,
+          dataCacheDuration: 300000,
+          dataRefreshInterval: 300000,
+          kioskModeEnabled: false,
+          language: 'en',
+          tapToAdvanceEnabled: false,
+          showCountdownEnabled: false,
+          screens: [],
+        };
+      }
+
+      const baseConfig = config;
+
+      const configuredTextScreens = new Map(
+        baseConfig.screens
+          .filter((screen) => screen.type === 'textScreen')
+          .map((screen) => {
+            const settings = screen.settings as TextScreenSettings | undefined;
+            return [settings?.id, screen] as const;
+          })
+          .filter(([id]) => Boolean(id)),
+      );
+
+      // Remove existing textScreen entries (we rebuild them from DB)
+      const nonTextScreens = baseConfig.screens.filter(s => s.type !== 'textScreen');
+
+      const textScreenConfigs: ScreenConfig[] = textScreens.map((ts: TextScreen) => {
+        const settings: TextScreenSettings = {
+          id: ts.id,
+          title: ts.title,
+          body: ts.body,
+          fontFamily: ts.fontFamily,
+          fontSize: ts.fontSize,
+          textColor: ts.textColor,
+          textAlign: ts.textAlign,
+          backgroundType: ts.backgroundType,
+          backgroundColor: ts.backgroundColor,
+          backgroundColorEnd: ts.backgroundColorEnd,
+          gradientDirection: ts.gradientDirection,
+          icon: ts.icon,
+          animation: ts.animation,
+        };
+
+        const configuredScreen = configuredTextScreens.get(ts.id);
+
+        return {
+          type: 'textScreen' as const,
+          enabled: configuredScreen?.enabled ?? true,
+          order: configuredScreen?.order ?? ts.order,
+          settings,
+        };
+      });
+
+      config = {
+        ...baseConfig,
+        screens: [...nonTextScreens, ...textScreenConfigs],
       };
     }
 

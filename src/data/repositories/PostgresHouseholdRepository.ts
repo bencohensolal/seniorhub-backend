@@ -15,6 +15,7 @@ import type { CaregiverTodo, CaregiverTodoWithComments, CaregiverTodoComment, Cr
 import type { DisplayTablet, DisplayTabletWithToken, CreateDisplayTabletInput, UpdateDisplayTabletInput, DisplayTabletAuthInfo } from '../../domain/entities/DisplayTablet.js';
 import type { TabletDisplayConfig } from '../../domain/entities/TabletDisplayConfig.js';
 import type { CreatePhotoInput, CreatePhotoScreenInput, Photo, PhotoScreen, PhotoScreenWithPhotos, UpdatePhotoInput, UpdatePhotoScreenInput } from '../../domain/entities/PhotoScreen.js';
+import type { TextScreen, CreateTextScreenInput, UpdateTextScreenInput } from '../../domain/entities/TextScreen.js';
 import type { PrivacySettings, UpdatePrivacySettingsInput } from '../../domain/entities/PrivacySettings.js';
 import type { UserProfile, UpdateUserProfileInput } from '../../domain/entities/UserProfile.js';
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../../domain/entities/HouseholdSettings.js';
@@ -28,6 +29,7 @@ import { PostgresTaskRepository } from './postgres/PostgresTaskRepository.js';
 import { PostgresDisplayTabletRepository } from './postgres/PostgresDisplayTabletRepository.js';
 import { PostgresDocumentRepository } from './postgres/PostgresDocumentRepository.js';
 import { PostgresPhotoScreenRepository } from './postgres/PostgresPhotoScreenRepository.js';
+import { PostgresTextScreenRepository } from './postgres/PostgresTextScreenRepository.js';
 import { PostgresPrivacyRepository } from './postgres/PostgresPrivacyRepository.js';
 import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergencyContactRepository.js';
 import { PostgresSeniorDeviceRepository } from './postgres/PostgresSeniorDeviceRepository.js';
@@ -45,6 +47,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly displayTablets: PostgresDisplayTabletRepository;
   private readonly documents: PostgresDocumentRepository;
   private readonly photoScreens: PostgresPhotoScreenRepository;
+  private readonly textScreens: PostgresTextScreenRepository;
   private readonly privacy: PostgresPrivacyRepository;
   private readonly emergencyContacts: PostgresEmergencyContactRepository;
   private readonly seniorDevices: PostgresSeniorDeviceRepository;
@@ -59,6 +62,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.displayTablets = new PostgresDisplayTabletRepository(pool);
     this.documents = new PostgresDocumentRepository(pool);
     this.photoScreens = new PostgresPhotoScreenRepository(pool);
+    this.textScreens = new PostgresTextScreenRepository(pool);
     this.privacy = new PostgresPrivacyRepository(pool);
     this.emergencyContacts = new PostgresEmergencyContactRepository(pool);
     this.seniorDevices = new PostgresSeniorDeviceRepository(pool);
@@ -174,6 +178,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   deletePhoto = (photoId: string, photoScreenId: string, householdId: string): Promise<void> => this.photoScreens.deletePhoto(photoId, photoScreenId, householdId);
   countPhotos = (photoScreenId: string): Promise<number> => this.photoScreens.countPhotos(photoScreenId);
   reorderPhotos = (photoScreenId: string, householdId: string, photoOrders: Array<{ id: string; order: number }>): Promise<Photo[]> => this.photoScreens.reorderPhotos(photoScreenId, householdId, photoOrders);
+
+  // Text Screens
+  listTextScreens = (tabletId: string, householdId: string): Promise<TextScreen[]> => this.textScreens.listTextScreens(tabletId, householdId);
+  getTextScreenById = (textScreenId: string, tabletId: string, householdId: string): Promise<TextScreen | null> => this.textScreens.getTextScreenById(textScreenId, tabletId, householdId);
+  createTextScreen = (input: CreateTextScreenInput): Promise<TextScreen> => this.textScreens.createTextScreen(input);
+  updateTextScreen = (textScreenId: string, tabletId: string, householdId: string, input: UpdateTextScreenInput): Promise<TextScreen> => this.textScreens.updateTextScreen(textScreenId, tabletId, householdId, input);
+  deleteTextScreen = (textScreenId: string, tabletId: string, householdId: string): Promise<void> => this.textScreens.deleteTextScreen(textScreenId, tabletId, householdId);
+  countTextScreens = (tabletId: string, householdId: string): Promise<number> => this.textScreens.countTextScreens(tabletId, householdId);
 
   // Privacy Settings
   getUserPrivacySettings = (userId: string): Promise<PrivacySettings | null> => this.privacy.getUserPrivacySettings(userId);

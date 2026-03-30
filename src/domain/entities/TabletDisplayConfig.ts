@@ -8,7 +8,8 @@ export type ScreenType =
   | 'tasks'
   | 'weekCalendar'
   | 'monthCalendar'
-  | 'photoGallery';
+  | 'photoGallery'
+  | 'textScreen';
 
 export type TabletLanguage = 'en' | 'fr';
 
@@ -28,7 +29,8 @@ export type ScreenSettings =
   | TasksScreenSettings
   | WeekCalendarScreenSettings
   | MonthCalendarScreenSettings
-  | PhotoGalleryScreenSettings;
+  | PhotoGalleryScreenSettings
+  | TextScreenSettings;
 
 // Summary screen settings
 export interface SummaryScreenSettings {
@@ -97,6 +99,23 @@ export interface PhotoGalleryScreenSettings {
   slideshowTransition?: 'fade' | 'slide' | 'none'; // Type de transition
   slideshowOrder?: 'sequential' | 'random'; // Ordre d'affichage
   showCaptions: boolean; // Afficher les légendes des photos
+}
+
+// Text screen settings
+export interface TextScreenSettings {
+  id: string;
+  title: string;
+  body: string | null;
+  fontFamily: 'sans-serif' | 'serif' | 'monospace';
+  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
+  textColor: string;
+  textAlign: 'left' | 'center' | 'right';
+  backgroundType: 'solid' | 'gradient';
+  backgroundColor: string;
+  backgroundColorEnd: string | null;
+  gradientDirection: 'to-bottom' | 'to-right' | 'to-bottom-right';
+  icon: string | null;
+  animation: 'none' | 'fade-in' | 'slide-up' | 'zoom-in';
 }
 
 // Main tablet display configuration

@@ -975,6 +975,31 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     throw new Error('Photo operations not implemented in InMemoryRepository');
   }
 
+  // Text Screen methods - stub implementations for test compatibility
+  async listTextScreens(_tabletId: string, _householdId: string): Promise<never[]> {
+    return [];
+  }
+
+  async getTextScreenById(_textScreenId: string, _tabletId: string, _householdId: string): Promise<null> {
+    return null;
+  }
+
+  async createTextScreen(_input: unknown): Promise<never> {
+    throw new Error('Text screen operations not implemented in InMemoryRepository');
+  }
+
+  async updateTextScreen(_textScreenId: string, _tabletId: string, _householdId: string, _input: unknown): Promise<never> {
+    throw new Error('Text screen operations not implemented in InMemoryRepository');
+  }
+
+  async deleteTextScreen(_textScreenId: string, _tabletId: string, _householdId: string): Promise<void> {
+    throw new Error('Text screen operations not implemented in InMemoryRepository');
+  }
+
+  async countTextScreens(_tabletId: string, _householdId: string): Promise<number> {
+    return 0;
+  }
+
   // Privacy Settings - stub implementations for test compatibility
   async getUserPrivacySettings(_userId: string): Promise<null> {
     return null;
