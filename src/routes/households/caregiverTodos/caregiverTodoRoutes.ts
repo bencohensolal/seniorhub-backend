@@ -129,7 +129,7 @@ export function registerCaregiverTodoRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -205,7 +205,7 @@ export function registerCaregiverTodoRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -327,7 +327,7 @@ export function registerCaregiverTodoRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -384,7 +384,7 @@ export function registerCaregiverTodoRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
@@ -448,7 +448,7 @@ export function registerCaregiverTodoRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
             required: ['status', 'data'],
           },
