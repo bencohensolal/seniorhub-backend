@@ -1570,4 +1570,16 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async createEmailAuthSession(_accountId: string): Promise<{ refreshToken: string }> { throw new Error('Not implemented in-memory'); }
   async findEmailAuthSession(_refreshToken: string) { return null; }
   async rotateEmailAuthSession(_sessionId: string, _accountId: string): Promise<{ refreshToken: string }> { throw new Error('Not implemented in-memory'); }
+
+  // Subscription stubs
+  async getActiveSubscription(_householdId: string) { return null; }
+  async getSubscriptionByStripeSubscriptionId(_stripeSubscriptionId: string) { return null; }
+  async getSubscriptionByStripeCustomerId(_stripeCustomerId: string) { return null; }
+  async createSubscription(householdId: string, plan: any): Promise<any> {
+    return { id: randomUUID(), householdId, plan, status: 'active', stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false, createdAt: nowIso(), updatedAt: nowIso() };
+  }
+  async updateSubscription(_subscriptionId: string, _input: any): Promise<any> { throw new Error('Not implemented in-memory'); }
+  async ensureDefaultSubscription(householdId: string): Promise<any> {
+    return { id: randomUUID(), householdId, plan: 'gratuit', status: 'active', stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false, createdAt: nowIso(), updatedAt: nowIso() };
+  }
 }

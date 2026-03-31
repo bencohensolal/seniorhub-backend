@@ -35,9 +35,11 @@ import { PostgresEmergencyContactRepository } from './postgres/PostgresEmergency
 import { PostgresSeniorDeviceRepository } from './postgres/PostgresSeniorDeviceRepository.js';
 import { PostgresEmailAuthRepository } from './postgres/PostgresEmailAuthRepository.js';
 import { PostgresCaregiverTodoRepository } from './postgres/PostgresCaregiverTodoRepository.js';
+import { PostgresSubscriptionRepository } from './postgres/PostgresSubscriptionRepository.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../../domain/entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../../domain/entities/SeniorDevice.js';
 import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../../domain/entities/EmailAccount.js';
+import type { Subscription, SubscriptionPlan, UpdateSubscriptionInput } from '../../domain/entities/Subscription.js';
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly core: PostgresHouseholdCoreRepository;
@@ -53,6 +55,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly seniorDevices: PostgresSeniorDeviceRepository;
   private readonly emailAuth: PostgresEmailAuthRepository;
   private readonly caregiverTodos: PostgresCaregiverTodoRepository;
+  private readonly subscriptions: PostgresSubscriptionRepository;
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
@@ -68,6 +71,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
     this.seniorDevices = new PostgresSeniorDeviceRepository(pool);
     this.emailAuth = new PostgresEmailAuthRepository(pool);
     this.caregiverTodos = new PostgresCaregiverTodoRepository(pool);
+    this.subscriptions = new PostgresSubscriptionRepository(pool);
   }
 
   // Core — households, members, settings, invitations
@@ -254,6 +258,14 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   completeCaregiverTodo = (todoId: string, householdId: string, completedBy: string): Promise<CaregiverTodo> => this.caregiverTodos.completeCaregiverTodo(todoId, householdId, completedBy);
   nudgeCaregiverTodo = (todoId: string, householdId: string): Promise<CaregiverTodo> => this.caregiverTodos.nudgeCaregiverTodo(todoId, householdId);
   addCaregiverTodoComment = (input: { todoId: string; authorId: string; content: string }): Promise<CaregiverTodoComment> => this.caregiverTodos.addCaregiverTodoComment(input);
+
+  // Subscriptions
+  getActiveSubscription = (householdId: string): Promise<Subscription | null> => this.subscriptions.getActiveSubscription(householdId);
+  getSubscriptionByStripeSubscriptionId = (stripeSubscriptionId: string): Promise<Subscription | null> => this.subscriptions.getByStripeSubscriptionId(stripeSubscriptionId);
+  getSubscriptionByStripeCustomerId = (stripeCustomerId: string): Promise<Subscription | null> => this.subscriptions.getByStripeCustomerId(stripeCustomerId);
+  createSubscription = (householdId: string, plan: SubscriptionPlan): Promise<Subscription> => this.subscriptions.createSubscription(householdId, plan);
+  updateSubscription = (subscriptionId: string, input: UpdateSubscriptionInput): Promise<Subscription> => this.subscriptions.updateSubscription(subscriptionId, input);
+  ensureDefaultSubscription = (householdId: string): Promise<Subscription> => this.subscriptions.ensureDefaultSubscription(householdId);
 
   // Email auth
   findEmailAccountById = (id: string): Promise<EmailAccount | null> => this.emailAuth.findEmailAccountById(id);

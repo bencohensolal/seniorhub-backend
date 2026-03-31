@@ -2,6 +2,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { BulkInvitationResult, HouseholdRepository, InvitationCandidate } from '../../repositories/HouseholdRepository.js';
 import { ForbiddenError } from '../../errors/index.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
+import { PlanLimitGuard } from '../shared/PlanLimitGuard.js';
 
 /**
  * Creates multiple invitations in bulk for a household.
@@ -9,9 +10,11 @@ import { HouseholdAccessValidator } from '../shared/index.js';
  */
 export class CreateBulkInvitationsUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
+  private readonly planLimitGuard: PlanLimitGuard;
 
   constructor(private readonly repository: HouseholdRepository) {
     this.accessValidator = new HouseholdAccessValidator(repository);
+    this.planLimitGuard = new PlanLimitGuard(repository);
   }
 
   /**
@@ -34,6 +37,15 @@ export class CreateBulkInvitationsUseCase {
 
       throw error;
     }
+
+    // Check plan limit: ensure at least one more member slot is available
+    const currentMembers = await this.repository.listHouseholdMembers(input.householdId);
+    await this.planLimitGuard.ensureWithinLimit({
+      householdId: input.householdId,
+      resource: 'members',
+      currentCount: currentMembers.length,
+      limitKey: 'maxMembers',
+    });
 
     return this.repository.createBulkInvitations({
       householdId: input.householdId,

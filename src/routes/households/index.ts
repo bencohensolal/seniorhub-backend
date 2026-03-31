@@ -88,6 +88,7 @@ import { TriggerEmergencyAlertUseCase } from '../../domain/usecases/emergencyCon
 import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyContactRoutes.js';
 import { registerSeniorDeviceRoutes } from './seniorDevices/seniorDeviceRoutes.js';
 import { registerCaregiverTodoRoutes } from './caregiverTodos/caregiverTodoRoutes.js';
+import { registerSubscriptionRoutes } from './subscriptions/subscriptionRoutes.js';
 import { ListCaregiverTodosUseCase } from '../../domain/usecases/caregiverTodos/ListCaregiverTodosUseCase.js';
 import { CreateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CreateCaregiverTodoUseCase.js';
 import { UpdateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/UpdateCaregiverTodoUseCase.js';
@@ -95,6 +96,7 @@ import { DeleteCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos
 import { CompleteCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CompleteCaregiverTodoUseCase.js';
 import { NudgeCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/NudgeCaregiverTodoUseCase.js';
 import { AddCaregiverTodoCommentUseCase } from '../../domain/usecases/caregiverTodos/AddCaregiverTodoCommentUseCase.js';
+import { GetHouseholdSubscriptionUseCase } from '../../domain/usecases/subscriptions/GetHouseholdSubscriptionUseCase.js';
 import { expoPushService } from '../../services/ExpoPushService.js';
 import { createSmsService } from '../../services/SmsService.js';
 
@@ -191,6 +193,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     completeCaregiverTodoUseCase: new CompleteCaregiverTodoUseCase(repository),
     nudgeCaregiverTodoUseCase: new NudgeCaregiverTodoUseCase(repository),
     addCaregiverTodoCommentUseCase: new AddCaregiverTodoCommentUseCase(repository),
+    getHouseholdSubscriptionUseCase: new GetHouseholdSubscriptionUseCase(repository),
   };
 
   // Register route modules
@@ -309,6 +312,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   registerSeniorDeviceRoutes(fastify, repository);
+
+  registerSubscriptionRoutes(fastify, repository, {
+    getHouseholdSubscriptionUseCase: useCases.getHouseholdSubscriptionUseCase,
+  });
 
   // Register photo screen routes with v1 prefix
   await fastify.register(photoScreenRoutes, { prefix: '/v1' });

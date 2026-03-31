@@ -24,6 +24,8 @@ import type { MedicationLog, CreateMedicationLogInput } from '../entities/Medica
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../entities/SeniorDevice.js';
 import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../entities/EmailAccount.js';
+import type { Subscription, UpdateSubscriptionInput } from '../entities/Subscription.js';
+import type { SubscriptionPlan } from '../entities/Subscription.js';
 
 export interface InvitationCandidate {
   firstName: string;
@@ -316,6 +318,14 @@ export interface HouseholdRepository {
   completeCaregiverTodo(todoId: string, householdId: string, completedBy: string): Promise<CaregiverTodo>;
   nudgeCaregiverTodo(todoId: string, householdId: string): Promise<CaregiverTodo>;
   addCaregiverTodoComment(input: { todoId: string; authorId: string; content: string }): Promise<CaregiverTodoComment>;
+
+  // Subscriptions
+  getActiveSubscription(householdId: string): Promise<Subscription | null>;
+  getSubscriptionByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription | null>;
+  getSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | null>;
+  createSubscription(householdId: string, plan: SubscriptionPlan): Promise<Subscription>;
+  updateSubscription(subscriptionId: string, input: UpdateSubscriptionInput): Promise<Subscription>;
+  ensureDefaultSubscription(householdId: string): Promise<Subscription>;
 
   // Email + password authentication
   findEmailAccountById(id: string): Promise<EmailAccount | null>;

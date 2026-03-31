@@ -3,6 +3,7 @@ import type { Task, CreateTaskInput, TaskCategory, TaskPriority, TaskRecurrence 
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
 import { ValidationError } from '../../errors/index.js';
+import { PlanLimitGuard } from '../shared/PlanLimitGuard.js';
 
 /**
  * Creates a new task for a household.
@@ -10,9 +11,11 @@ import { ValidationError } from '../../errors/index.js';
  */
 export class CreateTaskUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
+  private readonly planLimitGuard: PlanLimitGuard;
 
   constructor(private readonly repository: HouseholdRepository) {
     this.accessValidator = new HouseholdAccessValidator(repository);
+    this.planLimitGuard = new PlanLimitGuard(repository);
   }
 
   /**
@@ -37,6 +40,15 @@ export class CreateTaskUseCase {
   }): Promise<Task> {
     // Validate caregiver access
     const member = await this.accessValidator.ensureCaregiver(input.requester.userId, input.householdId);
+
+    // Check plan limit: count active (pending) tasks for this household
+    const activeTasks = await this.repository.listHouseholdTasks(input.householdId, { status: 'pending' });
+    await this.planLimitGuard.ensureWithinLimit({
+      householdId: input.householdId,
+      resource: 'tasks',
+      currentCount: activeTasks.length,
+      limitKey: 'maxActiveTasks',
+    });
 
     // Validate senior exists and belongs to household
     const senior = await this.repository.findMemberInHousehold(input.seniorId, input.householdId);
