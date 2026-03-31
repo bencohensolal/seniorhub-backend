@@ -73,16 +73,12 @@ export function registerJournalRoutes(
 
       try {
         const filters = queryResult.data;
-        const journalFilters: {
-          seniorId?: string;
-          category?: typeof filters.category;
-          limit?: number;
-          offset?: number;
-        } = {};
-        if (filters.seniorId) journalFilters.seniorId = filters.seniorId;
-        if (filters.category) journalFilters.category = filters.category;
-        if (filters.limit) journalFilters.limit = filters.limit;
-        if (filters.offset !== undefined) journalFilters.offset = filters.offset;
+        const journalFilters = {
+          ...(filters.seniorId && { seniorId: filters.seniorId }),
+          ...(filters.category && { category: filters.category }),
+          ...(filters.limit && { limit: filters.limit }),
+          ...(filters.offset !== undefined && { offset: filters.offset }),
+        };
 
         const entries = await useCases.listJournalEntriesUseCase.execute({
           householdId: paramsResult.data.householdId,

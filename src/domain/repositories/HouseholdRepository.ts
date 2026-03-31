@@ -3,7 +3,6 @@ import type { Member } from '../entities/Member.js';
 import type { Household, AuthenticatedRequester } from '../entities/Household.js';
 import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
 import type { HouseholdRole } from '../entities/Member.js';
-import type { JournalEntry, CreateJournalEntryInput, UpdateJournalEntryInput } from '../entities/JournalEntry.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
@@ -97,13 +96,6 @@ export interface HouseholdRepository {
   removeMember(memberId: string): Promise<void>;
   updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member>;
   logAuditEvent(input: AuditEventInput): Promise<void>;
-
-  // Journal
-  createJournalEntry(input: CreateJournalEntryInput): Promise<JournalEntry>;
-  listJournalEntries(householdId: string, options?: { seniorId?: string; limit?: number; offset?: number }): Promise<JournalEntry[]>;
-  getJournalEntry(householdId: string, entryId: string): Promise<JournalEntry | null>;
-  updateJournalEntry(householdId: string, entryId: string, input: UpdateJournalEntryInput): Promise<JournalEntry | null>;
-  deleteJournalEntry(householdId: string, entryId: string): Promise<boolean>;
 
   // Appointments
   listHouseholdAppointments(householdId: string): Promise<AppointmentWithReminders[]>;

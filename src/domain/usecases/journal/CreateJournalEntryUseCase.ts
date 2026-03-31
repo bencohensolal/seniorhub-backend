@@ -2,6 +2,7 @@ import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { JournalEntry, JournalCategory, CreateJournalEntryInput } from '../../entities/JournalEntry.js';
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { JournalEntryRepository } from '../../repositories/JournalEntryRepository.js';
+import { ForbiddenError } from '../../errors/index.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
 
 /**
@@ -25,8 +26,11 @@ export class CreateJournalEntryUseCase {
     category?: JournalCategory;
     requester: AuthenticatedRequester;
   }): Promise<JournalEntry> {
-    // Validate member access
+    // Validate member access (tablets cannot create journal entries)
     const member = await this.accessValidator.ensureMember(input.requester.userId, input.householdId);
+    if (!member) {
+      throw new ForbiddenError('Only household members can create journal entries.');
+    }
 
     const createInput: CreateJournalEntryInput = {
       householdId: input.householdId,
