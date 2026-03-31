@@ -1,5 +1,5 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
-import type { Subscription } from '../../entities/Subscription.js';
+import type { Subscription, SubscriptionPlan } from '../../entities/Subscription.js';
 import type { PlanLimits } from '../../entities/PlanLimits.js';
 import { getPlanLimits } from '../../entities/PlanLimits.js';
 import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
@@ -23,7 +23,10 @@ export class GetHouseholdSubscriptionUseCase {
     await this.accessValidator.ensureMember(input.requesterUserId, input.householdId);
 
     const subscription = await this.repository.ensureDefaultSubscription(input.householdId);
-    const limits = getPlanLimits(subscription.plan);
+    // Return gratuit limits for cancelled subscriptions
+    const effectivePlan: SubscriptionPlan =
+      subscription.status === 'cancelled' ? 'gratuit' : subscription.plan;
+    const limits = getPlanLimits(effectivePlan);
 
     return { subscription, limits };
   }

@@ -32,7 +32,10 @@ export class PlanLimitGuard {
     limitKey: keyof ReturnType<typeof getPlanLimits>;
   }): Promise<void> {
     const subscription = await this.repository.ensureDefaultSubscription(input.householdId);
-    const limits = getPlanLimits(subscription.plan);
+    // Force gratuit limits for cancelled subscriptions (webhook delay / race condition)
+    const effectivePlan: SubscriptionPlan =
+      subscription.status === 'cancelled' ? 'gratuit' : subscription.plan;
+    const limits = getPlanLimits(effectivePlan);
     const maxAllowed = limits[input.limitKey] as number;
 
     if (input.currentCount >= maxAllowed) {
@@ -41,8 +44,8 @@ export class PlanLimitGuard {
         resource: input.resource,
         current: input.currentCount,
         limit: maxAllowed,
-        currentPlan: subscription.plan,
-        upgradePlan: UPGRADE_PATH[subscription.plan],
+        currentPlan: effectivePlan,
+        upgradePlan: UPGRADE_PATH[effectivePlan],
       };
 
       throw new ConflictError(
@@ -56,6 +59,6 @@ export class PlanLimitGuard {
    */
   async getHouseholdPlan(householdId: string): Promise<SubscriptionPlan> {
     const subscription = await this.repository.ensureDefaultSubscription(householdId);
-    return subscription.plan;
+    return subscription.status === 'cancelled' ? 'gratuit' : subscription.plan;
   }
 }

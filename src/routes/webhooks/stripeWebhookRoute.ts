@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
 import type { SubscriptionPlan } from '../../domain/entities/Subscription.js';
 import { getStripe, getStripeWebhookSecret } from '../../config/stripe.js';
+import { getEmailProvider } from '../../data/services/email/emailProvider.js';
 
 /**
  * Extract period dates from Stripe subscription items.
@@ -167,6 +168,46 @@ export function registerStripeWebhookRoute(
             });
 
             request.log.warn({ subscriptionId: sub.id }, 'Payment failed — subscription marked as past_due');
+
+            // Send payment failure notification to household caregivers
+            try {
+              const members = await repository.listHouseholdMembers(sub.householdId);
+              const caregiverEmails = members
+                .filter((m) => m.role !== 'senior' && m.email)
+                .map((m) => m.email!);
+
+              if (caregiverEmails.length > 0) {
+                const emailProvider = getEmailProvider();
+                for (const email of caregiverEmails) {
+                  await emailProvider.send({
+                    to: email,
+                    subject: '[SeniorHub] Votre paiement a échoué',
+                    body: [
+                      'Bonjour,',
+                      '',
+                      'Le paiement de votre abonnement SeniorHub a échoué.',
+                      '',
+                      'Mettez à jour votre moyen de paiement depuis l\'application',
+                      '(Réglages → Abonnement → Gérer mon abonnement)',
+                      'pour conserver votre abonnement.',
+                      '',
+                      'Si le problème persiste, votre abonnement sera automatiquement',
+                      'résilié et vous passerez au plan Gratuit.',
+                      '',
+                      'L\'équipe SeniorHub',
+                    ].join('\n'),
+                  });
+                }
+                request.log.info(
+                  { householdId: sub.householdId, recipientCount: caregiverEmails.length },
+                  'Payment failure notification emails sent',
+                );
+              }
+            } catch (emailErr) {
+              // Don't fail the webhook if email sending fails
+              request.log.error({ err: emailErr }, 'Failed to send payment failure notification emails');
+            }
+
             break;
           }
 
