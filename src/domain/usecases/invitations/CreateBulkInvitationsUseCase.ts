@@ -4,6 +4,9 @@ import { ForbiddenError } from '../../errors/index.js';
 import { HouseholdAccessValidator } from '../shared/index.js';
 import { PlanLimitGuard } from '../shared/PlanLimitGuard.js';
 
+/** Roles that count toward maxCaregivers */
+const CAREGIVER_ROLES = new Set(['caregiver', 'family', 'intervenant']);
+
 /**
  * Creates multiple invitations in bulk for a household.
  * Only caregivers can send invitations.
@@ -17,11 +20,6 @@ export class CreateBulkInvitationsUseCase {
     this.planLimitGuard = new PlanLimitGuard(repository);
   }
 
-  /**
-   * @param input - Bulk invitation data with requester info
-   * @returns Result with successful and failed invitations
-   * @throws {ForbiddenError} If requester is not a caregiver
-   */
   async execute(input: {
     householdId: string;
     requester: AuthenticatedRequester;
@@ -34,18 +32,38 @@ export class CreateBulkInvitationsUseCase {
       if (error instanceof ForbiddenError) {
         throw new ForbiddenError('Only caregivers can send invitations.');
       }
-
       throw error;
     }
 
-    // Check plan limit: ensure at least one more member slot is available
+    // Count existing active members by role bucket
     const currentMembers = await this.repository.listHouseholdMembers(input.householdId);
-    await this.planLimitGuard.ensureWithinLimit({
-      householdId: input.householdId,
-      resource: 'members',
-      currentCount: currentMembers.length,
-      limitKey: 'maxMembers',
-    });
+    const activeMembers = currentMembers.filter((m) => m.status === 'active');
+    const currentSeniorCount = activeMembers.filter((m) => m.role === 'senior').length;
+    const currentCaregiverCount = activeMembers.filter((m) => CAREGIVER_ROLES.has(m.role)).length;
+
+    // Count how many of each role we're about to invite
+    const invitedSeniorCount = input.users.filter((u) => u.role === 'senior').length;
+    const invitedCaregiverCount = input.users.filter((u) => CAREGIVER_ROLES.has(u.role)).length;
+
+    // Check senior limit if any senior is being invited
+    if (invitedSeniorCount > 0) {
+      await this.planLimitGuard.ensureWithinLimit({
+        householdId: input.householdId,
+        resource: 'seniors',
+        currentCount: currentSeniorCount + invitedSeniorCount - 1,
+        limitKey: 'maxSeniors',
+      });
+    }
+
+    // Check caregiver limit if any non-senior is being invited
+    if (invitedCaregiverCount > 0) {
+      await this.planLimitGuard.ensureWithinLimit({
+        householdId: input.householdId,
+        resource: 'caregivers',
+        currentCount: currentCaregiverCount + invitedCaregiverCount - 1,
+        limitKey: 'maxCaregivers',
+      });
+    }
 
     return this.repository.createBulkInvitations({
       householdId: input.householdId,

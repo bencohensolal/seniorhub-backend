@@ -37,15 +37,27 @@ export class CreateProxyMemberUseCase {
       throw new ValidationError('First name and last name are required.');
     }
 
-    // Check plan limit for household members
+    // Check per-role plan limit
     const members = await this.repository.listHouseholdMembers(input.householdId);
     const activeMembers = members.filter((m) => m.status === 'active');
-    await this.planLimitGuard.ensureWithinLimit({
-      householdId: input.householdId,
-      resource: 'members',
-      currentCount: activeMembers.length,
-      limitKey: 'maxMembers',
-    });
+
+    if (input.role === 'senior') {
+      const currentSeniors = activeMembers.filter((m) => m.role === 'senior').length;
+      await this.planLimitGuard.ensureWithinLimit({
+        householdId: input.householdId,
+        resource: 'seniors',
+        currentCount: currentSeniors,
+        limitKey: 'maxSeniors',
+      });
+    } else {
+      const currentCaregivers = activeMembers.filter((m) => m.role !== 'senior').length;
+      await this.planLimitGuard.ensureWithinLimit({
+        householdId: input.householdId,
+        resource: 'caregivers',
+        currentCount: currentCaregivers,
+        limitKey: 'maxCaregivers',
+      });
+    }
 
     const userId = `proxy_${randomUUID()}`;
     const permissions = getDefaultHouseholdMemberPermissions(input.role);
