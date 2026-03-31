@@ -1,15 +1,16 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { DisplayTabletWithToken } from '../../entities/DisplayTablet.js';
 import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
-import { ForbiddenError, ConflictError } from '../../errors/index.js';
-
-const MAX_ACTIVE_TABLETS_PER_HOUSEHOLD = 10;
+import { PlanLimitGuard } from '../shared/PlanLimitGuard.js';
+import { ForbiddenError } from '../../errors/index.js';
 
 export class CreateDisplayTabletUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
+  private readonly planLimitGuard: PlanLimitGuard;
 
   constructor(private readonly repository: HouseholdRepository) {
     this.accessValidator = new HouseholdAccessValidator(repository);
+    this.planLimitGuard = new PlanLimitGuard(repository);
   }
 
   async execute(input: {
@@ -31,13 +32,14 @@ export class CreateDisplayTabletUseCase {
       throw new ForbiddenError('Seniors cannot create display tablets.');
     }
 
-    // Check if household has reached the maximum number of active tablets
+    // Check plan limit for tablets
     const activeCount = await this.repository.countActiveDisplayTablets(input.householdId);
-    if (activeCount >= MAX_ACTIVE_TABLETS_PER_HOUSEHOLD) {
-      throw new ConflictError(
-        `Maximum number of active tablets (${MAX_ACTIVE_TABLETS_PER_HOUSEHOLD}) reached for this household.`,
-      );
-    }
+    await this.planLimitGuard.ensureWithinLimit({
+      householdId: input.householdId,
+      resource: 'display_tablets',
+      currentCount: activeCount,
+      limitKey: 'maxTablets',
+    });
 
     // Create the tablet
     return this.repository.createDisplayTablet({

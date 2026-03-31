@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
 import type { GetHouseholdSubscriptionUseCase } from '../../../domain/usecases/subscriptions/GetHouseholdSubscriptionUseCase.js';
+import type { CreateCheckoutSessionUseCase } from '../../../domain/usecases/subscriptions/CreateCheckoutSessionUseCase.js';
+import type { CreatePortalSessionUseCase } from '../../../domain/usecases/subscriptions/CreatePortalSessionUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { getRequesterContext } from '../utils.js';
 
@@ -18,6 +20,8 @@ export function registerSubscriptionRoutes(
   _repository: HouseholdRepository,
   useCases: {
     getHouseholdSubscriptionUseCase: GetHouseholdSubscriptionUseCase;
+    createCheckoutSessionUseCase: CreateCheckoutSessionUseCase;
+    createPortalSessionUseCase: CreatePortalSessionUseCase;
   },
 ): void {
   // GET /v1/households/:householdId/subscription — Get current subscription & plan limits
@@ -93,28 +97,23 @@ export function registerSubscriptionRoutes(
             },
           },
           403: errorResponseSchema,
-          501: errorResponseSchema,
           500: errorResponseSchema,
         },
       },
     },
     async (request, reply) => {
       const { householdId } = request.params as { householdId: string };
-      const { plan, billingPeriod } = request.body as { plan: string; billingPeriod: string };
+      const { plan, billingPeriod } = request.body as { plan: 'famille' | 'serenite'; billingPeriod: 'monthly' | 'yearly' };
 
       try {
         const requester = getRequesterContext(request);
-
-        // TODO: Implement Stripe Checkout session creation
-        // 1. Validate user is caregiver/admin (not senior)
-        // 2. Get or create Stripe customer
-        // 3. Create Stripe Checkout session with correct price ID
-        // 4. Return checkout URL
-
-        return reply.status(501).send({
-          status: 'error',
-          message: 'Stripe checkout not yet implemented. Plan: ' + plan + ', period: ' + billingPeriod + ', household: ' + householdId + ', user: ' + requester.userId,
+        const result = await useCases.createCheckoutSessionUseCase.execute({
+          householdId,
+          plan,
+          billingPeriod,
+          requesterUserId: requester.userId,
         });
+        return reply.status(200).send({ status: 'success', data: result });
       } catch (error) {
         return handleDomainError(error, reply);
       }
@@ -146,7 +145,6 @@ export function registerSubscriptionRoutes(
             },
           },
           403: errorResponseSchema,
-          501: errorResponseSchema,
           500: errorResponseSchema,
         },
       },
@@ -156,17 +154,11 @@ export function registerSubscriptionRoutes(
 
       try {
         const requester = getRequesterContext(request);
-
-        // TODO: Implement Stripe Customer Portal session
-        // 1. Validate user is caregiver/admin
-        // 2. Get Stripe customer ID from subscription
-        // 3. Create portal session
-        // 4. Return portal URL
-
-        return reply.status(501).send({
-          status: 'error',
-          message: 'Stripe portal not yet implemented. Household: ' + householdId + ', user: ' + requester.userId,
+        const result = await useCases.createPortalSessionUseCase.execute({
+          householdId,
+          requesterUserId: requester.userId,
         });
+        return reply.status(200).send({ status: 'success', data: result });
       } catch (error) {
         return handleDomainError(error, reply);
       }

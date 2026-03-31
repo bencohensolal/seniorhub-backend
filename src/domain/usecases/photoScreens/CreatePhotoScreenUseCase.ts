@@ -1,12 +1,16 @@
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { AuthenticatedRequester } from '../../entities/Household.js';
 import type { CreatePhotoScreenInput, PhotoScreen } from '../../entities/PhotoScreen.js';
-import { MAX_PHOTO_SCREENS_PER_TABLET } from '../../entities/PhotoScreen.js';
-import { NotFoundError, ForbiddenError, MaxPhotoScreensReachedError } from '../../errors/index.js';
+import { NotFoundError, ForbiddenError } from '../../errors/index.js';
+import { PlanLimitGuard } from '../shared/PlanLimitGuard.js';
 import { tabletConfigNotifier } from '../../services/tabletConfigNotifier.js';
 
 export class CreatePhotoScreenUseCase {
-  constructor(private readonly repository: HouseholdRepository) {}
+  private readonly planLimitGuard: PlanLimitGuard;
+
+  constructor(private readonly repository: HouseholdRepository) {
+    this.planLimitGuard = new PlanLimitGuard(repository);
+  }
 
   async execute(input: {
     householdId: string;
@@ -41,14 +45,14 @@ export class CreatePhotoScreenUseCase {
       throw new NotFoundError('Display tablet not found.');
     }
 
-    // Check if max photo screens limit is reached
+    // Check plan limit for photo screens per tablet
     const existingCount = await this.repository.countPhotoScreens(input.tabletId, input.householdId);
-
-    if (existingCount >= MAX_PHOTO_SCREENS_PER_TABLET) {
-      throw new MaxPhotoScreensReachedError(
-        `This tablet has already reached the limit of ${MAX_PHOTO_SCREENS_PER_TABLET} photo screens.`,
-      );
-    }
+    await this.planLimitGuard.ensureWithinLimit({
+      householdId: input.householdId,
+      resource: 'photo_screens',
+      currentCount: existingCount,
+      limitKey: 'maxPhotoScreensPerTablet',
+    });
 
     // Create the photo screen with defaults
     const createInput: CreatePhotoScreenInput = {

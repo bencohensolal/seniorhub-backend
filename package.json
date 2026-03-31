@@ -6,9 +6,9 @@
   "engines": {
     "node": ">=20"
   },
-"scripts": {
-"prepare": "command -v pre-commit >/dev/null 2>&1 && pre-commit install --install-hooks || echo 'pre-commit not installed, skipping hooks installation'",
-"dev": "tsx watch src/server.ts",
+  "scripts": {
+    "prepare": "command -v pre-commit >/dev/null 2>&1 && pre-commit install --install-hooks || echo 'pre-commit not installed, skipping hooks installation'",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "start:railway": "node dist/scripts/startRailway.js",
@@ -32,6 +32,7 @@
     "pg": "^8.18.0",
     "resend": "^6.9.2",
     "sharp": "^0.34.5",
+    "stripe": "^21.0.1",
     "zod": "^4.1.5"
   },
   "devDependencies": {
