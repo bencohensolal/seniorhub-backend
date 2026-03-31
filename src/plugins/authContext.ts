@@ -72,6 +72,7 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
       '/v1/auth/email/login',             // Email + password login
       '/v1/auth/email/session/refresh',   // Email session refresh
       '/internal/', // Internal dev/test routes — no auth required
+      '/v1/webhooks/', // Webhooks — auth verified internally by each handler
     ];
     if (publicEndpoints.some(endpoint => request.url.startsWith(endpoint))) {
       return;
