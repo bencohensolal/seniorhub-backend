@@ -321,8 +321,7 @@ export interface HouseholdRepository {
 
   // Subscriptions
   getActiveSubscription(householdId: string): Promise<Subscription | null>;
-  getSubscriptionByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription | null>;
-  getSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | null>;
+  getSubscriptionByRcAppUserId(rcAppUserId: string): Promise<Subscription | null>;
   createSubscription(householdId: string, plan: SubscriptionPlan): Promise<Subscription>;
   updateSubscription(subscriptionId: string, input: UpdateSubscriptionInput): Promise<Subscription>;
   ensureDefaultSubscription(householdId: string): Promise<Subscription>;

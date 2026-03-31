@@ -97,8 +97,6 @@ import { CompleteCaregiverTodoUseCase } from '../../domain/usecases/caregiverTod
 import { NudgeCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/NudgeCaregiverTodoUseCase.js';
 import { AddCaregiverTodoCommentUseCase } from '../../domain/usecases/caregiverTodos/AddCaregiverTodoCommentUseCase.js';
 import { GetHouseholdSubscriptionUseCase } from '../../domain/usecases/subscriptions/GetHouseholdSubscriptionUseCase.js';
-import { CreateCheckoutSessionUseCase } from '../../domain/usecases/subscriptions/CreateCheckoutSessionUseCase.js';
-import { CreatePortalSessionUseCase } from '../../domain/usecases/subscriptions/CreatePortalSessionUseCase.js';
 import { expoPushService } from '../../services/ExpoPushService.js';
 import { createSmsService } from '../../services/SmsService.js';
 
@@ -196,8 +194,6 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     nudgeCaregiverTodoUseCase: new NudgeCaregiverTodoUseCase(repository),
     addCaregiverTodoCommentUseCase: new AddCaregiverTodoCommentUseCase(repository),
     getHouseholdSubscriptionUseCase: new GetHouseholdSubscriptionUseCase(repository),
-    createCheckoutSessionUseCase: new CreateCheckoutSessionUseCase(repository),
-    createPortalSessionUseCase: new CreatePortalSessionUseCase(repository),
   };
 
   // Register route modules
@@ -319,8 +315,6 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
 
   registerSubscriptionRoutes(fastify, repository, {
     getHouseholdSubscriptionUseCase: useCases.getHouseholdSubscriptionUseCase,
-    createCheckoutSessionUseCase: useCases.createCheckoutSessionUseCase,
-    createPortalSessionUseCase: useCases.createPortalSessionUseCase,
   });
 
   // Register photo screen routes with v1 prefix

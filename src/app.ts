@@ -15,7 +15,7 @@ import { CheckMissedMedicationsUseCase } from './domain/usecases/notifications/C
 import { startMedicationAlertScheduler } from './scheduler/medicationAlertScheduler.js';
 import { registerInternalRoutes } from './routes/internal/triggerRoutes.js';
 import { registerEmailAuthRoutes } from './routes/auth/emailAuthRoutes.js';
-import { registerStripeWebhookRoute } from './routes/webhooks/stripeWebhookRoute.js';
+import { registerRevenueCatWebhookRoute } from './routes/webhooks/revenuecatWebhookRoute.js';
 import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
 import { UpdateUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/UpdateUserPrivacySettingsUseCase.js';
 
@@ -102,8 +102,8 @@ export const buildApp = () => {
   const checkMissedUseCase = new CheckMissedMedicationsUseCase(notifRepo, pushService);
   startMedicationAlertScheduler(checkMissedUseCase);
 
-  // Stripe webhook (unauthenticated — signature verified internally)
-  registerStripeWebhookRoute(app, repository);
+  // RevenueCat webhook (unauthenticated — bearer token verified internally)
+  registerRevenueCatWebhookRoute(app, repository);
 
   // Internal routes (manual trigger for testing)
   registerInternalRoutes(app, checkMissedUseCase, notifRepo);

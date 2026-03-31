@@ -261,8 +261,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   // Subscriptions
   getActiveSubscription = (householdId: string): Promise<Subscription | null> => this.subscriptions.getActiveSubscription(householdId);
-  getSubscriptionByStripeSubscriptionId = (stripeSubscriptionId: string): Promise<Subscription | null> => this.subscriptions.getByStripeSubscriptionId(stripeSubscriptionId);
-  getSubscriptionByStripeCustomerId = (stripeCustomerId: string): Promise<Subscription | null> => this.subscriptions.getByStripeCustomerId(stripeCustomerId);
+  getSubscriptionByRcAppUserId = (rcAppUserId: string): Promise<Subscription | null> => this.subscriptions.getByRcAppUserId(rcAppUserId);
   createSubscription = (householdId: string, plan: SubscriptionPlan): Promise<Subscription> => this.subscriptions.createSubscription(householdId, plan);
   updateSubscription = (subscriptionId: string, input: UpdateSubscriptionInput): Promise<Subscription> => this.subscriptions.updateSubscription(subscriptionId, input);
   ensureDefaultSubscription = (householdId: string): Promise<Subscription> => this.subscriptions.ensureDefaultSubscription(householdId);

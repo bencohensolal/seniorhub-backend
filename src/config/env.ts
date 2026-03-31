@@ -41,6 +41,9 @@ const envSchema = z
     GCS_CLIENT_EMAIL: z.string().optional(),
     GCS_PRIVATE_KEY: z.string().optional(),
     GCP_SERVICE_ACCOUNT_KEY_BASE64: z.string().optional(),
+
+    // RevenueCat
+    REVENUECAT_WEBHOOK_AUTH_KEY: z.string().optional(),
   })
   .superRefine((value, context) => {
     if (value.PERSISTENCE_DRIVER === 'postgres' && !value.DATABASE_URL) {

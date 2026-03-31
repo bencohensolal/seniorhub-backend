@@ -6,8 +6,9 @@ export interface Subscription {
   householdId: string;
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
+  rcAppUserId: string | null;
+  rcOriginalTransactionId: string | null;
+  rcProductId: string | null;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
@@ -18,8 +19,9 @@ export interface Subscription {
 export interface UpdateSubscriptionInput {
   plan?: SubscriptionPlan;
   status?: SubscriptionStatus;
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
+  rcAppUserId?: string | null;
+  rcOriginalTransactionId?: string | null;
+  rcProductId?: string | null;
   currentPeriodStart?: string | null;
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
