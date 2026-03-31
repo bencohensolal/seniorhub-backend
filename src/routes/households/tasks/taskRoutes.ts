@@ -81,7 +81,7 @@ export function registerTaskRoutes(
             seniorId: { type: 'string' },
             category: {
               type: 'string',
-              enum: ['hydration', 'meals', 'medication', 'hygiene', 'mobility', 'social', 'medical', 'household', 'other']
+              enum: ['hydration', 'meals', 'hygiene', 'mobility', 'social', 'household', 'other']
             },
             fromDate: { type: 'string' },
             toDate: { type: 'string' },

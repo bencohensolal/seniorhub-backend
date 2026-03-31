@@ -28,7 +28,7 @@ export class NotFoundError extends DomainError {}
  * HTTP Status: 403
  * 
  * @example
- * throw new ForbiddenError('Only caregivers can delete medications.');
+ * throw new ForbiddenError('Only caregivers can perform this action.');
  * throw new ForbiddenError('Access denied to this household.');
  */
 export class ForbiddenError extends DomainError {}

@@ -24,7 +24,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -71,7 +71,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -107,7 +107,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -179,7 +179,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -449,7 +449,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -480,7 +480,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -575,7 +575,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -617,7 +617,7 @@ export class PostgresDocumentRepository {
     }
   }
 
-  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> {
+  async getSystemRootFolder(householdId: string, systemRootType: 'personal' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> {
     const result = await this.pool.query<{
       id: string;
       household_id: string;
@@ -626,7 +626,7 @@ export class PostgresDocumentRepository {
       name: string;
       description: string | null;
       type: 'system_root' | 'senior_folder' | 'user_folder';
-      system_root_type: 'medical' | 'administrative' | null;
+      system_root_type: 'personal' | 'administrative' | null;
       created_by_user_id: string;
       created_at: string | Date;
       updated_at: string | Date;
@@ -650,8 +650,8 @@ export class PostgresDocumentRepository {
   }
 
   async ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void> {
-    const roots: Array<{ type: 'medical' | 'administrative' | 'trash'; name: string; description: string }> = [
-      { type: 'medical', name: 'Medical Documents', description: 'Medical records and health-related documents' },
+    const roots: Array<{ type: 'personal' | 'administrative' | 'trash'; name: string; description: string }> = [
+      { type: 'personal', name: 'Personal Documents', description: 'Personal records and documents' },
       { type: 'administrative', name: 'Administrative Documents', description: 'Administrative and legal documents' },
       { type: 'trash', name: 'Trash', description: 'Deleted items — automatically purged after 30 days.' },
     ];
@@ -678,7 +678,7 @@ export class PostgresDocumentRepository {
     }
   }
 
-  async ensureSeniorFoldersForHousehold(householdId: string, medicalRootId: string, userId: string): Promise<void> {
+  async ensureSeniorFoldersForHousehold(householdId: string, personalRootId: string, userId: string): Promise<void> {
     const result = await this.pool.query<{ member_id: string; first_name: string; last_name: string }>(
       `SELECT hm.id AS member_id, hm.first_name, hm.last_name
        FROM household_members hm
@@ -697,7 +697,7 @@ export class PostgresDocumentRepository {
     for (const row of result.rows) {
       await this.createDocumentFolder({
         householdId,
-        parentFolderId: medicalRootId,
+        parentFolderId: personalRootId,
         seniorId: row.member_id,
         name: `${row.first_name} ${row.last_name}`,
         description: null,

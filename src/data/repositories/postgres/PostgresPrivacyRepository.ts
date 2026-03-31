@@ -85,13 +85,12 @@ export class PostgresPrivacyRepository {
       id: string;
       user_id: string;
       share_profile: boolean;
-      share_health_data: boolean;
       share_activity_history: boolean;
       allow_analytics: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, user_id, share_profile, share_health_data, share_activity_history,
+      `SELECT id, user_id, share_profile, share_activity_history,
               allow_analytics, created_at, updated_at
        FROM user_privacy_settings
        WHERE user_id = $1
@@ -108,7 +107,6 @@ export class PostgresPrivacyRepository {
       id: row.id,
       userId: row.user_id,
       shareProfile: row.share_profile,
-      shareHealthData: row.share_health_data,
       shareActivityHistory: row.share_activity_history,
       allowAnalytics: row.allow_analytics,
       createdAt: toIso(row.created_at),
@@ -124,10 +122,6 @@ export class PostgresPrivacyRepository {
     if (input.shareProfile !== undefined) {
       updates.push(`share_profile = $${paramIndex++}`);
       values.push(input.shareProfile);
-    }
-    if (input.shareHealthData !== undefined) {
-      updates.push(`share_health_data = $${paramIndex++}`);
-      values.push(input.shareHealthData);
     }
     if (input.shareActivityHistory !== undefined) {
       updates.push(`share_activity_history = $${paramIndex++}`);
@@ -153,22 +147,20 @@ export class PostgresPrivacyRepository {
       id: string;
       user_id: string;
       share_profile: boolean;
-      share_health_data: boolean;
       share_activity_history: boolean;
       allow_analytics: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `INSERT INTO user_privacy_settings (id, user_id, share_profile, share_health_data, share_activity_history, allow_analytics, created_at, updated_at)
-       VALUES (gen_random_uuid(), $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})
+      `INSERT INTO user_privacy_settings (id, user_id, share_profile, share_activity_history, allow_analytics, created_at, updated_at)
+       VALUES (gen_random_uuid(), $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})
        ON CONFLICT (user_id) DO UPDATE
        SET ${updates.join(', ')}
-       RETURNING id, user_id, share_profile, share_health_data, share_activity_history, allow_analytics, created_at, updated_at`,
+       RETURNING id, user_id, share_profile, share_activity_history, allow_analytics, created_at, updated_at`,
       [
         ...values,
         userId,
         input.shareProfile ?? true,
-        input.shareHealthData ?? true,
         input.shareActivityHistory ?? true,
         input.allowAnalytics ?? false,
         now,
@@ -185,7 +177,6 @@ export class PostgresPrivacyRepository {
       id: row.id,
       userId: row.user_id,
       shareProfile: row.share_profile,
-      shareHealthData: row.share_health_data,
       shareActivityHistory: row.share_activity_history,
       allowAnalytics: row.allow_analytics,
       createdAt: toIso(row.created_at),
@@ -202,13 +193,12 @@ export class PostgresPrivacyRepository {
       id: string;
       user_id: string;
       share_profile: boolean;
-      share_health_data: boolean;
       share_activity_history: boolean;
       allow_analytics: boolean;
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, user_id, share_profile, share_health_data, share_activity_history,
+      `SELECT id, user_id, share_profile, share_activity_history,
               allow_analytics, created_at, updated_at
        FROM user_privacy_settings
        WHERE user_id = ANY($1)`,
@@ -222,8 +212,7 @@ export class PostgresPrivacyRepository {
         id: row.id,
         userId: row.user_id,
         shareProfile: row.share_profile,
-        shareHealthData: row.share_health_data,
-        shareActivityHistory: row.share_activity_history,
+          shareActivityHistory: row.share_activity_history,
         allowAnalytics: row.allow_analytics,
         createdAt: toIso(row.created_at),
         updatedAt: toIso(row.updated_at),

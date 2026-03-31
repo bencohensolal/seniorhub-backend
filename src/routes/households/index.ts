@@ -20,17 +20,13 @@ import { createHouseholdRepository } from '../../data/repositories/createHouseho
 import { registerHouseholdRoutes } from './households/householdRoutes.js';
 import { registerInvitationRoutes } from './invitations/invitationRoutes.js';
 import { registerObservabilityRoutes } from './observabilityRoutes.js';
-import { registerMedicationRoutes } from './medications/medicationRoutes.js';
-import { registerReminderRoutes } from './medications/reminderRoutes.js';
-import { ListHouseholdMedicationsUseCase } from '../../domain/usecases/medications/ListHouseholdMedicationsUseCase.js';
-import { CreateMedicationUseCase } from '../../domain/usecases/medications/CreateMedicationUseCase.js';
-import { UpdateMedicationUseCase } from '../../domain/usecases/medications/UpdateMedicationUseCase.js';
-import { DeleteMedicationUseCase } from '../../domain/usecases/medications/DeleteMedicationUseCase.js';
-import { LogMedicationIntakeUseCase } from '../../domain/usecases/medications/LogMedicationIntakeUseCase.js';
-import { ListMedicationRemindersUseCase } from '../../domain/usecases/reminders/ListMedicationRemindersUseCase.js';
-import { CreateReminderUseCase } from '../../domain/usecases/reminders/CreateReminderUseCase.js';
-import { UpdateReminderUseCase } from '../../domain/usecases/reminders/UpdateReminderUseCase.js';
-import { DeleteReminderUseCase } from '../../domain/usecases/reminders/DeleteReminderUseCase.js';
+import { registerJournalRoutes } from './journal/journalRoutes.js';
+import { CreateJournalEntryUseCase } from '../../domain/usecases/journal/CreateJournalEntryUseCase.js';
+import { ListJournalEntriesUseCase } from '../../domain/usecases/journal/ListJournalEntriesUseCase.js';
+import { UpdateJournalEntryUseCase } from '../../domain/usecases/journal/UpdateJournalEntryUseCase.js';
+import { DeleteJournalEntryUseCase } from '../../domain/usecases/journal/DeleteJournalEntryUseCase.js';
+import { PostgresJournalEntryRepository } from '../../data/repositories/postgres/PostgresJournalEntryRepository.js';
+import { getPostgresPool } from '../../data/db/postgres.js';
 import { ListHouseholdAppointmentsUseCase } from '../../domain/usecases/appointments/ListHouseholdAppointmentsUseCase.js';
 import { CreateAppointmentUseCase } from '../../domain/usecases/appointments/CreateAppointmentUseCase.js';
 import { UpdateAppointmentUseCase } from '../../domain/usecases/appointments/UpdateAppointmentUseCase.js';
@@ -112,6 +108,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize repository
   const repository = createHouseholdRepository();
 
+  // Initialize journal repository (separate from household repo)
+  const journalRepository = new PostgresJournalEntryRepository(getPostgresPool());
+
   // Initialize shared services
   const accessValidator = new HouseholdAccessValidator(repository);
 
@@ -134,15 +133,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     removeHouseholdMemberUseCase: new RemoveHouseholdMemberUseCase(repository),
     updateHouseholdMemberRoleUseCase: new UpdateHouseholdMemberRoleUseCase(repository),
     leaveHouseholdUseCase: new LeaveHouseholdUseCase(repository),
-    listHouseholdMedicationsUseCase: new ListHouseholdMedicationsUseCase(repository),
-    createMedicationUseCase: new CreateMedicationUseCase(repository),
-    updateMedicationUseCase: new UpdateMedicationUseCase(repository),
-    deleteMedicationUseCase: new DeleteMedicationUseCase(repository),
-    logMedicationIntakeUseCase: new LogMedicationIntakeUseCase(repository),
-    listMedicationRemindersUseCase: new ListMedicationRemindersUseCase(repository),
-    createReminderUseCase: new CreateReminderUseCase(repository),
-    updateReminderUseCase: new UpdateReminderUseCase(repository),
-    deleteReminderUseCase: new DeleteReminderUseCase(repository),
+    createJournalEntryUseCase: new CreateJournalEntryUseCase(repository, journalRepository),
+    listJournalEntriesUseCase: new ListJournalEntriesUseCase(repository, journalRepository),
+    updateJournalEntryUseCase: new UpdateJournalEntryUseCase(repository, journalRepository),
+    deleteJournalEntryUseCase: new DeleteJournalEntryUseCase(repository, journalRepository),
     listHouseholdAppointmentsUseCase: new ListHouseholdAppointmentsUseCase(repository),
     createAppointmentUseCase: new CreateAppointmentUseCase(repository),
     updateAppointmentUseCase: new UpdateAppointmentUseCase(repository),
@@ -225,19 +219,11 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
 
   registerObservabilityRoutes(fastify);
 
-  registerMedicationRoutes(fastify, repository, {
-    listHouseholdMedicationsUseCase: useCases.listHouseholdMedicationsUseCase,
-    createMedicationUseCase: useCases.createMedicationUseCase,
-    updateMedicationUseCase: useCases.updateMedicationUseCase,
-    deleteMedicationUseCase: useCases.deleteMedicationUseCase,
-    logMedicationIntakeUseCase: useCases.logMedicationIntakeUseCase,
-  });
-
-  registerReminderRoutes(fastify, repository, {
-    listMedicationRemindersUseCase: useCases.listMedicationRemindersUseCase,
-    createReminderUseCase: useCases.createReminderUseCase,
-    updateReminderUseCase: useCases.updateReminderUseCase,
-    deleteReminderUseCase: useCases.deleteReminderUseCase,
+  registerJournalRoutes(fastify, repository, {
+    createJournalEntryUseCase: useCases.createJournalEntryUseCase,
+    listJournalEntriesUseCase: useCases.listJournalEntriesUseCase,
+    updateJournalEntryUseCase: useCases.updateJournalEntryUseCase,
+    deleteJournalEntryUseCase: useCases.deleteJournalEntryUseCase,
   });
 
   registerAppointmentRoutes(fastify, repository, {

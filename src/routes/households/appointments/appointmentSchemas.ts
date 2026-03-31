@@ -3,19 +3,6 @@ import { z } from 'zod';
 // Time validation regex for HH:MM format (00:00 to 23:59)
 const TIME_REGEX = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
 
-// Appointment type enum schema
-export const appointmentTypeSchema = z.enum([
-  'doctor',
-  'specialist',
-  'dentist',
-  'lab',
-  'imaging',
-  'therapy',
-  'pharmacy',
-  'hospital',
-  'other',
-]);
-
 // Appointment status enum schema
 export const appointmentStatusSchema = z.enum([
   'scheduled',
@@ -47,7 +34,7 @@ export const recurrenceSchema = z.object({
 // Schema for creating a new appointment
 export const createAppointmentBodySchema = z.object({
   title: z.string().min(1).max(200),
-  type: appointmentTypeSchema,
+  tags: z.array(z.string().max(100)).optional().default([]),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   time: z.string().regex(TIME_REGEX, 'Time must be in HH:MM format (00:00 to 23:59)'),
   duration: z.number().int().positive().optional(),
@@ -57,9 +44,8 @@ export const createAppointmentBodySchema = z.object({
   locationName: z.string().max(255).optional(),
   phoneNumber: z.string().max(50).optional(),
   description: z.string().max(1000).optional(),
-  professionalName: z.string().max(255).optional(),
-  preparation: z.string().max(1000).optional(),
-  documentsToTake: z.string().max(500).optional(),
+  contactName: z.string().max(255).optional(),
+  itemsToTake: z.string().max(500).optional(),
   transportArrangement: z.string().max(500).optional(),
   recurrence: recurrenceSchema.optional(),
   status: appointmentStatusSchema.optional(),
@@ -69,7 +55,7 @@ export const createAppointmentBodySchema = z.object({
 // Schema for updating an existing appointment (all fields optional for partial update)
 export const updateAppointmentBodySchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  type: appointmentTypeSchema.optional(),
+  tags: z.array(z.string().max(100)).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
   time: z.string().regex(TIME_REGEX, 'Time must be in HH:MM format (00:00 to 23:59)').optional(),
   duration: z.number().int().positive().nullable().optional(),
@@ -79,9 +65,8 @@ export const updateAppointmentBodySchema = z.object({
   locationName: z.string().max(255).nullable().optional(),
   phoneNumber: z.string().max(50).nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
-  professionalName: z.string().max(255).nullable().optional(),
-  preparation: z.string().max(1000).nullable().optional(),
-  documentsToTake: z.string().max(500).nullable().optional(),
+  contactName: z.string().max(255).nullable().optional(),
+  itemsToTake: z.string().max(500).nullable().optional(),
   transportArrangement: z.string().max(500).nullable().optional(),
   recurrence: recurrenceSchema.nullable().optional(),
   status: appointmentStatusSchema.optional(),
@@ -148,10 +133,9 @@ export const batchModifyOccurrencesBodySchema = z.object({
       locationName: z.string().max(255).optional(),
       address: z.string().max(500).optional(),
       phoneNumber: z.string().max(50).optional(),
-      professionalName: z.string().max(255).optional(),
+      contactName: z.string().max(255).optional(),
       description: z.string().max(1000).optional(),
-      preparation: z.string().max(1000).optional(),
-      documentsToTake: z.string().max(500).optional(),
+      itemsToTake: z.string().max(500).optional(),
       transportArrangement: z.string().max(500).optional(),
       notes: z.string().max(1000).optional(),
     }),
@@ -175,10 +159,9 @@ export const modifyOccurrenceBodySchema = z.object({
     locationName: z.string().max(255).optional(),
     address: z.string().max(500).optional(),
     phoneNumber: z.string().max(50).optional(),
-    professionalName: z.string().max(255).optional(),
+    contactName: z.string().max(255).optional(),
     description: z.string().max(1000).optional(),
-    preparation: z.string().max(1000).optional(),
-    documentsToTake: z.string().max(500).optional(),
+    itemsToTake: z.string().max(500).optional(),
     transportArrangement: z.string().max(500).optional(),
     notes: z.string().max(1000).optional(),
   }).optional(),

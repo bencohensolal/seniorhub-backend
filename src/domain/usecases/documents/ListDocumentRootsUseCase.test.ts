@@ -34,21 +34,21 @@ describe('ListDocumentRootsUseCase', () => {
     });
 
     expect(result).toBeDefined();
-    expect(result.medicalRoot).toBeDefined();
+    expect(result.personalRoot).toBeDefined();
     expect(result.administrativeRoot).toBeDefined();
     expect(result.seniorFolders).toBeDefined();
     expect(Array.isArray(result.seniorFolders)).toBe(true);
 
     // Check system roots have correct types
-    expect(result.medicalRoot.systemRootType).toBe('medical');
+    expect(result.personalRoot.systemRootType).toBe('personal');
     expect(result.administrativeRoot.systemRootType).toBe('administrative');
 
     // Check they belong to the correct household
-    expect(result.medicalRoot.householdId).toBe(household.id);
+    expect(result.personalRoot.householdId).toBe(household.id);
     expect(result.administrativeRoot.householdId).toBe(household.id);
   });
 
-  it('includes senior folders under medical root', async () => {
+  it('includes senior folders under personal root', async () => {
     // Setup: create household, member, and senior
     const household = await repository.createHousehold('Test Household', {
       userId: 'user-1',
@@ -128,7 +128,7 @@ describe('ListDocumentRootsUseCase', () => {
       requester,
     });
 
-    expect(result.medicalRoot).toBeDefined();
+    expect(result.personalRoot).toBeDefined();
     expect(result.administrativeRoot).toBeDefined();
   });
 });

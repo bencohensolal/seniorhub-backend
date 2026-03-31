@@ -48,7 +48,7 @@ export function mergeOccurrence(
     isCancelled: status === 'cancelled',
 
     title: overrides.title ?? appointment.title,
-    type: appointment.type,
+    tags: appointment.tags,
     duration,
     seniorIds: appointment.seniorIds,
     caregiverId: appointment.caregiverId,
@@ -56,9 +56,8 @@ export function mergeOccurrence(
     locationName: overrides.locationName !== undefined ? overrides.locationName : appointment.locationName,
     phoneNumber: overrides.phoneNumber !== undefined ? overrides.phoneNumber : appointment.phoneNumber,
     description: overrides.description !== undefined ? overrides.description : appointment.description,
-    professionalName: overrides.professionalName !== undefined ? overrides.professionalName : appointment.professionalName,
-    preparation: overrides.preparation !== undefined ? overrides.preparation : appointment.preparation,
-    documentsToTake: overrides.documentsToTake !== undefined ? overrides.documentsToTake : appointment.documentsToTake,
+    contactName: overrides.contactName !== undefined ? overrides.contactName : appointment.contactName,
+    itemsToTake: overrides.itemsToTake !== undefined ? overrides.itemsToTake : appointment.itemsToTake,
     transportArrangement: overrides.transportArrangement !== undefined ? overrides.transportArrangement : appointment.transportArrangement,
     notes: overrides.notes !== undefined ? overrides.notes : appointment.notes,
 

@@ -1,9 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { AuthProvider, HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
-import type { Medication, MedicationForm } from '../../../domain/entities/Medication.js';
-import type { MedicationReminder } from '../../../domain/entities/MedicationReminder.js';
-import type { Appointment, AppointmentType, AppointmentStatus, Recurrence } from '../../../domain/entities/Appointment.js';
+import type { Appointment, AppointmentStatus, Recurrence } from '../../../domain/entities/Appointment.js';
 import type { AppointmentReminder } from '../../../domain/entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, OccurrenceStatus, OccurrenceOverrides } from '../../../domain/entities/AppointmentOccurrence.js';
 import type { Task, TaskCategory, TaskPriority, TaskStatus, TaskRecurrence } from '../../../domain/entities/Task.js';
@@ -12,7 +10,6 @@ import type { DisplayTablet, DisplayTabletStatus } from '../../../domain/entitie
 import type { TabletDisplayConfig } from '../../../domain/entities/TabletDisplayConfig.js';
 import type { Document } from '../../../domain/entities/Document.js';
 import type { DocumentFolderWithCounts, DocumentFolderType, SystemRootType } from '../../../domain/entities/DocumentFolder.js';
-import type { MedicationLog } from '../../../domain/entities/MedicationLog.js';
 import type { SeniorDevice, SeniorDeviceStatus } from '../../../domain/entities/SeniorDevice.js';
 import type { CaregiverTodo, CaregiverTodoStatus, CaregiverTodoPriority, CaregiverTodoComment } from '../../../domain/entities/CaregiverTodo.js';
 
@@ -95,63 +92,11 @@ export const mapInvitation = (row: {
   acceptedAt: row.accepted_at ? toIso(row.accepted_at) : null,
 });
 
-export const mapMedication = (row: {
-  id: string;
-  household_id: string;
-  senior_id: string;
-  name: string;
-  dosage: string;
-  form: MedicationForm;
-  frequency: string;
-  prescribed_by: string | null;
-  prescription_date: string | Date | null;
-  start_date: string | Date;
-  end_date: string | Date | null;
-  instructions: string | null;
-  created_by_user_id: string;
-  created_at: string | Date;
-  updated_at: string | Date;
-}): Medication => ({
-  id: row.id,
-  householdId: row.household_id,
-  seniorId: row.senior_id,
-  name: row.name,
-  dosage: row.dosage,
-  form: row.form,
-  frequency: row.frequency,
-  prescribedBy: row.prescribed_by,
-  prescriptionDate: row.prescription_date ? toIso(row.prescription_date) : null,
-  startDate: toIso(row.start_date),
-  endDate: row.end_date ? toIso(row.end_date) : null,
-  instructions: row.instructions,
-  createdByUserId: row.created_by_user_id,
-  createdAt: toIso(row.created_at),
-  updatedAt: toIso(row.updated_at),
-});
-
-export const mapReminder = (row: {
-  id: string;
-  medication_id: string;
-  time: string;
-  days_of_week: number[] | string; // May come as array or string representation
-  enabled: boolean;
-  created_at: string | Date;
-  updated_at: string | Date;
-}): MedicationReminder => ({
-  id: row.id,
-  medicationId: row.medication_id,
-  time: row.time,
-  daysOfWeek: typeof row.days_of_week === 'string' ? JSON.parse(row.days_of_week) : row.days_of_week,
-  enabled: row.enabled,
-  createdAt: toIso(row.created_at),
-  updatedAt: toIso(row.updated_at),
-});
-
 export const mapAppointment = (row: {
   id: string;
   household_id: string;
   title: string;
-  type: AppointmentType;
+  tags: string[] | string | null;
   date: string | Date;
   time: string;
   duration: number | null;
@@ -161,9 +106,8 @@ export const mapAppointment = (row: {
   location_name: string | null;
   phone_number: string | null;
   description: string | null;
-  professional_name: string | null;
-  preparation: string | null;
-  documents_to_take: string | null;
+  contact_name: string | null;
+  items_to_take: string | null;
   transport_arrangement: string | null;
   recurrence: Recurrence | string | null; // May come as object or JSON string
   status: AppointmentStatus;
@@ -174,7 +118,7 @@ export const mapAppointment = (row: {
   id: row.id,
   householdId: row.household_id,
   title: row.title,
-  type: row.type,
+  tags: row.tags ? (typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags) : [],
   date: toIso(row.date).split('T')[0] || toIso(row.date), // Extract YYYY-MM-DD from ISO string
   time: row.time,
   duration: row.duration,
@@ -184,9 +128,8 @@ export const mapAppointment = (row: {
   locationName: row.location_name,
   phoneNumber: row.phone_number,
   description: row.description,
-  professionalName: row.professional_name,
-  preparation: row.preparation,
-  documentsToTake: row.documents_to_take,
+  contactName: row.contact_name,
+  itemsToTake: row.items_to_take,
   transportArrangement: row.transport_arrangement,
   recurrence: row.recurrence ? (typeof row.recurrence === 'string' ? JSON.parse(row.recurrence) : row.recurrence) : null,
   status: row.status,
@@ -369,32 +312,6 @@ export const mapDocument = (row: {
   originalFolderId: row.original_folder_id ?? null,
 });
 
-export function mapMedicationLog(row: {
-  id: string;
-  medication_id: string;
-  household_id: string;
-  scheduled_date: string | Date;
-  scheduled_time?: string | null;
-  taken_at: string | Date;
-  taken_by_user_id?: string | null;
-  note?: string | null;
-  created_at: string | Date;
-}): MedicationLog {
-  return {
-    id: row.id,
-    medicationId: row.medication_id,
-    householdId: row.household_id,
-    scheduledDate: typeof row.scheduled_date === 'string'
-      ? row.scheduled_date.slice(0, 10)
-      : row.scheduled_date.toISOString().slice(0, 10),
-    takenAt: toIso(row.taken_at),
-    createdAt: toIso(row.created_at),
-    ...(row.scheduled_time != null && { scheduledTime: row.scheduled_time }),
-    ...(row.taken_by_user_id != null && { takenByUserId: row.taken_by_user_id }),
-    ...(row.note != null && { note: row.note }),
-  };
-}
-
 export const mapDocumentFolder = (row: {
   id: string;
   household_id: string;
@@ -403,7 +320,7 @@ export const mapDocumentFolder = (row: {
   name: string;
   description: string | null;
   type: 'system_root' | 'senior_folder' | 'user_folder';
-  system_root_type: 'medical' | 'administrative' | 'trash' | null;
+  system_root_type: 'personal' | 'administrative' | 'trash' | null;
   created_by_user_id: string;
   created_at: string | Date;
   updated_at: string | Date;

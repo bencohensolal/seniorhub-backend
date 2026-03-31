@@ -1,16 +1,5 @@
 import type { AppointmentReminder } from './AppointmentReminder.js';
 
-export type AppointmentType =
-  | 'doctor'
-  | 'specialist'
-  | 'dentist'
-  | 'lab'
-  | 'imaging'
-  | 'therapy'
-  | 'pharmacy'
-  | 'hospital'
-  | 'other';
-
 export type AppointmentStatus =
   | 'scheduled'
   | 'confirmed'
@@ -38,7 +27,7 @@ export interface Appointment {
   id: string;
   householdId: string;
   title: string;
-  type: AppointmentType;
+  tags: string[];
   date: string; // ISO date string (YYYY-MM-DD)
   time: string; // HH:MM format
   duration: number | null; // minutes
@@ -54,9 +43,8 @@ export interface Appointment {
   
   // Details
   description: string | null;
-  professionalName: string | null;
-  preparation: string | null;
-  documentsToTake: string | null;
+  contactName: string | null;
+  itemsToTake: string | null;
   transportArrangement: string | null;
   
   // Recurrence
@@ -77,7 +65,7 @@ export interface AppointmentWithReminders extends Appointment {
 export interface CreateAppointmentInput {
   householdId: string;
   title: string;
-  type: AppointmentType;
+  tags?: string[];
   date: string;
   time: string;
   duration?: number;
@@ -87,9 +75,8 @@ export interface CreateAppointmentInput {
   locationName?: string;
   phoneNumber?: string;
   description?: string;
-  professionalName?: string;
-  preparation?: string;
-  documentsToTake?: string;
+  contactName?: string;
+  itemsToTake?: string;
   transportArrangement?: string;
   recurrence?: Recurrence;
   status?: AppointmentStatus;
@@ -98,7 +85,7 @@ export interface CreateAppointmentInput {
 
 export interface UpdateAppointmentInput {
   title?: string;
-  type?: AppointmentType;
+  tags?: string[];
   date?: string;
   time?: string;
   duration?: number | null;
@@ -108,9 +95,8 @@ export interface UpdateAppointmentInput {
   locationName?: string | null;
   phoneNumber?: string | null;
   description?: string | null;
-  professionalName?: string | null;
-  preparation?: string | null;
-  documentsToTake?: string | null;
+  contactName?: string | null;
+  itemsToTake?: string | null;
   transportArrangement?: string | null;
   recurrence?: Recurrence | null;
   status?: AppointmentStatus;

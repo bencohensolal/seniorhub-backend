@@ -8,7 +8,6 @@ import { requireWritePermission } from '../plugins/authContext.js';
 
 const updatePrivacySettingsBodySchema = z.object({
   shareProfile: z.boolean().optional(),
-  shareHealthData: z.boolean().optional(),
   shareActivityHistory: z.boolean().optional(),
   allowAnalytics: z.boolean().optional(),
 });
@@ -43,11 +42,10 @@ export function registerPrivacySettingsRoutes(
                 type: 'object',
                 properties: {
                   shareProfile: { type: 'boolean' },
-                  shareHealthData: { type: 'boolean' },
                   shareActivityHistory: { type: 'boolean' },
                   allowAnalytics: { type: 'boolean' },
                 },
-                required: ['shareProfile', 'shareHealthData', 'shareActivityHistory', 'allowAnalytics'],
+                required: ['shareProfile', 'shareActivityHistory', 'allowAnalytics'],
               },
             },
             required: ['data'],
@@ -75,7 +73,6 @@ export function registerPrivacySettingsRoutes(
         return reply.status(200).send({
           data: {
             shareProfile: settings.shareProfile,
-            shareHealthData: settings.shareHealthData,
             shareActivityHistory: settings.shareActivityHistory,
             allowAnalytics: settings.allowAnalytics,
           },
@@ -97,7 +94,6 @@ export function registerPrivacySettingsRoutes(
           type: 'object',
           properties: {
             shareProfile: { type: 'boolean' },
-            shareHealthData: { type: 'boolean' },
             shareActivityHistory: { type: 'boolean' },
             allowAnalytics: { type: 'boolean' },
           },
@@ -110,12 +106,11 @@ export function registerPrivacySettingsRoutes(
                 type: 'object',
                 properties: {
                   shareProfile: { type: 'boolean' },
-                  shareHealthData: { type: 'boolean' },
                   shareActivityHistory: { type: 'boolean' },
                   allowAnalytics: { type: 'boolean' },
                   updatedAt: { type: 'string' },
                 },
-                required: ['shareProfile', 'shareHealthData', 'shareActivityHistory', 'allowAnalytics', 'updatedAt'],
+                required: ['shareProfile', 'shareActivityHistory', 'allowAnalytics', 'updatedAt'],
               },
             },
             required: ['data'],
@@ -155,7 +150,6 @@ export function registerPrivacySettingsRoutes(
         return reply.status(200).send({
           data: {
             shareProfile: settings.shareProfile,
-            shareHealthData: settings.shareHealthData,
             shareActivityHistory: settings.shareActivityHistory,
             allowAnalytics: settings.allowAnalytics,
             updatedAt: settings.updatedAt,

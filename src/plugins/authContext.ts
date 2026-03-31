@@ -60,7 +60,7 @@ export const registerAuthContext = (fastify: FastifyInstance): void => {
     // Public endpoints that don't require authentication
     const publicEndpoints = [
       '/health',
-      '/v1/medications/autocomplete',
+
       '/v1/invitations/accept-link',
       '/v1/households/invitations/resolve',
       '/v1/households/invitations/accept',

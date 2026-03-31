@@ -7,7 +7,6 @@ export interface PrivacySettings {
   id: string;
   userId: string;
   shareProfile: boolean;
-  shareHealthData: boolean;
   shareActivityHistory: boolean;
   allowAnalytics: boolean;
   createdAt: string;
@@ -16,7 +15,6 @@ export interface PrivacySettings {
 
 export interface UpdatePrivacySettingsInput {
   shareProfile?: boolean;
-  shareHealthData?: boolean;
   shareActivityHistory?: boolean;
   allowAnalytics?: boolean;
 }

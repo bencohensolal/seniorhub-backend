@@ -19,11 +19,6 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
-import {
-  assertRequesterCanShareHealthData,
-  buildHouseholdPrivacyContext,
-  filterAppointmentsByPrivacy,
-} from '../../../domain/services/privacyFilter.js';
 import { NotFoundError } from '../../../domain/errors/index.js';
 
 export function registerOccurrenceRoutes(
@@ -96,7 +91,6 @@ export function registerOccurrenceRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const requester = getRequesterContext(request);
@@ -165,7 +159,6 @@ export function registerOccurrenceRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const requester = getRequesterContext(request);
@@ -223,7 +216,6 @@ export function registerOccurrenceRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const requester = getRequesterContext(request);
@@ -301,16 +293,6 @@ export function registerOccurrenceRoutes(
           throw new NotFoundError('Appointment not found.');
         }
 
-        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
-        const visibleAppointment = filterAppointmentsByPrivacy(
-          [appointment],
-          privacyContext,
-          request.requester?.userId,
-        );
-        if (visibleAppointment.length === 0) {
-          throw new NotFoundError('Appointment not found.');
-        }
-
         const requester = getRequesterContext(request);
         const occurrences = await useCases.listAppointmentOccurrencesUseCase.execute({
           userId: requester.userId,
@@ -352,10 +334,9 @@ export function registerOccurrenceRoutes(
             locationName: { type: 'string', maxLength: 255 },
             address: { type: 'string', maxLength: 500 },
             phoneNumber: { type: 'string', maxLength: 50 },
-            professionalName: { type: 'string', maxLength: 255 },
+            contactName: { type: 'string', maxLength: 255 },
             description: { type: 'string', maxLength: 1000 },
-            preparation: { type: 'string', maxLength: 1000 },
-            documentsToTake: { type: 'string', maxLength: 500 },
+            itemsToTake: { type: 'string', maxLength: 500 },
             transportArrangement: { type: 'string', maxLength: 500 },
             notes: { type: 'string', maxLength: 1000 },
           },
@@ -388,7 +369,6 @@ export function registerOccurrenceRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const requester = getRequesterContext(request);
@@ -450,7 +430,6 @@ export function registerOccurrenceRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const requester = getRequesterContext(request);

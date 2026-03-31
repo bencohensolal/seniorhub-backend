@@ -36,9 +36,9 @@ export class CreateDocumentUseCase {
       throw new ForbiddenError('Folder not found or does not belong to this household.');
     }
 
-    // Disallow uploading directly into Medical Documents root — must go inside a senior folder
-    if (folder.type === 'system_root' && folder.systemRootType === 'medical') {
-      throw new ForbiddenError('Cannot upload a document directly into Medical Documents. Navigate into a senior folder first.');
+    // Disallow uploading directly into Personal Documents root — must go inside a senior folder
+    if (folder.type === 'system_root' && folder.systemRootType === 'personal') {
+      throw new ForbiddenError('Cannot upload a document directly into Personal Documents. Navigate into a senior folder first.');
     }
 
     // Create document

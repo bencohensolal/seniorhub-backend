@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
-import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput, AppointmentType, AppointmentStatus } from '../../../domain/entities/Appointment.js';
+import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput, AppointmentStatus } from '../../../domain/entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../../domain/entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../../../domain/entities/AppointmentOccurrence.js';
 import {
@@ -23,7 +23,7 @@ export class PostgresAppointmentRepository {
       id: string;
       household_id: string;
       title: string;
-      type: AppointmentType;
+      tags: string | null;
       date: string | Date;
       time: string;
       duration: number | null;
@@ -33,9 +33,8 @@ export class PostgresAppointmentRepository {
       location_name: string | null;
       phone_number: string | null;
       description: string | null;
-      professional_name: string | null;
-      preparation: string | null;
-      documents_to_take: string | null;
+      contact_name: string | null;
+      items_to_take: string | null;
       transport_arrangement: string | null;
       recurrence: string | null;
       status: AppointmentStatus;
@@ -43,9 +42,9 @@ export class PostgresAppointmentRepository {
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, household_id, title, type, date, time, duration,
+      `SELECT id, household_id, title, tags::text, date, time, duration,
               senior_ids::text, caregiver_id, address, location_name, phone_number,
-              description, professional_name, preparation, documents_to_take,
+              description, contact_name, items_to_take,
               transport_arrangement, recurrence::text, status, notes,
               created_at, updated_at
        FROM appointments a
@@ -107,7 +106,7 @@ export class PostgresAppointmentRepository {
       id: string;
       household_id: string;
       title: string;
-      type: AppointmentType;
+      tags: string | null;
       date: string | Date;
       time: string;
       duration: number | null;
@@ -117,9 +116,8 @@ export class PostgresAppointmentRepository {
       location_name: string | null;
       phone_number: string | null;
       description: string | null;
-      professional_name: string | null;
-      preparation: string | null;
-      documents_to_take: string | null;
+      contact_name: string | null;
+      items_to_take: string | null;
       transport_arrangement: string | null;
       recurrence: string | null;
       status: AppointmentStatus;
@@ -127,9 +125,9 @@ export class PostgresAppointmentRepository {
       created_at: string | Date;
       updated_at: string | Date;
     }>(
-      `SELECT id, household_id, title, type, date, time, duration,
+      `SELECT id, household_id, title, tags::text, date, time, duration,
               senior_ids::text, caregiver_id, address, location_name, phone_number,
-              description, professional_name, preparation, documents_to_take,
+              description, contact_name, items_to_take,
               transport_arrangement, recurrence::text, status, notes,
               created_at, updated_at
        FROM appointments
@@ -175,7 +173,7 @@ export class PostgresAppointmentRepository {
       id: string;
       household_id: string;
       title: string;
-      type: AppointmentType;
+      tags: string | null;
       date: string | Date;
       time: string;
       duration: number | null;
@@ -185,9 +183,8 @@ export class PostgresAppointmentRepository {
       location_name: string | null;
       phone_number: string | null;
       description: string | null;
-      professional_name: string | null;
-      preparation: string | null;
-      documents_to_take: string | null;
+      contact_name: string | null;
+      items_to_take: string | null;
       transport_arrangement: string | null;
       recurrence: string | null;
       status: AppointmentStatus;
@@ -196,23 +193,23 @@ export class PostgresAppointmentRepository {
       updated_at: string | Date;
     }>(
       `INSERT INTO appointments (
-         id, household_id, title, type, date, time, duration,
+         id, household_id, title, tags, date, time, duration,
          senior_ids, caregiver_id, address, location_name, phone_number,
-         description, professional_name, preparation, documents_to_take,
+         description, contact_name, items_to_take,
          transport_arrangement, recurrence, status, notes,
          created_at, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $21)
-       RETURNING id, household_id, title, type, date, time, duration,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $20)
+       RETURNING id, household_id, title, tags::text, date, time, duration,
                  senior_ids::text, caregiver_id, address, location_name, phone_number,
-                 description, professional_name, preparation, documents_to_take,
+                 description, contact_name, items_to_take,
                  transport_arrangement, recurrence::text, status, notes,
                  created_at, updated_at`,
       [
         id,
         input.householdId,
         input.title,
-        input.type,
+        JSON.stringify(input.tags ?? []),
         input.date,
         input.time,
         input.duration ?? null,
@@ -222,9 +219,8 @@ export class PostgresAppointmentRepository {
         input.locationName ?? null,
         input.phoneNumber ?? null,
         input.description ?? null,
-        input.professionalName ?? null,
-        input.preparation ?? null,
-        input.documentsToTake ?? null,
+        input.contactName ?? null,
+        input.itemsToTake ?? null,
         input.transportArrangement ?? null,
         input.recurrence ? JSON.stringify(input.recurrence) : null,
         status,
@@ -250,9 +246,9 @@ export class PostgresAppointmentRepository {
       updates.push(`title = $${paramIndex++}`);
       values.push(input.title);
     }
-    if (input.type !== undefined) {
-      updates.push(`type = $${paramIndex++}`);
-      values.push(input.type);
+    if (input.tags !== undefined) {
+      updates.push(`tags = $${paramIndex++}`);
+      values.push(JSON.stringify(input.tags));
     }
     if (input.date !== undefined) {
       updates.push(`date = $${paramIndex++}`);
@@ -290,17 +286,13 @@ export class PostgresAppointmentRepository {
       updates.push(`description = $${paramIndex++}`);
       values.push(input.description);
     }
-    if (input.professionalName !== undefined) {
-      updates.push(`professional_name = $${paramIndex++}`);
-      values.push(input.professionalName);
+    if (input.contactName !== undefined) {
+      updates.push(`contact_name = $${paramIndex++}`);
+      values.push(input.contactName);
     }
-    if (input.preparation !== undefined) {
-      updates.push(`preparation = $${paramIndex++}`);
-      values.push(input.preparation);
-    }
-    if (input.documentsToTake !== undefined) {
-      updates.push(`documents_to_take = $${paramIndex++}`);
-      values.push(input.documentsToTake);
+    if (input.itemsToTake !== undefined) {
+      updates.push(`items_to_take = $${paramIndex++}`);
+      values.push(input.itemsToTake);
     }
     if (input.transportArrangement !== undefined) {
       updates.push(`transport_arrangement = $${paramIndex++}`);
@@ -334,7 +326,7 @@ export class PostgresAppointmentRepository {
       id: string;
       household_id: string;
       title: string;
-      type: AppointmentType;
+      tags: string | null;
       date: string | Date;
       time: string;
       duration: number | null;
@@ -344,9 +336,8 @@ export class PostgresAppointmentRepository {
       location_name: string | null;
       phone_number: string | null;
       description: string | null;
-      professional_name: string | null;
-      preparation: string | null;
-      documents_to_take: string | null;
+      contact_name: string | null;
+      items_to_take: string | null;
       transport_arrangement: string | null;
       recurrence: string | null;
       status: AppointmentStatus;
@@ -357,9 +348,9 @@ export class PostgresAppointmentRepository {
       `UPDATE appointments
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
-       RETURNING id, household_id, title, type, date, time, duration,
+       RETURNING id, household_id, title, tags::text, date, time, duration,
                  senior_ids::text, caregiver_id, address, location_name, phone_number,
-                 description, professional_name, preparation, documents_to_take,
+                 description, contact_name, items_to_take,
                  transport_arrangement, recurrence::text, status, notes,
                  created_at, updated_at`,
       values,

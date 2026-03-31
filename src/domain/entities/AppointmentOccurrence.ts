@@ -19,10 +19,9 @@ export interface OccurrenceOverrides {
   locationName?: string;
   address?: string;
   phoneNumber?: string;
-  professionalName?: string;
+  contactName?: string;
   description?: string;
-  preparation?: string;
-  documentsToTake?: string;
+  itemsToTake?: string;
   transportArrangement?: string;
   notes?: string;
 }
@@ -84,7 +83,7 @@ export interface GeneratedOccurrence {
   
   // Merged data (from recurring appointment + overrides)
   title: string;
-  type: string;
+  tags: string[];
   duration: number | null;
   seniorIds: string[];
   caregiverId: string | null;
@@ -92,9 +91,8 @@ export interface GeneratedOccurrence {
   locationName: string | null;
   phoneNumber: string | null;
   description: string | null;
-  professionalName: string | null;
-  preparation: string | null;
-  documentsToTake: string | null;
+  contactName: string | null;
+  itemsToTake: string | null;
   transportArrangement: string | null;
   notes: string | null;
   

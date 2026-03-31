@@ -5,7 +5,6 @@ export interface PlanLimits {
   maxSeniors: number;
   /** Max caregiver/family/intervenant members allowed */
   maxCaregivers: number;
-  maxMedicationsPerSenior: number;
   maxActiveAppointments: number;
   maxActiveTasks: number;
   maxCaregiverTodos: number;
@@ -41,7 +40,7 @@ function buildGratuitLimits(): PlanLimits {
   return {
     maxSeniors:                envInt('PLAN_GRATUIT_MAX_SENIORS', 1),
     maxCaregivers:             envInt('PLAN_GRATUIT_MAX_CAREGIVERS', 2),
-    maxMedicationsPerSenior:   envInt('PLAN_GRATUIT_MAX_MEDICATIONS_PER_SENIOR', 3),
+
     maxActiveAppointments:     envInt('PLAN_GRATUIT_MAX_ACTIVE_APPOINTMENTS', 3),
     maxActiveTasks:            envInt('PLAN_GRATUIT_MAX_ACTIVE_TASKS', 5),
     maxCaregiverTodos:         envInt('PLAN_GRATUIT_MAX_CAREGIVER_TODOS', 5),
@@ -57,7 +56,7 @@ function buildFamilleLimits(): PlanLimits {
   return {
     maxSeniors:                envInt('PLAN_FAMILLE_MAX_SENIORS', 2),
     maxCaregivers:             envInt('PLAN_FAMILLE_MAX_CAREGIVERS', 4),
-    maxMedicationsPerSenior:   envInt('PLAN_FAMILLE_MAX_MEDICATIONS_PER_SENIOR', 15),
+
     maxActiveAppointments:     envInt('PLAN_FAMILLE_MAX_ACTIVE_APPOINTMENTS', 15),
     maxActiveTasks:            envInt('PLAN_FAMILLE_MAX_ACTIVE_TASKS', -1),
     maxCaregiverTodos:         envInt('PLAN_FAMILLE_MAX_CAREGIVER_TODOS', -1),
@@ -73,7 +72,7 @@ function buildSereniteLimits(): PlanLimits {
   return {
     maxSeniors:                envInt('PLAN_SERENITE_MAX_SENIORS', -1),
     maxCaregivers:             envInt('PLAN_SERENITE_MAX_CAREGIVERS', -1),
-    maxMedicationsPerSenior:   envInt('PLAN_SERENITE_MAX_MEDICATIONS_PER_SENIOR', -1),
+
     maxActiveAppointments:     envInt('PLAN_SERENITE_MAX_ACTIVE_APPOINTMENTS', -1),
     maxActiveTasks:            envInt('PLAN_SERENITE_MAX_ACTIVE_TASKS', -1),
     maxCaregiverTodos:         envInt('PLAN_SERENITE_MAX_CAREGIVER_TODOS', -1),

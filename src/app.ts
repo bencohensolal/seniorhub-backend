@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { householdsRoutes } from './routes/households/index.js';
-import { registerPublicMedicationRoutes } from './routes/medicationRoutes.js';
+
 import { registerPrivacySettingsRoutes } from './routes/privacySettingsRoutes.js';
 import { registerUserProfileRoutes } from './routes/userProfileRoutes.js';
 import { registerPushTokenRoutes } from './routes/me/pushTokenRoutes.js';
@@ -10,9 +10,7 @@ import { registerAuthContext } from './plugins/authContext.js';
 import { createHouseholdRepository } from './data/repositories/createHouseholdRepository.js';
 import { getPostgresPool } from './data/db/postgres.js';
 import { PostgresNotificationRepository } from './data/repositories/postgres/PostgresNotificationRepository.js';
-import { ExpoPushService } from './services/ExpoPushService.js';
-import { CheckMissedMedicationsUseCase } from './domain/usecases/notifications/CheckMissedMedicationsUseCase.js';
-import { startMedicationAlertScheduler } from './scheduler/medicationAlertScheduler.js';
+
 import { registerInternalRoutes } from './routes/internal/triggerRoutes.js';
 import { registerEmailAuthRoutes } from './routes/auth/emailAuthRoutes.js';
 import { registerRevenueCatWebhookRoute } from './routes/webhooks/revenuecatWebhookRoute.js';
@@ -67,7 +65,7 @@ export const buildApp = () => {
         version: '0.1.0',
         description: 'Household onboarding and invitation management API contracts.',
       },
-      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Medications' }, { name: 'Observability' }, { name: 'Privacy' }, { name: 'Users' }],
+      tags: [{ name: 'Households' }, { name: 'Invitations' }, { name: 'Journal' }, { name: 'Observability' }, { name: 'Privacy' }, { name: 'Users' }],
     },
   });
 
@@ -79,7 +77,6 @@ export const buildApp = () => {
 
   registerAuthContext(app);
   app.register(householdsRoutes);
-  registerPublicMedicationRoutes(app);
 
   // Privacy settings + user profile routes
   const repository = createHouseholdRepository();
@@ -97,16 +94,11 @@ export const buildApp = () => {
   const notifRepo = new PostgresNotificationRepository(pool);
   registerPushTokenRoutes(app, notifRepo);
 
-  // Caregiver missed-medication alert scheduler
-  const pushService = new ExpoPushService();
-  const checkMissedUseCase = new CheckMissedMedicationsUseCase(notifRepo, pushService);
-  startMedicationAlertScheduler(checkMissedUseCase);
-
   // RevenueCat webhook (unauthenticated — bearer token verified internally)
   registerRevenueCatWebhookRoute(app, repository);
 
   // Internal routes (manual trigger for testing)
-  registerInternalRoutes(app, checkMissedUseCase, notifRepo);
+  registerInternalRoutes(app, notifRepo);
 
   return app;
 };

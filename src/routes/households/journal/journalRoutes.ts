@@ -1,0 +1,296 @@
+import type { FastifyInstance } from 'fastify';
+import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
+import type { ListJournalEntriesUseCase } from '../../../domain/usecases/journal/ListJournalEntriesUseCase.js';
+import type { CreateJournalEntryUseCase } from '../../../domain/usecases/journal/CreateJournalEntryUseCase.js';
+import type { UpdateJournalEntryUseCase } from '../../../domain/usecases/journal/UpdateJournalEntryUseCase.js';
+import type { DeleteJournalEntryUseCase } from '../../../domain/usecases/journal/DeleteJournalEntryUseCase.js';
+import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
+import {
+  createJournalEntryBodySchema,
+  updateJournalEntryBodySchema,
+  journalEntryParamsSchema,
+  listJournalEntriesQuerySchema,
+} from './journalSchemas.js';
+import { handleDomainError } from '../../errorHandler.js';
+import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { requireWritePermission } from '../../../plugins/authContext.js';
+
+export function registerJournalRoutes(
+  fastify: FastifyInstance,
+  repository: HouseholdRepository,
+  useCases: {
+    listJournalEntriesUseCase: ListJournalEntriesUseCase;
+    createJournalEntryUseCase: CreateJournalEntryUseCase;
+    updateJournalEntryUseCase: UpdateJournalEntryUseCase;
+    deleteJournalEntryUseCase: DeleteJournalEntryUseCase;
+  },
+): void {
+  // GET /v1/households/:householdId/journal - List journal entries
+  fastify.get(
+    '/v1/households/:householdId/journal',
+    {
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            seniorId: { type: 'string' },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+            limit: { type: 'integer', minimum: 1, maximum: 100 },
+            offset: { type: 'integer', minimum: 0 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'array' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      const queryResult = listJournalEntriesQuerySchema.safeParse(request.query);
+
+      if (!paramsResult.success || !queryResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const filters = queryResult.data;
+        const journalFilters: {
+          seniorId?: string;
+          category?: typeof filters.category;
+          limit?: number;
+          offset?: number;
+        } = {};
+        if (filters.seniorId) journalFilters.seniorId = filters.seniorId;
+        if (filters.category) journalFilters.category = filters.category;
+        if (filters.limit) journalFilters.limit = filters.limit;
+        if (filters.offset !== undefined) journalFilters.offset = filters.offset;
+
+        const entries = await useCases.listJournalEntriesUseCase.execute({
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+          filters: journalFilters,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: entries,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/journal - Create journal entry
+  fastify.post(
+    '/v1/households/:householdId/journal',
+    {
+      preHandler: requireWritePermission,
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        body: {
+          type: 'object',
+          required: ['seniorId', 'content'],
+          properties: {
+            seniorId: { type: 'string' },
+            content: { type: 'string', minLength: 1, maxLength: 5000 },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+          },
+        },
+        response: {
+          201: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object', additionalProperties: true },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = paramsSchema.safeParse(request.params);
+      const bodyResult = createJournalEntryBodySchema.safeParse(request.body);
+
+      if (!paramsResult.success || !bodyResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        const body = bodyResult.data;
+
+        const entry = await useCases.createJournalEntryUseCase.execute({
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+          seniorId: body.seniorId,
+          content: body.content,
+          ...(body.category !== undefined && { category: body.category }),
+        });
+
+        return reply.status(201).send({
+          status: 'success',
+          data: entry,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // PATCH /v1/households/:householdId/journal/:entryId - Update journal entry
+  fastify.patch(
+    '/v1/households/:householdId/journal/:entryId',
+    {
+      preHandler: requireWritePermission,
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            entryId: { type: 'string' },
+          },
+          required: ['householdId', 'entryId'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            content: { type: 'string', minLength: 1, maxLength: 5000 },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object', additionalProperties: true },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = journalEntryParamsSchema.safeParse(request.params);
+      const bodyResult = updateJournalEntryBodySchema.safeParse(request.body);
+
+      if (!paramsResult.success || !bodyResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        const body = bodyResult.data;
+
+        const updates: Record<string, unknown> = {};
+        if (body.content !== undefined) updates.content = body.content;
+        if (body.category !== undefined) updates.category = body.category;
+
+        const entry = await useCases.updateJournalEntryUseCase.execute({
+          entryId: paramsResult.data.entryId,
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+          updates,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          data: entry,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // DELETE /v1/households/:householdId/journal/:entryId - Delete journal entry
+  fastify.delete(
+    '/v1/households/:householdId/journal/:entryId',
+    {
+      preHandler: requireWritePermission,
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            entryId: { type: 'string' },
+          },
+          required: ['householdId', 'entryId'],
+        },
+        response: {
+          204: {
+            type: 'null',
+            description: 'Journal entry deleted successfully',
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = journalEntryParamsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        await useCases.deleteJournalEntryUseCase.execute({
+          entryId: paramsResult.data.entryId,
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+        });
+
+        return reply.status(204).send();
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+}

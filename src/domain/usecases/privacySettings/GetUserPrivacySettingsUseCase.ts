@@ -21,7 +21,6 @@ export class GetUserPrivacySettingsUseCase {
         id: '', // Will be generated on first save
         userId: input.userId,
         shareProfile: true,
-        shareHealthData: true,
         shareActivityHistory: true,
         allowAnalytics: false,
         createdAt: new Date().toISOString(),

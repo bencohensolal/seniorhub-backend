@@ -11,7 +11,6 @@ import type {
   InvitationCandidate,
 } from '../../domain/repositories/HouseholdRepository.js';
 import type { DisplayTablet } from '../../domain/entities/DisplayTablet.js';
-import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../../domain/entities/Medication.js';
 import type { PrivacySettings } from '../../domain/entities/PrivacySettings.js';
 import type { TabletDisplayConfig } from '../../domain/entities/TabletDisplayConfig.js';
 import type { UserProfile } from '../../domain/entities/UserProfile.js';
@@ -693,56 +692,6 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     };
   }
 
-  // Medication methods - stub implementations for test compatibility
-  async listHouseholdMedications(_householdId: string): Promise<Medication[]> {
-    return [];
-  }
-
-  async getMedicationById(_medicationId: string, _householdId: string): Promise<Medication | null> {
-    return null;
-  }
-
-  async createMedication(_input: CreateMedicationInput): Promise<Medication> {
-    throw new Error('Medication operations not implemented in InMemoryRepository');
-  }
-
-  async updateMedication(_medicationId: string, _householdId: string, _input: UpdateMedicationInput): Promise<Medication> {
-    throw new Error('Medication operations not implemented in InMemoryRepository');
-  }
-
-  async deleteMedication(_medicationId: string, _householdId: string): Promise<void> {
-    throw new Error('Medication operations not implemented in InMemoryRepository');
-  }
-
-  // Medication Log methods - stub implementations for test compatibility
-  async createMedicationLog(_input: unknown): Promise<never> {
-    throw new Error('MedicationLog operations not implemented in InMemoryRepository');
-  }
-
-  async getMedicationLogs(_householdId: string, _date: string): Promise<never[]> {
-    return [];
-  }
-
-  // Medication Reminder methods - stub implementations for test compatibility
-  async listMedicationReminders(_medicationId: string, _householdId: string): Promise<never[]> {
-    return [];
-  }
-
-  async getReminderById(_reminderId: string, _medicationId: string, _householdId: string): Promise<null> {
-    return null;
-  }
-
-  async createReminder(_input: unknown): Promise<never> {
-    throw new Error('Reminder operations not implemented in InMemoryRepository');
-  }
-
-  async updateReminder(_reminderId: string, _medicationId: string, _householdId: string, _input: unknown): Promise<never> {
-    throw new Error('Reminder operations not implemented in InMemoryRepository');
-  }
-
-  async deleteReminder(_reminderId: string, _medicationId: string, _householdId: string): Promise<void> {
-    throw new Error('Reminder operations not implemented in InMemoryRepository');
-  }
 
   // Appointment methods - stub implementations for test compatibility
   async listHouseholdAppointments(_householdId: string): Promise<never[]> {
@@ -1103,8 +1052,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     // Determine systemRootType
     let systemRootType: SystemRootType | null = input.systemRootType ?? null;
     if (type === 'system_root' && !systemRootType) {
-      // Default to 'medical' if not specified
-      systemRootType = 'medical';
+      // Default to 'personal' if not specified
+      systemRootType = 'personal';
     }
 
     const folder: DocumentFolder = {
@@ -1207,7 +1156,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     };
   }
 
-  async getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> {
+  async getSystemRootFolder(householdId: string, systemRootType: 'personal' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> {
     const folder = documentFolders.find(
       (f) =>
         f.householdId === householdId &&
@@ -1224,15 +1173,15 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   }
 
   async ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void> {
-    const types: ('medical' | 'administrative')[] = ['medical', 'administrative'];
+    const types: ('personal' | 'administrative')[] = ['personal', 'administrative'];
     for (const type of types) {
       const existing = await this.getSystemRootFolder(householdId, type);
       if (!existing) {
         await this.createDocumentFolder({
           householdId,
           parentFolderId: null,
-          name: type === 'medical' ? 'Medical Documents' : 'Administrative Documents',
-          description: type === 'medical' ? 'Medical records and health-related documents' : 'Administrative and legal documents',
+          name: type === 'personal' ? 'Personal Documents' : 'Administrative Documents',
+          description: type === 'personal' ? 'Personal records and documents' : 'Administrative and legal documents',
           type: 'system_root',
           systemRootType: type,
           createdByUserId: userId,
@@ -1241,7 +1190,7 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     }
   }
 
-  async ensureSeniorFoldersForHousehold(_householdId: string, _medicalRootId: string, _userId: string): Promise<void> {
+  async ensureSeniorFoldersForHousehold(_householdId: string, _personalRootId: string, _userId: string): Promise<void> {
     // No-op in in-memory repository (used for tests only)
   }
 

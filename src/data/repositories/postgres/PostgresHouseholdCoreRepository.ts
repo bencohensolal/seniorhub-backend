@@ -275,7 +275,7 @@ export class PostgresHouseholdCoreRepository {
 
     const membersResult = await this.pool.query<{
       id: string;
-      perm_manage_medications: boolean;
+      perm_manage_journal: boolean;
       perm_manage_appointments: boolean;
       perm_manage_tasks: boolean;
       perm_manage_caregiver_todos: boolean;
@@ -284,7 +284,7 @@ export class PostgresHouseholdCoreRepository {
       perm_view_documents: boolean;
       perm_manage_documents: boolean;
     }>(
-      `SELECT id, perm_manage_medications, perm_manage_appointments,
+      `SELECT id, perm_manage_journal, perm_manage_appointments,
               perm_manage_tasks, perm_manage_caregiver_todos, perm_manage_members,
               perm_view_sensitive_info, perm_view_documents, perm_manage_documents
        FROM household_members
@@ -295,7 +295,7 @@ export class PostgresHouseholdCoreRepository {
     const memberPermissions: Record<string, HouseholdMemberPermissions> = {};
     for (const row of membersResult.rows) {
       memberPermissions[row.id] = {
-        manageMedications: row.perm_manage_medications,
+        manageJournal: row.perm_manage_journal,
         manageAppointments: row.perm_manage_appointments,
         manageTasks: row.perm_manage_tasks,
         manageCaregiverTodos: row.perm_manage_caregiver_todos,
@@ -327,7 +327,7 @@ export class PostgresHouseholdCoreRepository {
       for (const [memberId, perms] of Object.entries(input.memberPermissions)) {
         await this.pool.query(
           `UPDATE household_members SET
-            perm_manage_medications     = COALESCE($2, perm_manage_medications),
+            perm_manage_journal     = COALESCE($2, perm_manage_journal),
             perm_manage_appointments    = COALESCE($3, perm_manage_appointments),
             perm_manage_tasks           = COALESCE($4, perm_manage_tasks),
             perm_manage_caregiver_todos = COALESCE($5, perm_manage_caregiver_todos),
@@ -338,7 +338,7 @@ export class PostgresHouseholdCoreRepository {
            WHERE id = $1 AND household_id = $10`,
           [
             memberId,
-            perms.manageMedications ?? null,
+            perms.manageJournal ?? null,
             perms.manageAppointments ?? null,
             perms.manageTasks ?? null,
             perms.manageCaregiverTodos ?? null,
@@ -390,7 +390,7 @@ export class PostgresHouseholdCoreRepository {
       await client.query(
         `INSERT INTO household_members
          (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
-          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+          perm_manage_journal, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
           perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
          VALUES ($1, $2, $3, $4, $5, $6, 'caregiver', 'active', $7, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         [
@@ -401,7 +401,7 @@ export class PostgresHouseholdCoreRepository {
           normalizeName(requester.firstName),
           normalizeName(requester.lastName),
           createdAt,
-          caregiverPerms.manageMedications,
+          caregiverPerms.manageJournal,
           caregiverPerms.manageAppointments,
           caregiverPerms.manageTasks,
           caregiverPerms.manageCaregiverTodos,
@@ -745,7 +745,7 @@ export class PostgresHouseholdCoreRepository {
       await client.query(
         `INSERT INTO household_members
          (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
-          perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+          perm_manage_journal, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
           perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          ON CONFLICT (household_id, user_id)
@@ -756,7 +756,7 @@ export class PostgresHouseholdCoreRepository {
            role = EXCLUDED.role,
            status = 'active',
            joined_at = EXCLUDED.joined_at,
-           perm_manage_medications     = EXCLUDED.perm_manage_medications,
+           perm_manage_journal     = EXCLUDED.perm_manage_journal,
            perm_manage_appointments    = EXCLUDED.perm_manage_appointments,
            perm_manage_tasks           = EXCLUDED.perm_manage_tasks,
            perm_manage_caregiver_todos = EXCLUDED.perm_manage_caregiver_todos,
@@ -773,7 +773,7 @@ export class PostgresHouseholdCoreRepository {
           normalizeName(input.requester.lastName),
           invitation.assigned_role,
           acceptedAt,
-          invitePerms.manageMedications,
+          invitePerms.manageJournal,
           invitePerms.manageAppointments,
           invitePerms.manageTasks,
           invitePerms.manageCaregiverTodos,
@@ -1123,7 +1123,7 @@ export class PostgresHouseholdCoreRepository {
     }>(
       `UPDATE household_members
        SET role = $2,
-           perm_manage_medications     = $3,
+           perm_manage_journal     = $3,
            perm_manage_appointments    = $4,
            perm_manage_tasks           = $5,
            perm_manage_caregiver_todos = $6,
@@ -1136,7 +1136,7 @@ export class PostgresHouseholdCoreRepository {
       [
         memberId,
         newRole,
-        rolePerms.manageMedications,
+        rolePerms.manageJournal,
         rolePerms.manageAppointments,
         rolePerms.manageTasks,
         rolePerms.manageCaregiverTodos,

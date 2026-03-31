@@ -1,7 +1,7 @@
 import type { HouseholdRole } from './Member.js';
 
 export type HouseholdPermissionAction =
-  | 'manageMedications'
+  | 'manageJournal'
   | 'manageAppointments'
   | 'manageTasks'
   | 'manageCaregiverTodos'
@@ -11,7 +11,7 @@ export type HouseholdPermissionAction =
   | 'manageDocuments';
 
 export interface HouseholdMemberPermissions {
-  manageMedications: boolean;
+  manageJournal: boolean;
   manageAppointments: boolean;
   manageTasks: boolean;
   manageCaregiverTodos: boolean;
@@ -54,7 +54,7 @@ export const getDefaultHouseholdMemberPermissions = (
   switch (role) {
     case 'caregiver':
       return {
-        manageMedications: true,
+        manageJournal: true,
         manageAppointments: true,
         manageTasks: true,
         manageCaregiverTodos: true,
@@ -65,7 +65,7 @@ export const getDefaultHouseholdMemberPermissions = (
       };
     case 'family':
       return {
-        manageMedications: false,
+        manageJournal: false,
         manageAppointments: true,
         manageTasks: true,
         manageCaregiverTodos: true,
@@ -76,7 +76,7 @@ export const getDefaultHouseholdMemberPermissions = (
       };
     case 'intervenant':
       return {
-        manageMedications: true,
+        manageJournal: true,
         manageAppointments: true,
         manageTasks: false,
         manageCaregiverTodos: false,
@@ -88,7 +88,7 @@ export const getDefaultHouseholdMemberPermissions = (
     case 'senior':
     default:
       return {
-        manageMedications: false,
+        manageJournal: false,
         manageAppointments: false,
         manageTasks: false,
         manageCaregiverTodos: false,

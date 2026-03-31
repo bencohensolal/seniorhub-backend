@@ -30,15 +30,15 @@ describe('CreateFolderUseCase', () => {
 
     const folder = await useCase.execute({
       householdId: household.id,
-      name: 'Medical Documents',
-      description: 'Medical records and prescriptions',
+      name: 'Personal Documents',
+      description: 'Personal records and documents',
       parentFolderId: null,
       requester,
     });
 
     expect(folder).toBeDefined();
-    expect(folder.name).toBe('Medical Documents');
-    expect(folder.description).toBe('Medical records and prescriptions');
+    expect(folder.name).toBe('Personal Documents');
+    expect(folder.description).toBe('Personal records and documents');
     expect(folder.householdId).toBe(household.id);
     expect(folder.parentFolderId).toBeNull();
     expect(folder.createdByUserId).toBe('user-1');
@@ -63,8 +63,8 @@ describe('CreateFolderUseCase', () => {
     // Create parent folder first
     const parentFolder = await repository.createDocumentFolder({
       householdId: household.id,
-      name: 'Medical',
-      description: 'Medical documents',
+      name: 'Personal',
+      description: 'Personal documents',
       parentFolderId: null,
       createdByUserId: 'user-1',
     });
@@ -72,7 +72,7 @@ describe('CreateFolderUseCase', () => {
     const childFolder = await useCase.execute({
       householdId: household.id,
       name: 'Prescriptions',
-      description: 'Medication prescriptions',
+      description: 'Personal documents',
       parentFolderId: parentFolder.id,
       requester,
     });

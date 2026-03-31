@@ -3,8 +3,7 @@ import type { Member } from '../entities/Member.js';
 import type { Household, AuthenticatedRequester } from '../entities/Household.js';
 import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
 import type { HouseholdRole } from '../entities/Member.js';
-import type { Medication, CreateMedicationInput, UpdateMedicationInput } from '../entities/Medication.js';
-import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../entities/MedicationReminder.js';
+import type { JournalEntry, CreateJournalEntryInput, UpdateJournalEntryInput } from '../entities/JournalEntry.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../entities/AppointmentOccurrence.js';
@@ -20,7 +19,6 @@ import type { UserProfile, UpdateUserProfileInput } from '../entities/UserProfil
 import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../entities/Document.js';
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
-import type { MedicationLog, CreateMedicationLogInput } from '../entities/MedicationLog.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
 import type { SeniorDevice, SeniorDeviceWithToken, CreateSeniorDeviceInput, SeniorDeviceAuthInfo } from '../entities/SeniorDevice.js';
 import type { EmailAccount, EmailAccountWithHash, EmailAuthSessionRecord } from '../entities/EmailAccount.js';
@@ -100,23 +98,12 @@ export interface HouseholdRepository {
   updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member>;
   logAuditEvent(input: AuditEventInput): Promise<void>;
 
-  // Medications
-  listHouseholdMedications(householdId: string): Promise<Medication[]>;
-  getMedicationById(medicationId: string, householdId: string): Promise<Medication | null>;
-  createMedication(input: CreateMedicationInput): Promise<Medication>;
-  updateMedication(medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication>;
-  deleteMedication(medicationId: string, householdId: string): Promise<void>;
-
-  // Medication Logs
-  createMedicationLog(input: CreateMedicationLogInput): Promise<MedicationLog>;
-  getMedicationLogs(householdId: string, date: string): Promise<MedicationLog[]>;
-
-  // Medication Reminders
-  listMedicationReminders(medicationId: string, householdId: string): Promise<MedicationReminder[]>;
-  getReminderById(reminderId: string, medicationId: string, householdId: string): Promise<MedicationReminder | null>;
-  createReminder(input: CreateReminderInput): Promise<MedicationReminder>;
-  updateReminder(reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder>;
-  deleteReminder(reminderId: string, medicationId: string, householdId: string): Promise<void>;
+  // Journal
+  createJournalEntry(input: CreateJournalEntryInput): Promise<JournalEntry>;
+  listJournalEntries(householdId: string, options?: { seniorId?: string; limit?: number; offset?: number }): Promise<JournalEntry[]>;
+  getJournalEntry(householdId: string, entryId: string): Promise<JournalEntry | null>;
+  updateJournalEntry(householdId: string, entryId: string, input: UpdateJournalEntryInput): Promise<JournalEntry | null>;
+  deleteJournalEntry(householdId: string, entryId: string): Promise<boolean>;
 
   // Appointments
   listHouseholdAppointments(householdId: string): Promise<AppointmentWithReminders[]>;
@@ -226,14 +213,14 @@ export interface HouseholdRepository {
   updateDocumentFolder(folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder>;
   softDeleteDocumentFolder(folderId: string, householdId: string): Promise<void>;
   restoreDocumentFolder(folderId: string, householdId: string): Promise<void>;
-  getSystemRootFolder(householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null>;
+  getSystemRootFolder(householdId: string, systemRootType: 'personal' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null>;
   moveDocumentFolderToTrash(folderId: string, householdId: string, trashFolderId: string): Promise<void>;
   moveDocumentToTrash(documentId: string, householdId: string, trashFolderId: string): Promise<void>;
   restoreDocumentFolderFromTrash(folderId: string, householdId: string): Promise<void>;
   restoreDocumentFromTrash(documentId: string, householdId: string): Promise<void>;
   purgeExpiredTrashItems(householdId: string, retentionDays: number): Promise<{ folders: number; documents: number }>;
   ensureSystemRootsForHousehold(householdId: string, userId: string): Promise<void>;
-  ensureSeniorFoldersForHousehold(householdId: string, medicalRootId: string, userId: string): Promise<void>;
+  ensureSeniorFoldersForHousehold(householdId: string, personalRootId: string, userId: string): Promise<void>;
   listSeniorFolders(householdId: string): Promise<DocumentFolderWithCounts[]>;
 
   getDocumentById(documentId: string, householdId: string): Promise<Document | null>;
@@ -295,7 +282,7 @@ export interface HouseholdRepository {
     role: HouseholdRole;
     phoneNumber?: string | undefined;
     permissions: {
-      manageMedications: boolean;
+      manageJournal: boolean;
       manageAppointments: boolean;
       manageTasks: boolean;
       manageCaregiverTodos: boolean;

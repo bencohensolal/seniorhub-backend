@@ -3,9 +3,7 @@ import type { HouseholdRepository } from '../../domain/repositories/HouseholdRep
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
 import type { AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
-import type { CreateMedicationInput, Medication, UpdateMedicationInput } from '../../domain/entities/Medication.js';
-import type { MedicationReminder, CreateReminderInput, UpdateReminderInput } from '../../domain/entities/MedicationReminder.js';
-import type { MedicationLog, CreateMedicationLogInput } from '../../domain/entities/MedicationLog.js';
+import type { JournalEntry, CreateJournalEntryInput, UpdateJournalEntryInput } from '../../domain/entities/JournalEntry.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../../domain/entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../domain/entities/AppointmentReminder.js';
 import type { AppointmentOccurrence, CreateOccurrenceInput, UpdateOccurrenceInput } from '../../domain/entities/AppointmentOccurrence.js';
@@ -23,7 +21,7 @@ import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../../d
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../../domain/entities/DocumentFolder.js';
 import type { BulkInvitationResult, InvitationCandidate } from '../../domain/repositories/HouseholdRepository.js';
 import { PostgresHouseholdCoreRepository } from './postgres/PostgresHouseholdCoreRepository.js';
-import { PostgresMedicationRepository } from './postgres/PostgresMedicationRepository.js';
+import { PostgresJournalEntryRepository } from './postgres/PostgresJournalEntryRepository.js';
 import { PostgresAppointmentRepository } from './postgres/PostgresAppointmentRepository.js';
 import { PostgresTaskRepository } from './postgres/PostgresTaskRepository.js';
 import { PostgresDisplayTabletRepository } from './postgres/PostgresDisplayTabletRepository.js';
@@ -43,7 +41,7 @@ import type { Subscription, SubscriptionPlan, UpdateSubscriptionInput } from '..
 
 export class PostgresHouseholdRepository implements HouseholdRepository {
   private readonly core: PostgresHouseholdCoreRepository;
-  private readonly medications: PostgresMedicationRepository;
+  private readonly journal: PostgresJournalEntryRepository;
   private readonly appointments: PostgresAppointmentRepository;
   private readonly tasks: PostgresTaskRepository;
   private readonly displayTablets: PostgresDisplayTabletRepository;
@@ -59,7 +57,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
 
   constructor(pool: Pool) {
     this.core = new PostgresHouseholdCoreRepository(pool);
-    this.medications = new PostgresMedicationRepository(pool);
+    this.journal = new PostgresJournalEntryRepository(pool);
     this.appointments = new PostgresAppointmentRepository(pool);
     this.tasks = new PostgresTaskRepository(pool);
     this.displayTablets = new PostgresDisplayTabletRepository(pool);
@@ -97,23 +95,12 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   removeMember = (memberId: string): Promise<void> => this.core.removeMember(memberId);
   updateMemberRole = (memberId: string, newRole: HouseholdRole): Promise<Member> => this.core.updateMemberRole(memberId, newRole);
 
-  // Medications
-  listHouseholdMedications = (householdId: string): Promise<Medication[]> => this.medications.listHouseholdMedications(householdId);
-  getMedicationById = (medicationId: string, householdId: string): Promise<Medication | null> => this.medications.getMedicationById(medicationId, householdId);
-  createMedication = (input: CreateMedicationInput): Promise<Medication> => this.medications.createMedication(input);
-  updateMedication = (medicationId: string, householdId: string, input: UpdateMedicationInput): Promise<Medication> => this.medications.updateMedication(medicationId, householdId, input);
-  deleteMedication = (medicationId: string, householdId: string): Promise<void> => this.medications.deleteMedication(medicationId, householdId);
-
-  // Medication Logs
-  createMedicationLog = (input: CreateMedicationLogInput): Promise<MedicationLog> => this.medications.createMedicationLog(input);
-  getMedicationLogs = (householdId: string, date: string): Promise<MedicationLog[]> => this.medications.getMedicationLogs(householdId, date);
-
-  // Medication Reminders
-  listMedicationReminders = (medicationId: string, householdId: string): Promise<MedicationReminder[]> => this.medications.listMedicationReminders(medicationId, householdId);
-  getReminderById = (reminderId: string, medicationId: string, householdId: string): Promise<MedicationReminder | null> => this.medications.getReminderById(reminderId, medicationId, householdId);
-  createReminder = (input: CreateReminderInput): Promise<MedicationReminder> => this.medications.createReminder(input);
-  updateReminder = (reminderId: string, medicationId: string, householdId: string, input: UpdateReminderInput): Promise<MedicationReminder> => this.medications.updateReminder(reminderId, medicationId, householdId, input);
-  deleteReminder = (reminderId: string, medicationId: string, householdId: string): Promise<void> => this.medications.deleteReminder(reminderId, medicationId, householdId);
+  // Journal
+  createJournalEntry = (input: CreateJournalEntryInput): Promise<JournalEntry> => this.journal.createJournalEntry(input);
+  listJournalEntries = (householdId: string, options?: { seniorId?: string; limit?: number; offset?: number }): Promise<JournalEntry[]> => this.journal.listJournalEntries(householdId, options);
+  getJournalEntry = (householdId: string, entryId: string): Promise<JournalEntry | null> => this.journal.getJournalEntry(householdId, entryId);
+  updateJournalEntry = (householdId: string, entryId: string, input: UpdateJournalEntryInput): Promise<JournalEntry | null> => this.journal.updateJournalEntry(householdId, entryId, input);
+  deleteJournalEntry = (householdId: string, entryId: string): Promise<boolean> => this.journal.deleteJournalEntry(householdId, entryId);
 
   // Appointments
   listHouseholdAppointments = (householdId: string): Promise<AppointmentWithReminders[]> => this.appointments.listHouseholdAppointments(householdId);
@@ -207,9 +194,9 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   updateDocumentFolder = (folderId: string, householdId: string, input: UpdateDocumentFolderInput): Promise<DocumentFolder> => this.documents.updateDocumentFolder(folderId, householdId, input);
   softDeleteDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.softDeleteDocumentFolder(folderId, householdId);
   restoreDocumentFolder = (folderId: string, householdId: string): Promise<void> => this.documents.restoreDocumentFolder(folderId, householdId);
-  getSystemRootFolder = (householdId: string, systemRootType: 'medical' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
+  getSystemRootFolder = (householdId: string, systemRootType: 'personal' | 'administrative' | 'trash'): Promise<DocumentFolderWithCounts | null> => this.documents.getSystemRootFolder(householdId, systemRootType);
   ensureSystemRootsForHousehold = (householdId: string, userId: string): Promise<void> => this.documents.ensureSystemRootsForHousehold(householdId, userId);
-  ensureSeniorFoldersForHousehold = (householdId: string, medicalRootId: string, userId: string): Promise<void> => this.documents.ensureSeniorFoldersForHousehold(householdId, medicalRootId, userId);
+  ensureSeniorFoldersForHousehold = (householdId: string, personalRootId: string, userId: string): Promise<void> => this.documents.ensureSeniorFoldersForHousehold(householdId, personalRootId, userId);
   listSeniorFolders = (householdId: string): Promise<DocumentFolderWithCounts[]> => this.documents.listSeniorFolders(householdId);
   moveDocumentFolderToTrash = (folderId: string, householdId: string, trashFolderId: string): Promise<void> => this.documents.moveDocumentFolderToTrash(folderId, householdId, trashFolderId);
   moveDocumentToTrash = (documentId: string, householdId: string, trashFolderId: string): Promise<void> => this.documents.moveDocumentToTrash(documentId, householdId, trashFolderId);
@@ -274,5 +261,5 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   createEmailAuthSession = (accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.createEmailAuthSession(accountId);
   findEmailAuthSession = (refreshToken: string): Promise<EmailAuthSessionRecord | null> => this.emailAuth.findEmailAuthSession(refreshToken);
   rotateEmailAuthSession = (sessionId: string, accountId: string): Promise<{ refreshToken: string }> => this.emailAuth.rotateEmailAuthSession(sessionId, accountId);
-  createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageMedications: boolean; manageAppointments: boolean; manageTasks: boolean; manageCaregiverTodos: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
+  createProxyMember = (input: { householdId: string; userId: string; firstName: string; lastName: string; role: HouseholdRole; phoneNumber?: string; permissions: { manageJournal: boolean; manageAppointments: boolean; manageTasks: boolean; manageCaregiverTodos: boolean; manageMembers: boolean; viewSensitiveInfo: boolean; viewDocuments: boolean; manageDocuments: boolean } }): Promise<{ id: string }> => this.seniorDevices.createProxyMember(input);
 }

@@ -260,7 +260,7 @@ export class PostgresSeniorDeviceRepository {
     role: HouseholdRole;
     phoneNumber?: string;
     permissions: {
-      manageMedications: boolean;
+      manageJournal: boolean;
       manageAppointments: boolean;
       manageTasks: boolean;
       manageCaregiverTodos: boolean;
@@ -277,7 +277,7 @@ export class PostgresSeniorDeviceRepository {
       `INSERT INTO household_members
        (id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at,
         auth_provider, phone_number,
-        perm_manage_medications, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
+        perm_manage_journal, perm_manage_appointments, perm_manage_tasks, perm_manage_caregiver_todos,
         perm_manage_members, perm_view_sensitive_info, perm_view_documents, perm_manage_documents)
        VALUES ($1, $2, $3, NULL, $4, $5, $6, 'active', $7, $7,
         'device', $8,
@@ -291,7 +291,7 @@ export class PostgresSeniorDeviceRepository {
         input.role,
         now,
         input.phoneNumber?.trim() || null,
-        input.permissions.manageMedications,
+        input.permissions.manageJournal,
         input.permissions.manageAppointments,
         input.permissions.manageTasks,
         input.permissions.manageCaregiverTodos,

@@ -5,8 +5,8 @@ import { HouseholdAccessValidator } from '../shared/index.js';
 import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 
 /**
- * Lists the two system root folders (Medical File and Administrative) for a household.
- * Also includes senior folders under Medical File root.
+ * Lists the two system root folders (Personal Documents and Administrative) for a household.
+ * Also includes senior folders under Personal Documents root.
  */
 export class ListDocumentRootsUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
@@ -17,14 +17,14 @@ export class ListDocumentRootsUseCase {
 
   /**
    * @param input - Household identifier with requester info
-   * @returns Object containing medical and administrative roots with senior folders
+   * @returns Object containing personal and administrative roots with senior folders
    * @throws {ForbiddenError} If requester is not a member of the household or lacks viewDocuments permission
    */
   async execute(input: {
     householdId: string;
     requester: AuthenticatedRequester;
   }): Promise<{
-    medicalRoot: DocumentFolderWithCounts;
+    personalRoot: DocumentFolderWithCounts;
     administrativeRoot: DocumentFolderWithCounts;
     seniorFolders: DocumentFolderWithCounts[];
     trashRoot: DocumentFolderWithCounts;
@@ -41,22 +41,22 @@ export class ListDocumentRootsUseCase {
     await this.repository.ensureSystemRootsForHousehold(input.householdId, input.requester.userId);
 
     // Fetch system roots
-    const medicalRoot = await this.repository.getSystemRootFolder(input.householdId, 'medical');
+    const personalRoot = await this.repository.getSystemRootFolder(input.householdId, 'personal');
     const administrativeRoot = await this.repository.getSystemRootFolder(input.householdId, 'administrative');
     const trashRoot = await this.repository.getSystemRootFolder(input.householdId, 'trash');
 
-    if (!medicalRoot || !administrativeRoot || !trashRoot) {
+    if (!personalRoot || !administrativeRoot || !trashRoot) {
       throw new NotFoundError('System roots not found after creation');
     }
 
     // Ensure senior folders exist for all active seniors in the household
-    await this.repository.ensureSeniorFoldersForHousehold(input.householdId, medicalRoot.id, input.requester.userId);
+    await this.repository.ensureSeniorFoldersForHousehold(input.householdId, personalRoot.id, input.requester.userId);
 
-    // Fetch senior folders under Medical File root
+    // Fetch senior folders under Personal Documents root
     const seniorFolders = await this.repository.listSeniorFolders(input.householdId);
 
     return {
-      medicalRoot,
+      personalRoot,
       administrativeRoot,
       seniorFolders,
       trashRoot,

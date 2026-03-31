@@ -1,7 +1,7 @@
 import type { HouseholdRole } from './Member.js';
 
 export type DocumentFolderType = 'system_root' | 'senior_folder' | 'user_folder';
-export type SystemRootType = 'medical' | 'administrative' | 'trash';
+export type SystemRootType = 'personal' | 'administrative' | 'trash';
 
 export interface DocumentFolder {
   id: string;
@@ -53,9 +53,9 @@ export const isSystemRoot = (folder: DocumentFolder): boolean => folder.type ===
 // Helper to check if a folder is a senior folder
 export const isSeniorFolder = (folder: DocumentFolder): boolean => folder.type === 'senior_folder';
 
-// Helper to check if a folder is a medical root
-export const isMedicalRoot = (folder: DocumentFolder): boolean =>
-  folder.type === 'system_root' && folder.systemRootType === 'medical';
+// Helper to check if a folder is a personal root
+export const isPersonalRoot = (folder: DocumentFolder): boolean =>
+  folder.type === 'system_root' && folder.systemRootType === 'personal';
 
 // Helper to check if a folder is an administrative root
 export const isAdministrativeRoot = (folder: DocumentFolder): boolean =>

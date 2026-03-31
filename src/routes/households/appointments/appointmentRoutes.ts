@@ -24,11 +24,6 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
-import {
-  assertRequesterCanShareHealthData,
-  buildHouseholdPrivacyContext,
-  filterAppointmentsByPrivacy,
-} from '../../../domain/services/privacyFilter.js';
 
 export function registerAppointmentRoutes(
   fastify: FastifyInstance,
@@ -115,14 +110,7 @@ export function registerAppointmentRoutes(
           toDate: queryResult.data.to,
         });
 
-        // Apply privacy filter: hide occurrences belonging to appointments the requester cannot see
-        const allAppointments = await repository.listHouseholdAppointments(paramsResult.data.householdId);
-        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
-        const visibleAppointments = filterAppointmentsByPrivacy(allAppointments, privacyContext, request.requester?.userId);
-        const visibleIds = new Set(visibleAppointments.map(a => a.id));
-        const filtered = allOccurrences.filter(o => visibleIds.has(o.recurringAppointmentId));
-
-        return reply.status(200).send({ status: 'success', data: filtered });
+        return reply.status(200).send({ status: 'success', data: allOccurrences });
       } catch (error) {
         return handleDomainError(error, reply);
       }
@@ -172,16 +160,9 @@ export function registerAppointmentRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
-        const privacyContext = await buildHouseholdPrivacyContext(repository, paramsResult.data.householdId);
-        const filteredAppointments = filterAppointmentsByPrivacy(
-          appointments,
-          privacyContext,
-          request.requester?.userId,
-        );
-
         return reply.status(200).send({
           status: 'success',
-          data: filteredAppointments,
+          data: appointments,
         });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -203,13 +184,10 @@ export function registerAppointmentRoutes(
         },
         body: {
           type: 'object',
-          required: ['title', 'type', 'date', 'time', 'seniorIds'],
+          required: ['title', 'date', 'time', 'seniorIds'],
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 200 },
-            type: {
-              type: 'string',
-              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other']
-            },
+            tags: { type: 'array', items: { type: 'string' } },
             date: { type: 'string' },
             time: { type: 'string' },
             duration: { type: 'number' },
@@ -219,9 +197,8 @@ export function registerAppointmentRoutes(
             locationName: { type: 'string', maxLength: 255 },
             phoneNumber: { type: 'string', maxLength: 50 },
             description: { type: 'string', maxLength: 1000 },
-            professionalName: { type: 'string', maxLength: 255 },
-            preparation: { type: 'string', maxLength: 1000 },
-            documentsToTake: { type: 'string', maxLength: 500 },
+            contactName: { type: 'string', maxLength: 255 },
+            itemsToTake: { type: 'string', maxLength: 500 },
             transportArrangement: { type: 'string', maxLength: 500 },
             recurrence: { type: 'object' },
             status: {
@@ -258,7 +235,6 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const body = bodyResult.data;
@@ -266,21 +242,20 @@ export function registerAppointmentRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
           title: body.title,
-          type: body.type,
           date: body.date,
           time: body.time,
           seniorIds: body.seniorIds,
         };
 
+        if (body.tags !== undefined) inputData.tags = body.tags;
         if (body.duration !== undefined) inputData.duration = body.duration;
         if (body.caregiverId !== undefined) inputData.caregiverId = body.caregiverId;
         if (body.address !== undefined) inputData.address = body.address;
         if (body.locationName !== undefined) inputData.locationName = body.locationName;
         if (body.phoneNumber !== undefined) inputData.phoneNumber = body.phoneNumber;
         if (body.description !== undefined) inputData.description = body.description;
-        if (body.professionalName !== undefined) inputData.professionalName = body.professionalName;
-        if (body.preparation !== undefined) inputData.preparation = body.preparation;
-        if (body.documentsToTake !== undefined) inputData.documentsToTake = body.documentsToTake;
+        if (body.contactName !== undefined) inputData.contactName = body.contactName;
+        if (body.itemsToTake !== undefined) inputData.itemsToTake = body.itemsToTake;
         if (body.transportArrangement !== undefined) inputData.transportArrangement = body.transportArrangement;
         if (body.recurrence !== undefined) {
           const recurrence = normalizeRecurrence(body.recurrence);
@@ -322,10 +297,7 @@ export function registerAppointmentRoutes(
           type: 'object',
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 200 },
-            type: {
-              type: 'string',
-              enum: ['doctor', 'specialist', 'dentist', 'lab', 'imaging', 'therapy', 'pharmacy', 'hospital', 'other']
-            },
+            tags: { type: 'array', items: { type: 'string' } },
             date: { type: 'string' },
             time: { type: 'string' },
             duration: { type: ['number', 'null'] },
@@ -335,9 +307,8 @@ export function registerAppointmentRoutes(
             locationName: { type: ['string', 'null'], maxLength: 255 },
             phoneNumber: { type: ['string', 'null'], maxLength: 50 },
             description: { type: ['string', 'null'], maxLength: 1000 },
-            professionalName: { type: ['string', 'null'], maxLength: 255 },
-            preparation: { type: ['string', 'null'], maxLength: 1000 },
-            documentsToTake: { type: ['string', 'null'], maxLength: 500 },
+            contactName: { type: ['string', 'null'], maxLength: 255 },
+            itemsToTake: { type: ['string', 'null'], maxLength: 500 },
             transportArrangement: { type: ['string', 'null'], maxLength: 500 },
             recurrence: { type: ['object', 'null'] },
             status: {
@@ -375,14 +346,13 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const updateData: UpdateAppointmentInput = {};
         const body = bodyResult.data;
 
         if (body.title !== undefined) updateData.title = body.title;
-        if (body.type !== undefined) updateData.type = body.type;
+        if (body.tags !== undefined) updateData.tags = body.tags;
         if (body.date !== undefined) updateData.date = body.date;
         if (body.time !== undefined) updateData.time = body.time;
         if (body.duration !== undefined) updateData.duration = body.duration;
@@ -392,9 +362,8 @@ export function registerAppointmentRoutes(
         if (body.locationName !== undefined) updateData.locationName = body.locationName;
         if (body.phoneNumber !== undefined) updateData.phoneNumber = body.phoneNumber;
         if (body.description !== undefined) updateData.description = body.description;
-        if (body.professionalName !== undefined) updateData.professionalName = body.professionalName;
-        if (body.preparation !== undefined) updateData.preparation = body.preparation;
-        if (body.documentsToTake !== undefined) updateData.documentsToTake = body.documentsToTake;
+        if (body.contactName !== undefined) updateData.contactName = body.contactName;
+        if (body.itemsToTake !== undefined) updateData.itemsToTake = body.itemsToTake;
         if (body.transportArrangement !== undefined) updateData.transportArrangement = body.transportArrangement;
         if (body.recurrence !== undefined) {
           const recurrence = body.recurrence ? normalizeRecurrence(body.recurrence) : null;
@@ -459,7 +428,6 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         await useCases.deleteAppointmentUseCase.execute({
@@ -526,7 +494,6 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const body = bodyResult.data;
@@ -607,7 +574,6 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         const updateData: UpdateAppointmentReminderInput = {};
@@ -673,7 +639,6 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await assertRequesterCanShareHealthData(repository, request.requester!.userId);
         await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
 
         await useCases.deleteAppointmentReminderUseCase.execute({

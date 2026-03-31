@@ -207,7 +207,7 @@ export function registerDocumentRoutes(
             name: { type: 'string', minLength: 1, maxLength: 200 },
             description: { type: ['string', 'null'], maxLength: 1000 },
             isSystemRoot: { type: 'boolean' },
-            systemRootType: { type: ['string', 'null'], enum: ['medical', 'administrative'] },
+            systemRootType: { type: ['string', 'null'], enum: ['personal', 'administrative'] },
           },
         },
         response: {

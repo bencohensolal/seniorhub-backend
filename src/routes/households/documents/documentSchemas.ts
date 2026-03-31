@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // System root type enum schema
-export const systemRootTypeSchema = z.enum(['medical', 'administrative']);
+export const systemRootTypeSchema = z.enum(['personal', 'administrative']);
 
 // Schema for creating a new document folder
 export const createDocumentFolderBodySchema = z.object({

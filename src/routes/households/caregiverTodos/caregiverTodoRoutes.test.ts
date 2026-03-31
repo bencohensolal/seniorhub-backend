@@ -99,7 +99,7 @@ const repositoryStub: CaregiverTodoRouteRepository = {
     householdId: HOUSEHOLD_ID,
     memberPermissions: {
       [MEMBER_ID]: {
-        manageMedications: true,
+        manageJournal: true,
         manageAppointments: true,
         manageTasks: true,
         manageCaregiverTodos: true,

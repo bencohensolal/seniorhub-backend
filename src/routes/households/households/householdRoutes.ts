@@ -21,7 +21,7 @@ const householdNotificationsSchema = z.object({
 });
 
 const memberPermissionsSchema = z.object({
-  manageMedications: z.boolean().optional(),
+  manageJournal: z.boolean().optional(),
   manageAppointments: z.boolean().optional(),
   manageTasks: z.boolean().optional(),
   manageCaregiverTodos: z.boolean().optional(),
