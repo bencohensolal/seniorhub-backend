@@ -18,14 +18,19 @@ const STRIPE_PRICES: Record<string, Record<string, string>> = {
   },
 };
 
+/** A key is considered "configured" only if it looks like a real Stripe key. */
+function isConfigured(key: string): boolean {
+  return key.startsWith('sk_test_') || key.startsWith('sk_live_');
+}
+
 /**
  * Returns the Stripe instance (lazy singleton).
- * Returns null if STRIPE_SECRET_KEY is not configured.
+ * Returns null if STRIPE_SECRET_KEY is not set or is a placeholder.
  */
 let stripeInstance: Stripe | null = null;
 
 export function getStripe(): Stripe | null {
-  if (!STRIPE_SECRET_KEY) return null;
+  if (!isConfigured(STRIPE_SECRET_KEY)) return null;
   if (!stripeInstance) {
     stripeInstance = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2026-03-25.dahlia',
@@ -40,5 +45,10 @@ export function getStripePriceId(plan: string, billingPeriod: string): string | 
 }
 
 export function getStripeWebhookSecret(): string {
-  return STRIPE_WEBHOOK_SECRET;
+  return STRIPE_WEBHOOK_SECRET.startsWith('whsec_') ? STRIPE_WEBHOOK_SECRET : '';
+}
+
+export function getStripePriceIdForPlan(plan: string, billingPeriod: string): string | null {
+  const id = STRIPE_PRICES[plan]?.[billingPeriod] ?? '';
+  return id.startsWith('price_') ? id : null;
 }

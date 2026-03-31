@@ -2,7 +2,7 @@ import type { HouseholdRepository } from '../../repositories/HouseholdRepository
 import type { SubscriptionPlan } from '../../entities/Subscription.js';
 import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
 import { ForbiddenError, ValidationError } from '../../errors/index.js';
-import { getStripe, getStripePriceId } from '../../../config/stripe.js';
+import { getStripe, getStripePriceIdForPlan } from '../../../config/stripe.js';
 
 export class CreateCheckoutSessionUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
@@ -26,7 +26,7 @@ export class CreateCheckoutSessionUseCase {
     await this.accessValidator.ensureCaregiver(input.requesterUserId, input.householdId);
 
     // Get the correct price ID
-    const priceId = getStripePriceId(input.plan, input.billingPeriod);
+    const priceId = getStripePriceIdForPlan(input.plan, input.billingPeriod);
     if (!priceId) {
       throw new ValidationError(
         `Stripe price not configured for plan "${input.plan}" with billing period "${input.billingPeriod}". ` +
