@@ -22,9 +22,9 @@ export interface PlanLimits {
  */
 function envInt(key: string, defaultValue: number): number {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return defaultValue;
+  if (raw === undefined || raw === '') return defaultValue === -1 ? Infinity : defaultValue;
   const n = parseInt(raw, 10);
-  if (isNaN(n)) return defaultValue;
+  if (isNaN(n)) return defaultValue === -1 ? Infinity : defaultValue;
   return n === -1 ? Infinity : n;
 }
 
