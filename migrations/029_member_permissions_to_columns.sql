@@ -18,25 +18,28 @@ UPDATE household_members SET
   perm_view_documents      = (role IN ('caregiver', 'family', 'intervenant', 'senior')),
   perm_manage_documents    = (role IN ('caregiver', 'intervenant'));
 
--- 3. Backfill customised permissions from household_settings JSONB (only if column still exists)
+-- 3. Backfill customised permissions from household_settings JSONB (only if table+column still exist)
+-- Uses EXECUTE (dynamic SQL) so PostgreSQL doesn't fail at parse time when household_settings doesn't exist
 DO $$
 DECLARE
   r RECORD;
   mp JSONB;
-  col_exists BOOLEAN;
+  tbl_exists BOOLEAN;
 BEGIN
   SELECT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'household_settings' AND column_name = 'member_permissions'
-  ) INTO col_exists;
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'household_settings'
+  ) INTO tbl_exists;
 
-  IF col_exists THEN
+  IF tbl_exists THEN
     FOR r IN
-      SELECT hm.id, hs.member_permissions
-      FROM household_members hm
-      JOIN household_settings hs ON hs.household_id = hm.household_id
-      WHERE hs.member_permissions IS NOT NULL
-        AND hs.member_permissions != '{}'::jsonb
+      EXECUTE '
+        SELECT hm.id, hs.member_permissions
+        FROM household_members hm
+        JOIN household_settings hs ON hs.household_id = hm.household_id
+        WHERE hs.member_permissions IS NOT NULL
+          AND hs.member_permissions != ''{}''::jsonb
+      '
     LOOP
       mp := r.member_permissions -> r.id::text;
       IF mp IS NOT NULL THEN
@@ -51,8 +54,8 @@ BEGIN
         WHERE id = r.id;
       END IF;
     END LOOP;
+
+    -- Drop the now-redundant JSONB column
+    EXECUTE 'ALTER TABLE household_settings DROP COLUMN IF EXISTS member_permissions';
   END IF;
 END $$;
-
--- 4. Drop the now-redundant JSONB column
-ALTER TABLE household_settings DROP COLUMN IF EXISTS member_permissions;
