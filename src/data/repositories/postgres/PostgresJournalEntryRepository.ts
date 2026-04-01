@@ -16,7 +16,7 @@ import { nowIso, toIso } from './helpers.js';
 type JournalEntryRow = {
   id: string;
   household_id: string;
-  senior_id: string;
+  senior_ids: string[] | string;
   author_id: string;
   content: string;
   description: string | null;
@@ -29,7 +29,7 @@ type JournalEntryRow = {
 const mapJournalEntry = (row: JournalEntryRow): JournalEntry => ({
   id: row.id,
   householdId: row.household_id,
-  seniorId: row.senior_id,
+  seniorIds: typeof row.senior_ids === 'string' ? JSON.parse(row.senior_ids) : row.senior_ids,
   authorId: row.author_id,
   content: row.content,
   ...(row.description ? { description: row.description } : {}),
@@ -53,7 +53,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     },
   ): Promise<JournalEntry[]> {
     let query = `
-      SELECT id, household_id, senior_id, author_id, content, description, category,
+      SELECT id, household_id, senior_ids::text, author_id, content, description, category,
              archived_at, created_at, updated_at
       FROM journal_entries
       WHERE household_id = $1
@@ -70,8 +70,8 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     }
 
     if (filters?.seniorId) {
-      query += ` AND senior_id = $${paramIndex++}`;
-      params.push(filters.seniorId);
+      query += ` AND senior_ids @> $${paramIndex++}::jsonb`;
+      params.push(JSON.stringify([filters.seniorId]));
     }
 
     if (filters?.category) {
@@ -97,7 +97,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
 
   async getById(id: string): Promise<JournalEntry | null> {
     const result = await this.pool.query<JournalEntryRow>(
-      `SELECT id, household_id, senior_id, author_id, content, description, category,
+      `SELECT id, household_id, senior_ids::text, author_id, content, description, category,
               archived_at, created_at, updated_at
        FROM journal_entries
        WHERE id = $1
@@ -120,16 +120,16 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
 
     const result = await this.pool.query<JournalEntryRow>(
       `INSERT INTO journal_entries (
-         id, household_id, senior_id, author_id, content, description, category,
+         id, household_id, senior_ids, author_id, content, description, category,
          created_at, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
-       RETURNING id, household_id, senior_id, author_id, content, description, category,
+       VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, $8)
+       RETURNING id, household_id, senior_ids::text, author_id, content, description, category,
                  archived_at, created_at, updated_at`,
       [
         id,
         input.householdId,
-        input.seniorId,
+        JSON.stringify(input.seniorIds),
         input.authorId,
         input.content,
         input.description ?? null,
@@ -151,6 +151,10 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     const values: unknown[] = [];
     let paramIndex = 1;
 
+    if (input.seniorIds !== undefined) {
+      updates.push(`senior_ids = $${paramIndex++}::jsonb`);
+      values.push(JSON.stringify(input.seniorIds));
+    }
     if (input.content !== undefined) {
       updates.push(`content = $${paramIndex++}`);
       values.push(input.content);
@@ -178,7 +182,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
       `UPDATE journal_entries
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++}
-       RETURNING id, household_id, senior_id, author_id, content, description, category,
+       RETURNING id, household_id, senior_ids::text, author_id, content, description, category,
                  archived_at, created_at, updated_at`,
       values,
     );
@@ -208,7 +212,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
       `UPDATE journal_entries
        SET archived_at = NOW(), updated_at = NOW()
        WHERE id = $1 AND archived_at IS NULL
-       RETURNING id, household_id, senior_id, author_id, content, description, category,
+       RETURNING id, household_id, senior_ids::text, author_id, content, description, category,
                  archived_at, created_at, updated_at`,
       [id],
     );
@@ -226,7 +230,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
       `UPDATE journal_entries
        SET archived_at = NULL, updated_at = NOW()
        WHERE id = $1 AND archived_at IS NOT NULL
-       RETURNING id, household_id, senior_id, author_id, content, description, category,
+       RETURNING id, household_id, senior_ids::text, author_id, content, description, category,
                  archived_at, created_at, updated_at`,
       [id],
     );

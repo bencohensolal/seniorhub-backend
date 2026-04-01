@@ -52,7 +52,7 @@ export function registerJournalRoutes(
             type: 'object',
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'array' },
+              data: { type: 'array', items: { type: 'object', additionalProperties: true } },
             },
             required: ['status', 'data'],
           },
@@ -113,9 +113,8 @@ export function registerJournalRoutes(
         },
         body: {
           type: 'object',
-          required: ['seniorId', 'content'],
           properties: {
-            seniorId: { type: 'string' },
+            seniorIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
             content: { type: 'string', minLength: 1, maxLength: 5000 },
             description: { type: 'string', maxLength: 10000 },
             category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other'] },
@@ -154,7 +153,7 @@ export function registerJournalRoutes(
         const entry = await useCases.createJournalEntryUseCase.execute({
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
-          seniorId: body.seniorId,
+          seniorIds: body.seniorIds,
           content: body.content,
           ...(body.description !== undefined && { description: body.description }),
           ...(body.category !== undefined && { category: body.category }),
@@ -188,6 +187,7 @@ export function registerJournalRoutes(
         body: {
           type: 'object',
           properties: {
+            seniorIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
             content: { type: 'string', minLength: 1, maxLength: 5000 },
             description: { type: ['string', 'null'], maxLength: 10000 },
             category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other'] },
@@ -225,6 +225,7 @@ export function registerJournalRoutes(
         const body = bodyResult.data;
 
         const updates: Record<string, unknown> = {};
+        if (body.seniorIds !== undefined) updates.seniorIds = body.seniorIds;
         if (body.content !== undefined) updates.content = body.content;
         if (body.description !== undefined) updates.description = body.description;
         if (body.category !== undefined) updates.category = body.category;

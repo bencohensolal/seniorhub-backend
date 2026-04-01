@@ -23,7 +23,7 @@ export class CreateJournalEntryUseCase {
 
   async execute(input: {
     householdId: string;
-    seniorId: string;
+    seniorIds: string[];
     content: string;
     description?: string;
     category?: JournalCategory;
@@ -46,7 +46,7 @@ export class CreateJournalEntryUseCase {
 
     const createInput: CreateJournalEntryInput = {
       householdId: input.householdId,
-      seniorId: input.seniorId,
+      seniorIds: input.seniorIds,
       authorId: member.id,
       content: input.content,
       ...(input.description !== undefined && { description: input.description }),

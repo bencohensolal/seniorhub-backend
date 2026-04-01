@@ -3,7 +3,7 @@ export type JournalCategory = 'general' | 'mood' | 'meal' | 'outing' | 'visit' |
 export interface JournalEntry {
   id: string;
   householdId: string;
-  seniorId: string;
+  seniorIds: string[];
   authorId: string;
   content: string;
   description?: string;
@@ -15,7 +15,7 @@ export interface JournalEntry {
 
 export interface CreateJournalEntryInput {
   householdId: string;
-  seniorId: string;
+  seniorIds: string[];
   authorId: string;
   content: string;
   description?: string;
@@ -23,6 +23,7 @@ export interface CreateJournalEntryInput {
 }
 
 export interface UpdateJournalEntryInput {
+  seniorIds?: string[];
   content?: string;
   description?: string | null;
   category?: JournalCategory;
