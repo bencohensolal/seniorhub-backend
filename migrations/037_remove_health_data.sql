@@ -80,7 +80,7 @@ UPDATE document_folders SET system_root_type = 'personal', name = 'Personal Docu
 
 -- Step 3: Drop old enum and create new one
 DROP TYPE IF EXISTS system_root_type;
-CREATE TYPE system_root_type AS ENUM ('personal', 'administrative');
+CREATE TYPE system_root_type AS ENUM ('personal', 'administrative', 'trash');
 
 -- Step 4: Convert column back to enum
 ALTER TABLE document_folders ALTER COLUMN system_root_type TYPE system_root_type USING system_root_type::system_root_type;
