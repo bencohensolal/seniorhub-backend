@@ -16,16 +16,19 @@ export interface PlanLimits {
   historyDays: number;
 }
 
+/** Sentinel value meaning "unlimited" — avoids Infinity/JSON issues */
+const UNLIMITED = 999_999;
+
 /**
- * Parse an env var integer. Returns `Infinity` if value is -1 (unlimited sentinel).
+ * Parse an env var integer. Returns UNLIMITED (999999) if value is -1.
  * Falls back to `defaultValue` if env var is unset or invalid.
  */
 function envInt(key: string, defaultValue: number): number {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return defaultValue === -1 ? Infinity : defaultValue;
+  if (raw === undefined || raw === '') return defaultValue === -1 ? UNLIMITED : defaultValue;
   const n = parseInt(raw, 10);
-  if (isNaN(n)) return defaultValue === -1 ? Infinity : defaultValue;
-  return n === -1 ? Infinity : n;
+  if (isNaN(n)) return defaultValue === -1 ? UNLIMITED : defaultValue;
+  return n === -1 ? UNLIMITED : n;
 }
 
 /**
@@ -34,7 +37,7 @@ function envInt(key: string, defaultValue: number): number {
  */
 function envMb(key: string, defaultMb: number): number {
   const mb = envInt(key, defaultMb);
-  return mb === Infinity ? Infinity : mb * 1024 * 1024;
+  return mb >= UNLIMITED ? UNLIMITED : mb * 1024 * 1024;
 }
 
 function buildGratuitLimits(): PlanLimits {
