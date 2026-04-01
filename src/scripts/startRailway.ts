@@ -1,11 +1,5 @@
 import { spawn } from 'node:child_process';
 
-console.log('[startRailway] Bootstrap starting - version v2-unlimited-fix');
-// Log DB URL structure (masked password) for debugging
-const dbUrl = process.env.DATABASE_URL ?? '';
-const masked = dbUrl.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
-console.log('[startRailway] DATABASE_URL structure:', masked);
-
 const MIGRATION_RETRY_ATTEMPTS = 12;
 const MIGRATION_RETRY_DELAY_MS = 5000;
 

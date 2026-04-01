@@ -55,7 +55,7 @@ export const buildApp = () => {
   });
 
   app.get('/health', async () => {
-    return { status: 'ok', version: 'v2-unlimited-fix' };
+    return { status: 'ok' };
   });
 
   app.register(swagger, {
