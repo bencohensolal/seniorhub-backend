@@ -11,7 +11,7 @@ export interface Document {
   fileSizeBytes: number;
   extension: string;
   eventDate: string | null; // optional date of related event (e.g., lab result date)
-  category: string | null; // optional category (e.g., prescription, lab_result, insurance)
+  category: string | null; // optional category (e.g., invoice, insurance, contract)
   tags: string[]; // optional tags for flexible categorization
   uploadedByUserId: string;
   uploadedAt: string;

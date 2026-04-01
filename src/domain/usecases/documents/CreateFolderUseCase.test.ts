@@ -71,14 +71,14 @@ describe('CreateFolderUseCase', () => {
 
     const childFolder = await useCase.execute({
       householdId: household.id,
-      name: 'Prescriptions',
+      name: 'Invoices',
       description: 'Personal documents',
       parentFolderId: parentFolder.id,
       requester,
     });
 
     expect(childFolder).toBeDefined();
-    expect(childFolder.name).toBe('Prescriptions');
+    expect(childFolder.name).toBe('Invoices');
     expect(childFolder.parentFolderId).toBe(parentFolder.id);
   });
 
