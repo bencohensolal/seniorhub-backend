@@ -1,4 +1,4 @@
-export type JournalCategory = 'general' | 'mood' | 'meal' | 'outing' | 'visit' | 'incident' | 'other';
+export type JournalCategory = 'general' | 'mood' | 'meal' | 'outing' | 'visit' | 'incident' | 'care' | 'other';
 
 export interface JournalEntry {
   id: string;
@@ -8,6 +8,7 @@ export interface JournalEntry {
   content: string;
   description?: string;
   category: JournalCategory;
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

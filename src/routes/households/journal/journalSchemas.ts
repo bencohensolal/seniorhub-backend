@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const journalCategorySchema = z.enum(['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other']);
+export const journalCategorySchema = z.enum(['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other']);
 
 export const createJournalEntryBodySchema = z.object({
   seniorId: z.string().uuid('Invalid senior ID format'),
@@ -23,6 +23,7 @@ export const journalEntryParamsSchema = z.object({
 export const listJournalEntriesQuerySchema = z.object({
   seniorId: z.string().uuid().optional(),
   category: journalCategorySchema.optional(),
+  archived: z.preprocess((v) => v === 'true' || v === '1', z.boolean()).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });

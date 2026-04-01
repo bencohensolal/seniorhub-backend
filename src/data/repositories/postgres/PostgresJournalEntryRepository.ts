@@ -21,6 +21,7 @@ type JournalEntryRow = {
   content: string;
   description: string | null;
   category: JournalCategory;
+  archived_at: string | Date | null;
   created_at: string | Date;
   updated_at: string | Date;
 };
@@ -33,6 +34,7 @@ const mapJournalEntry = (row: JournalEntryRow): JournalEntry => ({
   content: row.content,
   ...(row.description ? { description: row.description } : {}),
   category: row.category,
+  ...(row.archived_at ? { archivedAt: toIso(row.archived_at) } : {}),
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
 });
@@ -45,19 +47,27 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     filters?: {
       seniorId?: string;
       category?: JournalCategory;
+      archived?: boolean;
       limit?: number;
       offset?: number;
     },
   ): Promise<JournalEntry[]> {
     let query = `
       SELECT id, household_id, senior_id, author_id, content, description, category,
-             created_at, updated_at
+             archived_at, created_at, updated_at
       FROM journal_entries
       WHERE household_id = $1
     `;
 
     const params: unknown[] = [householdId];
     let paramIndex = 2;
+
+    // Default: show non-archived entries
+    if (filters?.archived === true) {
+      query += ` AND archived_at IS NOT NULL`;
+    } else if (filters?.archived === false || filters?.archived === undefined) {
+      query += ` AND archived_at IS NULL`;
+    }
 
     if (filters?.seniorId) {
       query += ` AND senior_id = $${paramIndex++}`;
@@ -87,8 +97,8 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
 
   async getById(id: string): Promise<JournalEntry | null> {
     const result = await this.pool.query<JournalEntryRow>(
-      `SELECT id, household_id, senior_id, author_id, content, category,
-              created_at, updated_at
+      `SELECT id, household_id, senior_id, author_id, content, description, category,
+              archived_at, created_at, updated_at
        FROM journal_entries
        WHERE id = $1
        LIMIT 1`,
@@ -115,7 +125,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
        RETURNING id, household_id, senior_id, author_id, content, description, category,
-                 created_at, updated_at`,
+                 archived_at, created_at, updated_at`,
       [
         id,
         input.householdId,
@@ -169,7 +179,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++}
        RETURNING id, household_id, senior_id, author_id, content, description, category,
-                 created_at, updated_at`,
+                 archived_at, created_at, updated_at`,
       values,
     );
 
@@ -191,5 +201,41 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     if (result.rowCount === 0) {
       throw new NotFoundError('Journal entry not found.');
     }
+  }
+
+  async archive(id: string): Promise<JournalEntry> {
+    const result = await this.pool.query<JournalEntryRow>(
+      `UPDATE journal_entries
+       SET archived_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND archived_at IS NULL
+       RETURNING id, household_id, senior_id, author_id, content, description, category,
+                 archived_at, created_at, updated_at`,
+      [id],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Journal entry not found or already archived.');
+    }
+
+    return mapJournalEntry(row);
+  }
+
+  async unarchive(id: string): Promise<JournalEntry> {
+    const result = await this.pool.query<JournalEntryRow>(
+      `UPDATE journal_entries
+       SET archived_at = NULL, updated_at = NOW()
+       WHERE id = $1 AND archived_at IS NOT NULL
+       RETURNING id, household_id, senior_id, author_id, content, description, category,
+                 archived_at, created_at, updated_at`,
+      [id],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Journal entry not found or not archived.');
+    }
+
+    return mapJournalEntry(row);
   }
 }

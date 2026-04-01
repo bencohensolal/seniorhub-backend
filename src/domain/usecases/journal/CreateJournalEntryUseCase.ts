@@ -35,8 +35,8 @@ export class CreateJournalEntryUseCase {
       throw new ForbiddenError('Only household members can create journal entries.');
     }
 
-    // Check plan limit for journal entries
-    const currentEntries = await this.journalRepository.listByHousehold(input.householdId);
+    // Check plan limit for journal entries (only count non-archived)
+    const currentEntries = await this.journalRepository.listByHousehold(input.householdId, { archived: false });
     await this.planLimitGuard.ensureWithinLimit({
       householdId: input.householdId,
       resource: 'journal_entries',

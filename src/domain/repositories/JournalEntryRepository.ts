@@ -11,6 +11,7 @@ export interface JournalEntryRepository {
     filters?: {
       seniorId?: string;
       category?: JournalCategory;
+      archived?: boolean;
       limit?: number;
       offset?: number;
     },
@@ -23,4 +24,8 @@ export interface JournalEntryRepository {
   update(id: string, input: UpdateJournalEntryInput): Promise<JournalEntry>;
 
   delete(id: string): Promise<void>;
+
+  archive(id: string): Promise<JournalEntry>;
+
+  unarchive(id: string): Promise<JournalEntry>;
 }

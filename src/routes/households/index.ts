@@ -224,7 +224,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     listJournalEntriesUseCase: useCases.listJournalEntriesUseCase,
     updateJournalEntryUseCase: useCases.updateJournalEntryUseCase,
     deleteJournalEntryUseCase: useCases.deleteJournalEntryUseCase,
-  });
+  }, journalRepository);
 
   registerAppointmentRoutes(fastify, repository, {
     listHouseholdAppointmentsUseCase: useCases.listHouseholdAppointmentsUseCase,

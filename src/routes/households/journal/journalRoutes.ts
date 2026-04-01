@@ -24,6 +24,7 @@ export function registerJournalRoutes(
     updateJournalEntryUseCase: UpdateJournalEntryUseCase;
     deleteJournalEntryUseCase: DeleteJournalEntryUseCase;
   },
+  journalRepository?: import('../../../domain/repositories/JournalEntryRepository.js').JournalEntryRepository,
 ): void {
   // GET /v1/households/:householdId/journal - List journal entries
   fastify.get(
@@ -40,7 +41,8 @@ export function registerJournalRoutes(
           type: 'object',
           properties: {
             seniorId: { type: 'string' },
-            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other'] },
+            archived: { type: 'string', enum: ['true', 'false'] },
             limit: { type: 'integer', minimum: 1, maximum: 100 },
             offset: { type: 'integer', minimum: 0 },
           },
@@ -76,6 +78,7 @@ export function registerJournalRoutes(
         const journalFilters = {
           ...(filters.seniorId && { seniorId: filters.seniorId }),
           ...(filters.category && { category: filters.category }),
+          ...(filters.archived !== undefined && { archived: filters.archived }),
           ...(filters.limit && { limit: filters.limit }),
           ...(filters.offset !== undefined && { offset: filters.offset }),
         };
@@ -115,7 +118,7 @@ export function registerJournalRoutes(
             seniorId: { type: 'string' },
             content: { type: 'string', minLength: 1, maxLength: 5000 },
             description: { type: 'string', maxLength: 10000 },
-            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other'] },
           },
         },
         response: {
@@ -187,7 +190,7 @@ export function registerJournalRoutes(
           properties: {
             content: { type: 'string', minLength: 1, maxLength: 5000 },
             description: { type: ['string', 'null'], maxLength: 10000 },
-            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
+            category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'care', 'other'] },
           },
         },
         response: {
@@ -237,6 +240,76 @@ export function registerJournalRoutes(
           status: 'success',
           data: entry,
         });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/journal/:entryId/archive - Archive journal entry
+  fastify.post(
+    '/v1/households/:householdId/journal/:entryId/archive',
+    {
+      preHandler: requireWritePermission,
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' }, entryId: { type: 'string' } },
+          required: ['householdId', 'entryId'],
+        },
+        response: {
+          200: { type: 'object', properties: { status: { type: 'string' }, data: { type: 'object', additionalProperties: true } }, required: ['status', 'data'] },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = journalEntryParamsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({ status: 'error', message: 'Invalid request payload.' });
+      }
+      try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        const entry = await journalRepository!.archive(paramsResult.data.entryId);
+        return reply.status(200).send({ status: 'success', data: entry });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/journal/:entryId/unarchive - Unarchive journal entry
+  fastify.post(
+    '/v1/households/:householdId/journal/:entryId/unarchive',
+    {
+      preHandler: requireWritePermission,
+      schema: {
+        tags: ['Journal'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' }, entryId: { type: 'string' } },
+          required: ['householdId', 'entryId'],
+        },
+        response: {
+          200: { type: 'object', properties: { status: { type: 'string' }, data: { type: 'object', additionalProperties: true } }, required: ['status', 'data'] },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = journalEntryParamsSchema.safeParse(request.params);
+      if (!paramsResult.success) {
+        return reply.status(400).send({ status: 'error', message: 'Invalid request payload.' });
+      }
+      try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        const entry = await journalRepository!.unarchive(paramsResult.data.entryId);
+        return reply.status(200).send({ status: 'success', data: entry });
       } catch (error) {
         return handleDomainError(error, reply);
       }
