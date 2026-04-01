@@ -114,6 +114,7 @@ export function registerJournalRoutes(
           properties: {
             seniorId: { type: 'string' },
             content: { type: 'string', minLength: 1, maxLength: 5000 },
+            description: { type: 'string', maxLength: 10000 },
             category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
           },
         },
@@ -152,6 +153,7 @@ export function registerJournalRoutes(
           requester: getRequesterContext(request),
           seniorId: body.seniorId,
           content: body.content,
+          ...(body.description !== undefined && { description: body.description }),
           ...(body.category !== undefined && { category: body.category }),
         });
 
@@ -184,6 +186,7 @@ export function registerJournalRoutes(
           type: 'object',
           properties: {
             content: { type: 'string', minLength: 1, maxLength: 5000 },
+            description: { type: ['string', 'null'], maxLength: 10000 },
             category: { type: 'string', enum: ['general', 'mood', 'meal', 'outing', 'visit', 'incident', 'other'] },
           },
         },
@@ -220,6 +223,7 @@ export function registerJournalRoutes(
 
         const updates: Record<string, unknown> = {};
         if (body.content !== undefined) updates.content = body.content;
+        if (body.description !== undefined) updates.description = body.description;
         if (body.category !== undefined) updates.category = body.category;
 
         const entry = await useCases.updateJournalEntryUseCase.execute({

@@ -8,6 +8,7 @@ export interface PlanLimits {
   maxActiveAppointments: number;
   maxActiveTasks: number;
   maxCaregiverTodos: number;
+  maxJournalEntries: number;
   storageQuotaBytes: number;
   maxTablets: number;
   maxPhotoScreensPerTablet: number;
@@ -44,6 +45,7 @@ function buildGratuitLimits(): PlanLimits {
     maxActiveAppointments:     envInt('PLAN_GRATUIT_MAX_ACTIVE_APPOINTMENTS', 3),
     maxActiveTasks:            envInt('PLAN_GRATUIT_MAX_ACTIVE_TASKS', 5),
     maxCaregiverTodos:         envInt('PLAN_GRATUIT_MAX_CAREGIVER_TODOS', 5),
+    maxJournalEntries:         envInt('PLAN_GRATUIT_MAX_JOURNAL_ENTRIES', 3),
     storageQuotaBytes:         envMb ('PLAN_GRATUIT_STORAGE_QUOTA_MB', 100),
     maxTablets:                envInt('PLAN_GRATUIT_MAX_TABLETS', 0),
     maxPhotoScreensPerTablet:  envInt('PLAN_GRATUIT_MAX_PHOTO_SCREENS_PER_TABLET', 0),
@@ -60,6 +62,7 @@ function buildFamilleLimits(): PlanLimits {
     maxActiveAppointments:     envInt('PLAN_FAMILLE_MAX_ACTIVE_APPOINTMENTS', 15),
     maxActiveTasks:            envInt('PLAN_FAMILLE_MAX_ACTIVE_TASKS', -1),
     maxCaregiverTodos:         envInt('PLAN_FAMILLE_MAX_CAREGIVER_TODOS', -1),
+    maxJournalEntries:         envInt('PLAN_FAMILLE_MAX_JOURNAL_ENTRIES', 15),
     storageQuotaBytes:         envMb ('PLAN_FAMILLE_STORAGE_QUOTA_MB', 2048),
     maxTablets:                envInt('PLAN_FAMILLE_MAX_TABLETS', 2),
     maxPhotoScreensPerTablet:  envInt('PLAN_FAMILLE_MAX_PHOTO_SCREENS_PER_TABLET', 3),
@@ -76,6 +79,7 @@ function buildSereniteLimits(): PlanLimits {
     maxActiveAppointments:     envInt('PLAN_SERENITE_MAX_ACTIVE_APPOINTMENTS', -1),
     maxActiveTasks:            envInt('PLAN_SERENITE_MAX_ACTIVE_TASKS', -1),
     maxCaregiverTodos:         envInt('PLAN_SERENITE_MAX_CAREGIVER_TODOS', -1),
+    maxJournalEntries:         envInt('PLAN_SERENITE_MAX_JOURNAL_ENTRIES', -1),
     storageQuotaBytes:         envMb ('PLAN_SERENITE_STORAGE_QUOTA_MB', 20480),
     maxTablets:                envInt('PLAN_SERENITE_MAX_TABLETS', 5),
     maxPhotoScreensPerTablet:  envInt('PLAN_SERENITE_MAX_PHOTO_SCREENS_PER_TABLET', 5),

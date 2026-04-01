@@ -3,7 +3,7 @@ import type { JournalEntry, JournalCategory, CreateJournalEntryInput } from '../
 import type { HouseholdRepository } from '../../repositories/HouseholdRepository.js';
 import type { JournalEntryRepository } from '../../repositories/JournalEntryRepository.js';
 import { ForbiddenError } from '../../errors/index.js';
-import { HouseholdAccessValidator } from '../shared/index.js';
+import { HouseholdAccessValidator, PlanLimitGuard } from '../shared/index.js';
 
 /**
  * Creates a new journal entry for a household.
@@ -11,18 +11,21 @@ import { HouseholdAccessValidator } from '../shared/index.js';
  */
 export class CreateJournalEntryUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
+  private readonly planLimitGuard: PlanLimitGuard;
 
   constructor(
     private readonly householdRepository: HouseholdRepository,
     private readonly journalRepository: JournalEntryRepository,
   ) {
     this.accessValidator = new HouseholdAccessValidator(householdRepository);
+    this.planLimitGuard = new PlanLimitGuard(householdRepository);
   }
 
   async execute(input: {
     householdId: string;
     seniorId: string;
     content: string;
+    description?: string;
     category?: JournalCategory;
     requester: AuthenticatedRequester;
   }): Promise<JournalEntry> {
@@ -32,11 +35,21 @@ export class CreateJournalEntryUseCase {
       throw new ForbiddenError('Only household members can create journal entries.');
     }
 
+    // Check plan limit for journal entries
+    const currentEntries = await this.journalRepository.listByHousehold(input.householdId);
+    await this.planLimitGuard.ensureWithinLimit({
+      householdId: input.householdId,
+      resource: 'journal_entries',
+      currentCount: currentEntries.length,
+      limitKey: 'maxJournalEntries',
+    });
+
     const createInput: CreateJournalEntryInput = {
       householdId: input.householdId,
       seniorId: input.seniorId,
       authorId: member.id,
       content: input.content,
+      ...(input.description !== undefined && { description: input.description }),
       ...(input.category && { category: input.category }),
     };
 
