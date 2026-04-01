@@ -5,11 +5,13 @@ export const journalCategorySchema = z.enum(['general', 'mood', 'meal', 'outing'
 export const createJournalEntryBodySchema = z.object({
   seniorId: z.string().uuid('Invalid senior ID format'),
   content: z.string().min(1).max(5000),
+  description: z.string().max(10000).optional(),
   category: journalCategorySchema.optional().default('general'),
 });
 
 export const updateJournalEntryBodySchema = z.object({
   content: z.string().min(1).max(5000).optional(),
+  description: z.string().max(10000).nullable().optional(),
   category: journalCategorySchema.optional(),
 });
 

@@ -19,6 +19,7 @@ type JournalEntryRow = {
   senior_id: string;
   author_id: string;
   content: string;
+  description: string | null;
   category: JournalCategory;
   created_at: string | Date;
   updated_at: string | Date;
@@ -30,6 +31,7 @@ const mapJournalEntry = (row: JournalEntryRow): JournalEntry => ({
   seniorId: row.senior_id,
   authorId: row.author_id,
   content: row.content,
+  ...(row.description ? { description: row.description } : {}),
   category: row.category,
   createdAt: toIso(row.created_at),
   updatedAt: toIso(row.updated_at),
@@ -48,7 +50,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
     },
   ): Promise<JournalEntry[]> {
     let query = `
-      SELECT id, household_id, senior_id, author_id, content, category,
+      SELECT id, household_id, senior_id, author_id, content, description, category,
              created_at, updated_at
       FROM journal_entries
       WHERE household_id = $1
@@ -108,11 +110,11 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
 
     const result = await this.pool.query<JournalEntryRow>(
       `INSERT INTO journal_entries (
-         id, household_id, senior_id, author_id, content, category,
+         id, household_id, senior_id, author_id, content, description, category,
          created_at, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
-       RETURNING id, household_id, senior_id, author_id, content, category,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+       RETURNING id, household_id, senior_id, author_id, content, description, category,
                  created_at, updated_at`,
       [
         id,
@@ -120,6 +122,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
         input.seniorId,
         input.authorId,
         input.content,
+        input.description ?? null,
         category,
         now,
       ],
@@ -142,6 +145,10 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
       updates.push(`content = $${paramIndex++}`);
       values.push(input.content);
     }
+    if (input.description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(input.description);
+    }
     if (input.category !== undefined) {
       updates.push(`category = $${paramIndex++}`);
       values.push(input.category);
@@ -161,7 +168,7 @@ export class PostgresJournalEntryRepository implements JournalEntryRepository {
       `UPDATE journal_entries
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++}
-       RETURNING id, household_id, senior_id, author_id, content, category,
+       RETURNING id, household_id, senior_id, author_id, content, description, category,
                  created_at, updated_at`,
       values,
     );

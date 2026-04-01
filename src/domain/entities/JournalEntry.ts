@@ -6,6 +6,7 @@ export interface JournalEntry {
   seniorId: string;
   authorId: string;
   content: string;
+  description?: string;
   category: JournalCategory;
   createdAt: string;
   updatedAt: string;
@@ -16,10 +17,12 @@ export interface CreateJournalEntryInput {
   seniorId: string;
   authorId: string;
   content: string;
+  description?: string;
   category?: JournalCategory;
 }
 
 export interface UpdateJournalEntryInput {
   content?: string;
+  description?: string | null;
   category?: JournalCategory;
 }
