@@ -8,25 +8,14 @@
 --   5. Remove health-related privacy settings
 --   6. Rename medication permission to journal permission
 
-BEGIN;
-
 -- ============================================================
 -- 1. DROP MEDICATIONS MODULE
 -- ============================================================
 
--- Drop medication alerts tracking (if exists)
 DROP TABLE IF EXISTS caregiver_medication_alerts;
-
--- Drop medication logs
 DROP TABLE IF EXISTS medication_logs;
-
--- Drop medication reminders (depends on medications)
 DROP TABLE IF EXISTS medication_reminders;
-
--- Drop medications table
 DROP TABLE IF EXISTS medications;
-
--- Drop medication form enum
 DROP TYPE IF EXISTS medication_form;
 
 -- ============================================================
@@ -67,31 +56,34 @@ COMMENT ON COLUMN journal_entries.category IS 'Optional category for filtering e
 -- 3. TRANSFORM APPOINTMENTS (medical types → free tags)
 -- ============================================================
 
--- Add tags column
 ALTER TABLE appointments ADD COLUMN tags JSONB NOT NULL DEFAULT '[]'::jsonb;
-
--- Drop medical type column and enum
 ALTER TABLE appointments DROP COLUMN type;
 DROP TYPE IF EXISTS appointment_type;
 
--- Rename medical-specific columns
 ALTER TABLE appointments RENAME COLUMN professional_name TO contact_name;
 ALTER TABLE appointments DROP COLUMN preparation;
 ALTER TABLE appointments RENAME COLUMN documents_to_take TO items_to_take;
 
--- Update table comment
 COMMENT ON TABLE appointments IS 'Stores appointments for household members';
 
 -- ============================================================
 -- 4. TRANSFORM DOCUMENTS (medical → personal)
 -- ============================================================
 
--- Update medical system roots to personal
+-- Recreate system_root_type enum: replace 'medical' with 'personal'
+-- Step 1: Change column to VARCHAR temporarily
+ALTER TABLE document_folders ALTER COLUMN system_root_type TYPE VARCHAR(50) USING system_root_type::text;
+
+-- Step 2: Update data
 UPDATE document_folders SET system_root_type = 'personal', name = 'Personal Documents', description = 'Personal documents organized by senior'
   WHERE system_root_type = 'medical';
 
--- Update the enum: add 'personal', then migrate, then remove 'medical'
-ALTER TYPE system_root_type ADD VALUE IF NOT EXISTS 'personal';
+-- Step 3: Drop old enum and create new one
+DROP TYPE IF EXISTS system_root_type;
+CREATE TYPE system_root_type AS ENUM ('personal', 'administrative');
+
+-- Step 4: Convert column back to enum
+ALTER TABLE document_folders ALTER COLUMN system_root_type TYPE system_root_type USING system_root_type::system_root_type;
 
 -- Update the function that creates system roots for new households
 CREATE OR REPLACE FUNCTION ensure_document_system_roots_for_household(household_uuid UUID, user_id TEXT)
@@ -158,5 +150,3 @@ ALTER TABLE user_privacy_settings DROP COLUMN IF EXISTS share_health_data;
 -- ============================================================
 
 ALTER TABLE household_members RENAME COLUMN perm_manage_medications TO perm_manage_journal;
-
-COMMIT;
