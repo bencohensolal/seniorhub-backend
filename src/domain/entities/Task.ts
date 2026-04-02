@@ -26,28 +26,34 @@ export interface TaskRecurrence {
 export interface Task {
   id: string;
   householdId: string;
-  seniorId: string; // household member ID
+  seniorIds: string[]; // household member IDs
   caregiverId: string | null; // household member ID
-  
+
   // Basic information
   title: string;
   description: string | null;
   category: TaskCategory;
   priority: TaskPriority;
   status: TaskStatus;
-  
+
   // Scheduling
   dueDate: string | null; // ISO date string (YYYY-MM-DD)
   dueTime: string | null; // HH:MM format
   duration: number | null; // Duration in minutes
-  
+
   // Recurrence
   recurrence: TaskRecurrence | null;
-  
+
+  // Confirmation
+  requiresConfirmation: boolean;
+  confirmationDelayMinutes: number | null;
+  confirmedAt: string | null;
+  confirmedBy: string | null;
+
   // Completion tracking
   completedAt: string | null; // ISO timestamp
   completedBy: string | null; // household member ID
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -60,7 +66,7 @@ export interface TaskWithReminders extends Task {
 
 export interface CreateTaskInput {
   householdId: string;
-  seniorId: string; // Required: task must be assigned to a senior
+  seniorIds: string[]; // Required: task must be assigned to at least one senior
   caregiverId?: string;
   title: string;
   description?: string;
@@ -70,10 +76,13 @@ export interface CreateTaskInput {
   dueTime?: string;
   duration?: number; // Duration in minutes
   recurrence?: TaskRecurrence;
+  requiresConfirmation?: boolean;
+  confirmationDelayMinutes?: number;
   createdBy: string;
 }
 
 export interface UpdateTaskInput {
+  seniorIds?: string[];
   title?: string;
   description?: string | null;
   category?: TaskCategory;
@@ -84,6 +93,8 @@ export interface UpdateTaskInput {
   duration?: number | null;
   recurrence?: TaskRecurrence | null;
   caregiverId?: string | null;
+  requiresConfirmation?: boolean;
+  confirmationDelayMinutes?: number | null;
   completedAt?: string | null;
   completedBy?: string | null;
 }

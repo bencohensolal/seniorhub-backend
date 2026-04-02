@@ -12,6 +12,37 @@ import {
   mapTaskReminder,
 } from './helpers.js';
 
+// Shared row type for task queries
+type TaskRow = {
+  id: string;
+  household_id: string;
+  senior_ids: string[] | string;
+  caregiver_id: string | null;
+  title: string;
+  description: string | null;
+  category: TaskCategory;
+  priority: TaskPriority;
+  status: TaskStatus;
+  due_date: string | Date | null;
+  due_time: string | null;
+  duration: number | null;
+  recurrence: string | null;
+  requires_confirmation: boolean;
+  confirmation_delay_minutes: number | null;
+  confirmed_at: string | Date | null;
+  confirmed_by: string | null;
+  completed_at: string | Date | null;
+  completed_by: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+  created_by: string;
+};
+
+const TASK_COLUMNS = `id, household_id, senior_ids, caregiver_id, title, description,
+  category, priority, status, due_date, due_time, duration, recurrence::text,
+  requires_confirmation, confirmation_delay_minutes, confirmed_at, confirmed_by,
+  completed_at, completed_by, created_at, updated_at, created_by`;
+
 export class PostgresTaskRepository {
   constructor(protected readonly pool: Pool) {}
 
@@ -23,13 +54,12 @@ export class PostgresTaskRepository {
     toDate?: string;
   }): Promise<TaskWithReminders[]> {
     let query = `
-      SELECT t.id, t.household_id, t.senior_id, t.caregiver_id, t.title, t.description,
+      SELECT t.id, t.household_id, t.senior_ids, t.caregiver_id, t.title, t.description,
              t.category, t.priority, t.status, t.due_date, t.due_time, t.duration, t.recurrence::text,
+             t.requires_confirmation, t.confirmation_delay_minutes, t.confirmed_at, t.confirmed_by,
              t.completed_at, t.completed_by, t.created_at, t.updated_at, t.created_by
       FROM tasks t
-      LEFT JOIN household_members hm ON hm.id::text = t.senior_id::text
       WHERE t.household_id = $1
-        AND (t.senior_id IS NULL OR hm.status IS NULL OR hm.status != 'archived')
     `;
 
     const params: unknown[] = [householdId];
@@ -41,8 +71,8 @@ export class PostgresTaskRepository {
     }
 
     if (filters?.seniorId) {
-      query += ` AND t.senior_id = $${paramIndex++}`;
-      params.push(filters.seniorId);
+      query += ` AND t.senior_ids @> $${paramIndex++}::jsonb`;
+      params.push(JSON.stringify([filters.seniorId]));
     }
 
     if (filters?.category) {
@@ -62,26 +92,7 @@ export class PostgresTaskRepository {
 
     query += ` ORDER BY t.due_date ASC NULLS LAST, t.priority DESC, t.created_at DESC`;
 
-    const tasksResult = await this.pool.query<{
-      id: string;
-      household_id: string;
-      senior_id: string;
-      caregiver_id: string | null;
-      title: string;
-      description: string | null;
-      category: TaskCategory;
-      priority: TaskPriority;
-      status: TaskStatus;
-      due_date: string | Date | null;
-      due_time: string | null;
-      duration: number | null;
-      recurrence: string | null;
-      completed_at: string | Date | null;
-      completed_by: string | null;
-      created_at: string | Date;
-      updated_at: string | Date;
-      created_by: string;
-    }>(query, params);
+    const tasksResult = await this.pool.query<TaskRow>(query, params);
 
     // Fetch all reminders for these tasks
     const taskIds = tasksResult.rows.map(row => row.id);
@@ -124,29 +135,8 @@ export class PostgresTaskRepository {
   }
 
   async getTaskById(taskId: string, householdId: string): Promise<TaskWithReminders | null> {
-    const taskResult = await this.pool.query<{
-      id: string;
-      household_id: string;
-      senior_id: string;
-      caregiver_id: string | null;
-      title: string;
-      description: string | null;
-      category: TaskCategory;
-      priority: TaskPriority;
-      status: TaskStatus;
-      due_date: string | Date | null;
-      due_time: string | null;
-      duration: number | null;
-      recurrence: string | null;
-      completed_at: string | Date | null;
-      completed_by: string | null;
-      created_at: string | Date;
-      updated_at: string | Date;
-      created_by: string;
-    }>(
-      `SELECT id, household_id, senior_id, caregiver_id, title, description,
-              category, priority, status, due_date, due_time, duration, recurrence::text,
-              completed_at, completed_by, created_at, updated_at, created_by
+    const taskResult = await this.pool.query<TaskRow>(
+      `SELECT ${TASK_COLUMNS}
        FROM tasks
        WHERE id = $1 AND household_id = $2
        LIMIT 1`,
@@ -188,39 +178,19 @@ export class PostgresTaskRepository {
     const now = nowIso();
     const priority = input.priority || 'normal';
 
-    const result = await this.pool.query<{
-      id: string;
-      household_id: string;
-      senior_id: string;
-      caregiver_id: string | null;
-      title: string;
-      description: string | null;
-      category: TaskCategory;
-      priority: TaskPriority;
-      status: TaskStatus;
-      due_date: string | Date | null;
-      due_time: string | null;
-      duration: number | null;
-      recurrence: string | null;
-      completed_at: string | Date | null;
-      completed_by: string | null;
-      created_at: string | Date;
-      updated_at: string | Date;
-      created_by: string;
-    }>(
+    const result = await this.pool.query<TaskRow>(
       `INSERT INTO tasks (
-         id, household_id, senior_id, caregiver_id, title, description,
+         id, household_id, senior_ids, caregiver_id, title, description,
          category, priority, status, due_date, due_time, duration, recurrence,
+         requires_confirmation, confirmation_delay_minutes,
          created_at, updated_at, created_by
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $13, $14)
-       RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, duration, recurrence::text,
-                 completed_at, completed_by, created_at, updated_at, created_by`,
+       VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $14, $15, $15, $16)
+       RETURNING ${TASK_COLUMNS}`,
       [
         id,
         input.householdId,
-        input.seniorId,
+        JSON.stringify(input.seniorIds),
         input.caregiverId ?? null,
         input.title,
         input.description ?? null,
@@ -230,6 +200,8 @@ export class PostgresTaskRepository {
         input.dueTime ?? null,
         input.duration ?? null,
         input.recurrence ? JSON.stringify(input.recurrence) : null,
+        input.requiresConfirmation ?? false,
+        input.confirmationDelayMinutes ?? null,
         now,
         input.createdBy,
       ],
@@ -248,6 +220,10 @@ export class PostgresTaskRepository {
     const values: unknown[] = [];
     let paramIndex = 1;
 
+    if (input.seniorIds !== undefined) {
+      updates.push(`senior_ids = $${paramIndex++}::jsonb`);
+      values.push(JSON.stringify(input.seniorIds));
+    }
     if (input.title !== undefined) {
       updates.push(`title = $${paramIndex++}`);
       values.push(input.title);
@@ -294,6 +270,14 @@ export class PostgresTaskRepository {
       updates.push(`caregiver_id = $${paramIndex++}`);
       values.push(input.caregiverId);
     }
+    if (input.requiresConfirmation !== undefined) {
+      updates.push(`requires_confirmation = $${paramIndex++}`);
+      values.push(input.requiresConfirmation);
+    }
+    if (input.confirmationDelayMinutes !== undefined) {
+      updates.push(`confirmation_delay_minutes = $${paramIndex++}`);
+      values.push(input.confirmationDelayMinutes);
+    }
     if (input.completedAt !== undefined) {
       updates.push(`completed_at = $${paramIndex++}`);
       values.push(input.completedAt);
@@ -314,32 +298,11 @@ export class PostgresTaskRepository {
     values.push(taskId);
     values.push(householdId);
 
-    const result = await this.pool.query<{
-      id: string;
-      household_id: string;
-      senior_id: string;
-      caregiver_id: string | null;
-      title: string;
-      description: string | null;
-      category: TaskCategory;
-      priority: TaskPriority;
-      status: TaskStatus;
-      due_date: string | Date | null;
-      due_time: string | null;
-      duration: number | null;
-      recurrence: string | null;
-      completed_at: string | Date | null;
-      completed_by: string | null;
-      created_at: string | Date;
-      updated_at: string | Date;
-      created_by: string;
-    }>(
+    const result = await this.pool.query<TaskRow>(
       `UPDATE tasks
        SET ${updates.join(', ')}
        WHERE id = $${paramIndex++} AND household_id = $${paramIndex++}
-       RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, duration, recurrence::text,
-                 completed_at, completed_by, created_at, updated_at, created_by`,
+       RETURNING ${TASK_COLUMNS}`,
       values,
     );
 
@@ -367,32 +330,11 @@ export class PostgresTaskRepository {
     const completedAt = input.completedAt || nowIso();
     const now = nowIso();
 
-    const result = await this.pool.query<{
-      id: string;
-      household_id: string;
-      senior_id: string;
-      caregiver_id: string | null;
-      title: string;
-      description: string | null;
-      category: TaskCategory;
-      priority: TaskPriority;
-      status: TaskStatus;
-      due_date: string | Date | null;
-      due_time: string | null;
-      duration: number | null;
-      recurrence: string | null;
-      completed_at: string | Date | null;
-      completed_by: string | null;
-      created_at: string | Date;
-      updated_at: string | Date;
-      created_by: string;
-    }>(
+    const result = await this.pool.query<TaskRow>(
       `UPDATE tasks
        SET status = 'completed', completed_at = $3, completed_by = $4, updated_at = $5
        WHERE id = $1 AND household_id = $2
-       RETURNING id, household_id, senior_id, caregiver_id, title, description,
-                 category, priority, status, due_date, due_time, duration, recurrence::text,
-                 completed_at, completed_by, created_at, updated_at, created_by`,
+       RETURNING ${TASK_COLUMNS}`,
       [taskId, householdId, completedAt, completedBy, now],
     );
 
@@ -402,6 +344,51 @@ export class PostgresTaskRepository {
     }
 
     return mapTask(row);
+  }
+
+  async confirmTask(taskId: string, householdId: string, confirmedBy: string): Promise<Task> {
+    const now = nowIso();
+
+    const result = await this.pool.query<TaskRow>(
+      `UPDATE tasks
+       SET confirmed_at = $3, confirmed_by = $4, updated_at = $3
+       WHERE id = $1 AND household_id = $2 AND requires_confirmation = true AND confirmed_at IS NULL
+       RETURNING ${TASK_COLUMNS}`,
+      [taskId, householdId, now, confirmedBy],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new NotFoundError('Task not found or already confirmed.');
+    }
+
+    return mapTask(row);
+  }
+
+  async listUnconfirmedTasks(): Promise<(Task & { householdId: string })[]> {
+    const result = await this.pool.query<TaskRow>(
+      `SELECT ${TASK_COLUMNS}
+       FROM tasks
+       WHERE requires_confirmation = true
+         AND confirmed_at IS NULL
+         AND confirmation_notified_at IS NULL
+         AND status = 'pending'
+         AND due_date IS NOT NULL
+         AND due_time IS NOT NULL
+         AND confirmation_delay_minutes IS NOT NULL
+         AND (due_date + due_time::time + (confirmation_delay_minutes || ' minutes')::interval) < NOW()`,
+    );
+
+    return result.rows.map(row => mapTask(row));
+  }
+
+  async markConfirmationNotified(taskIds: string[]): Promise<void> {
+    if (taskIds.length === 0) return;
+    const now = nowIso();
+    await this.pool.query(
+      `UPDATE tasks SET confirmation_notified_at = $1 WHERE id = ANY($2)`,
+      [now, taskIds],
+    );
   }
 
   // Task Reminders

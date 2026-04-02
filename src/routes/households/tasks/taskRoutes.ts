@@ -8,6 +8,7 @@ import type { CreateTaskUseCase } from '../../../domain/usecases/tasks/CreateTas
 import type { UpdateTaskUseCase } from '../../../domain/usecases/tasks/UpdateTaskUseCase.js';
 import type { DeleteTaskUseCase } from '../../../domain/usecases/tasks/DeleteTaskUseCase.js';
 import type { CompleteTaskUseCase } from '../../../domain/usecases/tasks/CompleteTaskUseCase.js';
+import type { ConfirmTaskUseCase } from '../../../domain/usecases/tasks/ConfirmTaskUseCase.js';
 import type { CreateTaskReminderUseCase } from '../../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
 import type { UpdateTaskReminderUseCase } from '../../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
 import type { DeleteTaskReminderUseCase } from '../../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
@@ -40,6 +41,7 @@ export function registerTaskRoutes(
     updateTaskUseCase: UpdateTaskUseCase;
     deleteTaskUseCase: DeleteTaskUseCase;
     completeTaskUseCase: CompleteTaskUseCase;
+    confirmTaskUseCase: ConfirmTaskUseCase;
     createTaskReminderUseCase: CreateTaskReminderUseCase;
     updateTaskReminderUseCase: UpdateTaskReminderUseCase;
     deleteTaskReminderUseCase: DeleteTaskReminderUseCase;
@@ -163,10 +165,10 @@ export function registerTaskRoutes(
         },
         body: {
           type: 'object',
-          required: ['title', 'seniorId', 'category'],
+          required: ['title', 'seniorIds', 'category'],
           properties: {
             title: { type: 'string', minLength: 1, maxLength: 255 },
-            seniorId: { type: 'string' },
+            seniorIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
             description: { type: 'string', maxLength: 1000 },
             category: {
               type: 'string',
@@ -178,6 +180,8 @@ export function registerTaskRoutes(
             duration: { type: 'integer', minimum: 1, maximum: 1440 },
             caregiverId: { type: 'string' },
             recurrence: { type: 'object' },
+            requiresConfirmation: { type: 'boolean' },
+            confirmationDelayMinutes: { type: 'integer', minimum: 5, maximum: 480 },
           },
         },
         response: {
@@ -213,7 +217,7 @@ export function registerTaskRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
           title: body.title,
-          seniorId: body.seniorId,
+          seniorIds: body.seniorIds,
           category: body.category,
         };
 
@@ -229,6 +233,8 @@ export function registerTaskRoutes(
             inputData.recurrence = recurrence;
           }
         }
+        if (body.requiresConfirmation !== undefined) inputData.requiresConfirmation = body.requiresConfirmation;
+        if (body.confirmationDelayMinutes !== undefined) inputData.confirmationDelayMinutes = body.confirmationDelayMinutes;
 
         const task = await useCases.createTaskUseCase.execute(inputData);
 
@@ -259,6 +265,7 @@ export function registerTaskRoutes(
         body: {
           type: 'object',
           properties: {
+            seniorIds: { type: 'array', items: { type: 'string' }, minItems: 1 },
             title: { type: 'string', minLength: 1, maxLength: 255 },
             description: { type: ['string', 'null'], maxLength: 1000 },
             category: {
@@ -272,6 +279,8 @@ export function registerTaskRoutes(
             duration: { type: ['integer', 'null'], minimum: 1, maximum: 1440 },
             recurrence: { type: ['object', 'null'] },
             caregiverId: { type: ['string', 'null'] },
+            requiresConfirmation: { type: 'boolean' },
+            confirmationDelayMinutes: { type: ['integer', 'null'], minimum: 5, maximum: 480 },
           },
         },
         response: {
@@ -309,6 +318,7 @@ export function registerTaskRoutes(
         const updateData: UpdateTaskInput = {};
         const body = bodyResult.data;
 
+        if (body.seniorIds !== undefined) updateData.seniorIds = body.seniorIds;
         if (body.title !== undefined) updateData.title = body.title;
         if (body.description !== undefined) updateData.description = body.description;
         if (body.category !== undefined) updateData.category = body.category;
@@ -324,6 +334,8 @@ export function registerTaskRoutes(
           }
         }
         if (body.caregiverId !== undefined) updateData.caregiverId = body.caregiverId;
+        if (body.requiresConfirmation !== undefined) updateData.requiresConfirmation = body.requiresConfirmation;
+        if (body.confirmationDelayMinutes !== undefined) updateData.confirmationDelayMinutes = body.confirmationDelayMinutes;
 
         const task = await useCases.updateTaskUseCase.execute({
           taskId: paramsResult.data.taskId,
@@ -406,6 +418,63 @@ export function registerTaskRoutes(
         if (body.completedAt) inputData.completedAt = body.completedAt;
 
         const task = await useCases.completeTaskUseCase.execute(inputData);
+
+        return reply.status(200).send({
+          status: 'success',
+          data: task,
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // POST /v1/households/:householdId/tasks/:taskId/confirm - Confirm task (senior)
+  fastify.post(
+    '/v1/households/:householdId/tasks/:taskId/confirm',
+    {
+      schema: {
+        tags: ['Tasks'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            taskId: { type: 'string' },
+          },
+          required: ['householdId', 'taskId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object' },
+            },
+            required: ['status', 'data'],
+          },
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const paramsResult = taskParamsSchema.safeParse(request.params);
+
+      if (!paramsResult.success) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Invalid request payload.',
+        });
+      }
+
+      try {
+        const task = await useCases.confirmTaskUseCase.execute({
+          taskId: paramsResult.data.taskId,
+          householdId: paramsResult.data.householdId,
+          requester: getRequesterContext(request),
+        });
 
         return reply.status(200).send({
           status: 'success',

@@ -41,7 +41,7 @@ export const taskRecurrenceSchema = z.object({
 
 // Schema for creating a new task
 export const createTaskBodySchema = z.object({
-  seniorId: z.string().uuid('Invalid senior ID format'),
+  seniorIds: z.array(z.string().uuid('Invalid senior ID format')).min(1, 'At least one senior is required'),
   caregiverId: z.string().uuid('Invalid caregiver ID format').optional(),
   title: z.string().min(1).max(255),
   description: z.string().max(1000).optional(),
@@ -51,10 +51,13 @@ export const createTaskBodySchema = z.object({
   dueTime: z.string().regex(TIME_REGEX, 'Time must be in HH:MM format').optional(),
   duration: z.number().int().min(1).max(1440).optional(), // Duration in minutes (1 min to 24 hours)
   recurrence: taskRecurrenceSchema.optional(),
+  requiresConfirmation: z.boolean().optional().default(false),
+  confirmationDelayMinutes: z.number().int().min(5).max(480).optional(), // 5 min to 8 hours
 });
 
 // Schema for updating an existing task
 export const updateTaskBodySchema = z.object({
+  seniorIds: z.array(z.string().uuid('Invalid senior ID format')).min(1, 'At least one senior is required').optional(),
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(1000).nullable().optional(),
   category: taskCategorySchema.optional(),
@@ -65,6 +68,8 @@ export const updateTaskBodySchema = z.object({
   duration: z.number().int().min(1).max(1440).nullable().optional(), // Duration in minutes
   recurrence: taskRecurrenceSchema.nullable().optional(),
   caregiverId: z.string().uuid('Invalid caregiver ID format').nullable().optional(),
+  requiresConfirmation: z.boolean().optional(),
+  confirmationDelayMinutes: z.number().int().min(5).max(480).nullable().optional(),
 });
 
 // Schema for completing a task

@@ -26,7 +26,7 @@ export class CreateTaskUseCase {
    */
   async execute(input: {
     householdId: string;
-    seniorId: string;
+    seniorIds: string[];
     caregiverId?: string;
     title: string;
     description?: string;
@@ -36,6 +36,8 @@ export class CreateTaskUseCase {
     dueTime?: string;
     duration?: number;
     recurrence?: TaskRecurrence;
+    requiresConfirmation?: boolean;
+    confirmationDelayMinutes?: number;
     requester: AuthenticatedRequester;
   }): Promise<Task> {
     // Validate caregiver access
@@ -50,10 +52,12 @@ export class CreateTaskUseCase {
       limitKey: 'maxActiveTasks',
     });
 
-    // Validate senior exists and belongs to household
-    const senior = await this.repository.findMemberInHousehold(input.seniorId, input.householdId);
-    if (!senior) {
-      throw new ValidationError('Senior not found in household.');
+    // Validate all seniors exist and belong to household
+    for (const seniorId of input.seniorIds) {
+      const senior = await this.repository.findMemberInHousehold(seniorId, input.householdId);
+      if (!senior) {
+        throw new ValidationError(`Senior ${seniorId} not found in household.`);
+      }
     }
 
     // If caregiverId provided, validate they belong to household
@@ -67,7 +71,7 @@ export class CreateTaskUseCase {
     // Create task input
     const createInput: CreateTaskInput = {
       householdId: input.householdId,
-      seniorId: input.seniorId,
+      seniorIds: input.seniorIds,
       title: input.title,
       category: input.category,
       createdBy: member.id,
@@ -78,6 +82,8 @@ export class CreateTaskUseCase {
       ...(input.dueTime && { dueTime: input.dueTime }),
       ...(input.duration && { duration: input.duration }),
       ...(input.recurrence && { recurrence: input.recurrence }),
+      ...(input.requiresConfirmation !== undefined && { requiresConfirmation: input.requiresConfirmation }),
+      ...(input.confirmationDelayMinutes !== undefined && { confirmationDelayMinutes: input.confirmationDelayMinutes }),
     };
 
     return this.repository.createTask(createInput);

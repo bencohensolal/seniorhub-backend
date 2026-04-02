@@ -181,7 +181,7 @@ export const mapOccurrence = (row: {
 export const mapTask = (row: {
   id: string;
   household_id: string;
-  senior_id: string;
+  senior_ids: string[] | string;
   caregiver_id: string | null;
   title: string;
   description: string | null;
@@ -192,6 +192,10 @@ export const mapTask = (row: {
   due_time: string | null;
   duration: number | null;
   recurrence: TaskRecurrence | string | null;
+  requires_confirmation: boolean;
+  confirmation_delay_minutes: number | null;
+  confirmed_at: string | Date | null;
+  confirmed_by: string | null;
   completed_at: string | Date | null;
   completed_by: string | null;
   created_at: string | Date;
@@ -200,7 +204,7 @@ export const mapTask = (row: {
 }): Task => ({
   id: row.id,
   householdId: row.household_id,
-  seniorId: row.senior_id,
+  seniorIds: typeof row.senior_ids === 'string' ? JSON.parse(row.senior_ids) : row.senior_ids,
   caregiverId: row.caregiver_id,
   title: row.title,
   description: row.description,
@@ -211,6 +215,10 @@ export const mapTask = (row: {
   dueTime: row.due_time,
   duration: row.duration,
   recurrence: row.recurrence ? (typeof row.recurrence === 'string' ? JSON.parse(row.recurrence) : row.recurrence) : null,
+  requiresConfirmation: row.requires_confirmation,
+  confirmationDelayMinutes: row.confirmation_delay_minutes,
+  confirmedAt: row.confirmed_at ? toIso(row.confirmed_at) : null,
+  confirmedBy: row.confirmed_by,
   completedAt: row.completed_at ? toIso(row.completed_at) : null,
   completedBy: row.completed_by,
   createdAt: toIso(row.created_at),

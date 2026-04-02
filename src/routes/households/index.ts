@@ -26,7 +26,9 @@ import { ListJournalEntriesUseCase } from '../../domain/usecases/journal/ListJou
 import { UpdateJournalEntryUseCase } from '../../domain/usecases/journal/UpdateJournalEntryUseCase.js';
 import { DeleteJournalEntryUseCase } from '../../domain/usecases/journal/DeleteJournalEntryUseCase.js';
 import { PostgresJournalEntryRepository } from '../../data/repositories/postgres/PostgresJournalEntryRepository.js';
+import { InMemoryJournalEntryRepository } from '../../data/repositories/InMemoryJournalEntryRepository.js';
 import { getPostgresPool } from '../../data/db/postgres.js';
+import { env } from '../../config/env.js';
 import { ListHouseholdAppointmentsUseCase } from '../../domain/usecases/appointments/ListHouseholdAppointmentsUseCase.js';
 import { CreateAppointmentUseCase } from '../../domain/usecases/appointments/CreateAppointmentUseCase.js';
 import { UpdateAppointmentUseCase } from '../../domain/usecases/appointments/UpdateAppointmentUseCase.js';
@@ -55,6 +57,7 @@ import { CreateTaskUseCase } from '../../domain/usecases/tasks/CreateTaskUseCase
 import { UpdateTaskUseCase } from '../../domain/usecases/tasks/UpdateTaskUseCase.js';
 import { DeleteTaskUseCase } from '../../domain/usecases/tasks/DeleteTaskUseCase.js';
 import { CompleteTaskUseCase } from '../../domain/usecases/tasks/CompleteTaskUseCase.js';
+import { ConfirmTaskUseCase } from '../../domain/usecases/tasks/ConfirmTaskUseCase.js';
 import { CreateTaskReminderUseCase } from '../../domain/usecases/tasks/CreateTaskReminderUseCase.js';
 import { UpdateTaskReminderUseCase } from '../../domain/usecases/tasks/UpdateTaskReminderUseCase.js';
 import { DeleteTaskReminderUseCase } from '../../domain/usecases/tasks/DeleteTaskReminderUseCase.js';
@@ -109,7 +112,9 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   const repository = createHouseholdRepository();
 
   // Initialize journal repository (separate from household repo)
-  const journalRepository = new PostgresJournalEntryRepository(getPostgresPool());
+  const journalRepository = env.PERSISTENCE_DRIVER === 'postgres'
+    ? new PostgresJournalEntryRepository(getPostgresPool())
+    : new InMemoryJournalEntryRepository();
 
   // Initialize shared services
   const accessValidator = new HouseholdAccessValidator(repository);
@@ -156,6 +161,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     updateTaskUseCase: new UpdateTaskUseCase(repository),
     deleteTaskUseCase: new DeleteTaskUseCase(repository),
     completeTaskUseCase: new CompleteTaskUseCase(repository),
+    confirmTaskUseCase: new ConfirmTaskUseCase(repository),
     createTaskReminderUseCase: new CreateTaskReminderUseCase(repository),
     updateTaskReminderUseCase: new UpdateTaskReminderUseCase(repository),
     deleteTaskReminderUseCase: new DeleteTaskReminderUseCase(repository),
@@ -252,6 +258,7 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
     updateTaskUseCase: useCases.updateTaskUseCase,
     deleteTaskUseCase: useCases.deleteTaskUseCase,
     completeTaskUseCase: useCases.completeTaskUseCase,
+    confirmTaskUseCase: useCases.confirmTaskUseCase,
     createTaskReminderUseCase: useCases.createTaskReminderUseCase,
     updateTaskReminderUseCase: useCases.updateTaskReminderUseCase,
     deleteTaskReminderUseCase: useCases.deleteTaskReminderUseCase,

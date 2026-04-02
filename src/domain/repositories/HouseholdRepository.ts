@@ -133,6 +133,9 @@ export interface HouseholdRepository {
   updateTask(taskId: string, householdId: string, input: UpdateTaskInput): Promise<Task>;
   deleteTask(taskId: string, householdId: string): Promise<void>;
   completeTask(taskId: string, householdId: string, input: CompleteTaskInput, completedBy: string): Promise<Task>;
+  confirmTask(taskId: string, householdId: string, confirmedBy: string): Promise<Task>;
+  listUnconfirmedTasks(): Promise<Task[]>;
+  markConfirmationNotified(taskIds: string[]): Promise<void>;
 
   // Task Reminders
   listTaskReminders(taskId: string, householdId: string): Promise<TaskReminder[]>;
