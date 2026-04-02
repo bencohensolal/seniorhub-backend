@@ -14,6 +14,7 @@ import { PostgresNotificationRepository } from './data/repositories/postgres/Pos
 import { registerInternalRoutes } from './routes/internal/triggerRoutes.js';
 import { registerEmailAuthRoutes } from './routes/auth/emailAuthRoutes.js';
 import { registerRevenueCatWebhookRoute } from './routes/webhooks/revenuecatWebhookRoute.js';
+import { env } from './config/env.js';
 import { GetUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/GetUserPrivacySettingsUseCase.js';
 import { UpdateUserPrivacySettingsUseCase } from './domain/usecases/privacySettings/UpdateUserPrivacySettingsUseCase.js';
 
@@ -89,16 +90,16 @@ export const buildApp = () => {
   // Email + password authentication (for users without Google accounts)
   registerEmailAuthRoutes(app, repository);
 
-  // Push token registration
-  const pool = getPostgresPool();
-  const notifRepo = new PostgresNotificationRepository(pool);
-  registerPushTokenRoutes(app, notifRepo);
+  // Push token registration & internal routes (require postgres)
+  if (env.PERSISTENCE_DRIVER === 'postgres') {
+    const pool = getPostgresPool();
+    const notifRepo = new PostgresNotificationRepository(pool);
+    registerPushTokenRoutes(app, notifRepo);
+    registerInternalRoutes(app, notifRepo);
+  }
 
   // RevenueCat webhook (unauthenticated — bearer token verified internally)
   registerRevenueCatWebhookRoute(app, repository);
-
-  // Internal routes (manual trigger for testing)
-  registerInternalRoutes(app, notifRepo);
 
   return app;
 };
