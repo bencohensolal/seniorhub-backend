@@ -57,7 +57,7 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
       seniorIds: input.seniorIds,
       authorId: input.authorId,
       content: input.content,
-      ...(input.description ? { description: input.description } : {}),
+      description: input.description,
       category: input.category || 'general',
       createdAt: now,
       updatedAt: now,
@@ -70,16 +70,31 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
     const idx = this.entries.findIndex((e) => e.id === id);
     if (idx === -1) throw new NotFoundError('Journal entry not found.');
 
-    const updates: Partial<JournalEntry> = {};
-    if (input.seniorIds !== undefined) updates.seniorIds = input.seniorIds;
-    if (input.content !== undefined) updates.content = input.content;
-    if (input.description !== undefined) updates.description = input.description ?? undefined;
-    if (input.category !== undefined) updates.category = input.category;
+    const existing = this.entries[idx]!;
+    const updated: JournalEntry = {
+      id: existing.id,
+      householdId: existing.householdId,
+      seniorIds: input.seniorIds !== undefined ? input.seniorIds : existing.seniorIds,
+      authorId: existing.authorId,
+      content: input.content !== undefined ? input.content : existing.content,
+      description: input.description !== undefined ? (input.description ?? undefined) : existing.description,
+      category: input.category !== undefined ? input.category : existing.category,
+      archivedAt: existing.archivedAt,
+      createdAt: existing.createdAt,
+      updatedAt: nowIso(),
+    };
 
-    if (Object.keys(updates).length === 0) throw new ValidationError('No fields to update.');
+    if (
+      updated.seniorIds === existing.seniorIds &&
+      updated.content === existing.content &&
+      updated.description === existing.description &&
+      updated.category === existing.category
+    ) {
+      throw new ValidationError('No fields to update.');
+    }
 
-    this.entries[idx] = { ...this.entries[idx], ...updates, updatedAt: nowIso() };
-    return this.entries[idx];
+    this.entries[idx] = updated;
+    return updated;
   }
 
   async delete(id: string): Promise<void> {
@@ -90,20 +105,33 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
 
   async archive(id: string): Promise<JournalEntry> {
     const idx = this.entries.findIndex((e) => e.id === id);
-    if (idx === -1 || this.entries[idx].archivedAt) {
+    const entry = this.entries[idx];
+    if (idx === -1 || !entry || entry.archivedAt) {
       throw new NotFoundError('Journal entry not found or already archived.');
     }
-    this.entries[idx] = { ...this.entries[idx], archivedAt: nowIso(), updatedAt: nowIso() };
-    return this.entries[idx];
+    const updated: JournalEntry = { ...entry, archivedAt: nowIso(), updatedAt: nowIso() };
+    this.entries[idx] = updated;
+    return updated;
   }
 
   async unarchive(id: string): Promise<JournalEntry> {
     const idx = this.entries.findIndex((e) => e.id === id);
-    if (idx === -1 || !this.entries[idx].archivedAt) {
+    const entry = this.entries[idx];
+    if (idx === -1 || !entry || !entry.archivedAt) {
       throw new NotFoundError('Journal entry not found or not archived.');
     }
-    const { archivedAt: _, ...rest } = this.entries[idx];
-    this.entries[idx] = { ...rest, updatedAt: nowIso() } as JournalEntry;
-    return this.entries[idx];
+    const updated: JournalEntry = {
+      id: entry.id,
+      householdId: entry.householdId,
+      seniorIds: entry.seniorIds,
+      authorId: entry.authorId,
+      content: entry.content,
+      description: entry.description,
+      category: entry.category,
+      createdAt: entry.createdAt,
+      updatedAt: nowIso(),
+    };
+    this.entries[idx] = updated;
+    return updated;
   }
 }
