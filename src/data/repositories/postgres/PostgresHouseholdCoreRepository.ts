@@ -275,6 +275,7 @@ export class PostgresHouseholdCoreRepository {
 
     const membersResult = await this.pool.query<{
       id: string;
+      role: string;
       perm_manage_journal: boolean;
       perm_manage_appointments: boolean;
       perm_manage_tasks: boolean;
@@ -284,7 +285,7 @@ export class PostgresHouseholdCoreRepository {
       perm_view_documents: boolean;
       perm_manage_documents: boolean;
     }>(
-      `SELECT id, perm_manage_journal, perm_manage_appointments,
+      `SELECT id, role, perm_manage_journal, perm_manage_appointments,
               perm_manage_tasks, perm_manage_caregiver_todos, perm_manage_members,
               perm_view_sensitive_info, perm_view_documents, perm_manage_documents
        FROM household_members
@@ -294,15 +295,32 @@ export class PostgresHouseholdCoreRepository {
 
     const memberPermissions: Record<string, HouseholdMemberPermissions> = {};
     for (const row of membersResult.rows) {
+      const defaults = getDefaultHouseholdMemberPermissions(row.role as HouseholdRole);
       memberPermissions[row.id] = {
+        viewJournal: defaults.viewJournal,
         manageJournal: row.perm_manage_journal,
+        deleteJournal: defaults.deleteJournal,
+        viewAppointments: defaults.viewAppointments,
         manageAppointments: row.perm_manage_appointments,
+        deleteAppointments: defaults.deleteAppointments,
+        viewTasks: defaults.viewTasks,
         manageTasks: row.perm_manage_tasks,
+        deleteTasks: defaults.deleteTasks,
+        viewCaregiverTodos: defaults.viewCaregiverTodos,
         manageCaregiverTodos: row.perm_manage_caregiver_todos,
-        manageMembers: row.perm_manage_members,
-        viewSensitiveInfo: row.perm_view_sensitive_info,
+        deleteCaregiverTodos: defaults.deleteCaregiverTodos,
         viewDocuments: row.perm_view_documents,
         manageDocuments: row.perm_manage_documents,
+        deleteDocuments: defaults.deleteDocuments,
+        manageMembers: row.perm_manage_members,
+        inviteMembers: defaults.inviteMembers,
+        editMemberRoles: defaults.editMemberRoles,
+        archiveMembers: defaults.archiveMembers,
+        manageMemberPermissions: defaults.manageMemberPermissions,
+        viewDisplayTablets: defaults.viewDisplayTablets,
+        manageDisplayTablets: defaults.manageDisplayTablets,
+        deleteDisplayTablets: defaults.deleteDisplayTablets,
+        viewSensitiveInfo: row.perm_view_sensitive_info,
       };
     }
 

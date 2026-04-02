@@ -2,7 +2,7 @@ import type { HouseholdRepository } from '../../repositories/HouseholdRepository
 import { ForbiddenError, NotFoundError } from '../../errors/index.js';
 import { HouseholdAccessValidator } from '../shared/HouseholdAccessValidator.js';
 
-export class ArchiveSeniorUseCase {
+export class ArchiveMemberUseCase {
   private readonly accessValidator: HouseholdAccessValidator;
 
   constructor(private readonly repository: HouseholdRepository) {
@@ -17,11 +17,12 @@ export class ArchiveSeniorUseCase {
     const requester = await this.accessValidator.ensureMember(input.requesterUserId, input.householdId);
 
     if (!requester) {
-      throw new ForbiddenError('Only household members can archive seniors.');
+      throw new ForbiddenError('Only household members can archive members.');
     }
 
-    if (requester.role === 'senior') {
-      throw new ForbiddenError('Seniors cannot archive other members.');
+    // Cannot archive yourself
+    if (requester.id === input.memberId) {
+      throw new ForbiddenError('You cannot archive yourself.');
     }
 
     // Verify target member exists in this household
@@ -30,18 +31,19 @@ export class ArchiveSeniorUseCase {
       throw new NotFoundError('Member not found in this household.');
     }
 
-    if (target.role !== 'senior') {
-      throw new ForbiddenError('Only senior members can be archived.');
+    // Revoke all active senior devices first (only applicable to seniors)
+    if (target.role === 'senior') {
+      await this.repository.revokeAllSeniorDevicesForMember(
+        input.memberId,
+        input.householdId,
+        input.requesterUserId,
+      );
     }
-
-    // Revoke all active senior devices first
-    await this.repository.revokeAllSeniorDevicesForMember(
-      input.memberId,
-      input.householdId,
-      input.requesterUserId,
-    );
 
     // Archive the member
     await this.repository.archiveMember(input.memberId, input.householdId);
   }
 }
+
+/** @deprecated Use ArchiveMemberUseCase instead */
+export const ArchiveSeniorUseCase = ArchiveMemberUseCase;

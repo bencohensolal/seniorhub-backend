@@ -15,7 +15,7 @@ import type { PhotoScreen, PhotoScreenWithPhotos, Photo, CreatePhotoScreenInput,
 import type { TextScreen, CreateTextScreenInput, UpdateTextScreenInput } from '../entities/TextScreen.js';
 import type { PrivacySettings, UpdatePrivacySettingsInput } from '../entities/PrivacySettings.js';
 import type { UserProfile, UpdateUserProfileInput } from '../entities/UserProfile.js';
-import type { HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
+import type { HouseholdMemberPermissions, HouseholdSettings, UpdateHouseholdSettingsInput } from '../entities/HouseholdSettings.js';
 import type { Document, CreateDocumentInput, UpdateDocumentInput } from '../entities/Document.js';
 import type { DocumentFolder, DocumentFolderWithCounts, CreateDocumentFolderInput, UpdateDocumentFolderInput } from '../entities/DocumentFolder.js';
 import type { EmergencyContact, CreateEmergencyContactInput, UpdateEmergencyContactInput } from '../entities/EmergencyContact.js';
@@ -276,16 +276,7 @@ export interface HouseholdRepository {
     lastName: string;
     role: HouseholdRole;
     phoneNumber?: string | undefined;
-    permissions: {
-      manageJournal: boolean;
-      manageAppointments: boolean;
-      manageTasks: boolean;
-      manageCaregiverTodos: boolean;
-      manageMembers: boolean;
-      viewSensitiveInfo: boolean;
-      viewDocuments: boolean;
-      manageDocuments: boolean;
-    };
+    permissions: HouseholdMemberPermissions;
   }): Promise<{ id: string }>;
 
   // Caregiver Todos

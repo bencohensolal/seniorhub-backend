@@ -244,7 +244,7 @@ export const registerInvitationRoutes = (
           requesterUserId: request.requester!.userId,
           allowedRoles: ['caregiver'],
         });
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'inviteMembers');
 
         const result = await useCases.createBulkInvitationsUseCase.execute({
           householdId: paramsResult.data.householdId,
@@ -638,7 +638,7 @@ export const registerInvitationRoutes = (
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'inviteMembers');
 
         const result = await useCases.resendInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,
@@ -742,7 +742,7 @@ export const registerInvitationRoutes = (
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'inviteMembers');
 
         const result = await useCases.reactivateInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,
@@ -833,7 +833,7 @@ export const registerInvitationRoutes = (
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'inviteMembers');
 
         await useCases.cancelInvitationUseCase.execute({
           householdId: paramsResult.data.householdId,

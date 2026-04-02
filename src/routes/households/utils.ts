@@ -2,6 +2,8 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { ForbiddenError } from '../../domain/errors/index.js';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
 import type { HouseholdPermissionAction } from '../../domain/entities/HouseholdSettings.js';
+import { getDefaultHouseholdMemberPermissions } from '../../domain/entities/HouseholdSettings.js';
+import type { HouseholdRole } from '../../domain/entities/Member.js';
 
 // ============================================
 // Tablet Authentication Utilities
@@ -91,8 +93,10 @@ export const ensureHouseholdPermission = async (
   }
 
   const settings = await repository.getHouseholdSettings(householdId);
-  const memberPermissions = settings.memberPermissions[member.id];
-  if (!memberPermissions?.[permission]) {
+  const stored = settings.memberPermissions[member.id];
+  const defaults = getDefaultHouseholdMemberPermissions(member.role as HouseholdRole);
+  const effectiveValue = stored?.[permission] ?? defaults[permission] ?? false;
+  if (!effectiveValue) {
     throw new ForbiddenError(`Missing required household permission: ${permission}.`);
   }
 };

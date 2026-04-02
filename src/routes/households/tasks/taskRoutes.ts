@@ -522,7 +522,7 @@ export function registerTaskRoutes(
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageTasks');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteTasks');
         await useCases.deleteTaskUseCase.execute({
           taskId: paramsResult.data.taskId,
           householdId: paramsResult.data.householdId,

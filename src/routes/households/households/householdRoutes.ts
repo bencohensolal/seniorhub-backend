@@ -495,7 +495,7 @@ export const registerHouseholdRoutes = (
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageMemberPermissions');
         const payload: UpdateHouseholdSettingsInput = {
           ...(bodyResult.data.notifications && {
             notifications: bodyResult.data.notifications as Partial<HouseholdNotificationSettings>,

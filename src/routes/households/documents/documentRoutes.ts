@@ -237,6 +237,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageDocuments');
         const folder = await useCases.createFolderUseCase.execute({
           ...bodyResult.data,
           householdId: paramsResult.data.householdId,
@@ -303,6 +304,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageDocuments');
         const folder = await useCases.updateFolderUseCase.execute({
           folderId: paramsResult.data.folderId,
           householdId: paramsResult.data.householdId,
@@ -359,6 +361,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteDocuments');
         await useCases.deleteFolderUseCase.execute({
           folderId: paramsResult.data.folderId,
           householdId: paramsResult.data.householdId,
@@ -427,6 +430,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageDocuments');
         const document = await useCases.createDocumentUseCase.execute({
           ...bodyResult.data,
           householdId: paramsResult.data.householdId,
@@ -493,6 +497,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageDocuments');
         const document = await useCases.updateDocumentUseCase.execute({
           documentId: paramsResult.data.documentId,
           householdId: paramsResult.data.householdId,
@@ -549,6 +554,7 @@ export function registerDocumentRoutes(
       }
 
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteDocuments');
         await useCases.deleteDocumentUseCase.execute({
           documentId: paramsResult.data.documentId,
           householdId: paramsResult.data.householdId,
@@ -653,6 +659,7 @@ export function registerDocumentRoutes(
         return reply.status(400).send({ status: 'error', message: 'Invalid request payload.' });
       }
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteDocuments');
         await useCases.moveToTrashUseCase.execute({
           householdId: paramsResult.data.householdId,
           itemId: body.itemId,
@@ -701,6 +708,7 @@ export function registerDocumentRoutes(
         return reply.status(400).send({ status: 'error', message: 'Invalid request payload.' });
       }
       try {
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteDocuments');
         await useCases.permanentlyDeleteFromTrashUseCase.execute({
           householdId: paramsResult.data.householdId,
           itemId: body.itemId,

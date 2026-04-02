@@ -11,6 +11,7 @@ import { AuthenticateDisplayTabletUseCase } from '../../../domain/usecases/displ
 import { RefreshDisplayTabletSessionUseCase } from '../../../domain/usecases/displayTablets/RefreshDisplayTabletSessionUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission } from '../utils.js';
 
 // Tablet auth rate limiting (in-memory, per IP/tabletId)
 const tabletAuthRateState = new Map<string, { count: number; windowStartMs: number }>();
@@ -179,6 +180,7 @@ export const registerDisplayTabletRoutes = (
       try {
         const params = householdParamsSchema.parse(request.params);
         const body = createTabletBodySchema.parse(request.body);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'manageDisplayTablets');
         const useCase = new CreateDisplayTabletUseCase(repository);
 
         const tablet = await useCase.execute({
@@ -246,6 +248,7 @@ export const registerDisplayTabletRoutes = (
       try {
         const params = householdTabletParamsSchema.parse(request.params);
         const body = updateTabletBodySchema.parse(request.body);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'manageDisplayTablets');
         const useCase = new UpdateDisplayTabletUseCase(repository);
 
         const tablet = await useCase.execute({
@@ -297,6 +300,7 @@ export const registerDisplayTabletRoutes = (
     async (request, reply) => {
       try {
         const params = householdTabletParamsSchema.parse(request.params);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'deleteDisplayTablets');
         const useCase = new RevokeDisplayTabletUseCase(repository);
 
         await useCase.execute({
@@ -343,6 +347,7 @@ export const registerDisplayTabletRoutes = (
     async (request, reply) => {
       try {
         const params = householdTabletParamsSchema.parse(request.params);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'deleteDisplayTablets');
         const useCase = new DeleteDisplayTabletUseCase(repository);
 
         await useCase.execute({
@@ -402,6 +407,7 @@ export const registerDisplayTabletRoutes = (
     async (request, reply) => {
       try {
         const params = householdTabletParamsSchema.parse(request.params);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'manageDisplayTablets');
         const useCase = new RegenerateDisplayTabletTokenUseCase(repository);
 
         const tablet = await useCase.execute({

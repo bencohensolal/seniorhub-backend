@@ -428,7 +428,7 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteAppointments');
 
         await useCases.deleteAppointmentUseCase.execute({
           appointmentId: paramsResult.data.appointmentId,
@@ -639,7 +639,7 @@ export function registerAppointmentRoutes(
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageAppointments');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteAppointments');
 
         await useCases.deleteAppointmentReminderUseCase.execute({
           reminderId: paramsResult.data.reminderId,

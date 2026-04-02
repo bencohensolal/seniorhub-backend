@@ -354,7 +354,7 @@ export function registerJournalRoutes(
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageJournal');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteJournal');
         await useCases.deleteJournalEntryUseCase.execute({
           entryId: paramsResult.data.entryId,
           householdId: paramsResult.data.householdId,

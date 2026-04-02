@@ -293,7 +293,7 @@ export function registerCaregiverTodoRoutes(
       }
 
       try {
-        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'manageCaregiverTodos');
+        await ensureHouseholdPermission(request, repository, paramsResult.data.householdId, 'deleteCaregiverTodos');
         await useCases.deleteCaregiverTodoUseCase.execute({
           todoId: paramsResult.data.todoId,
           householdId: paramsResult.data.householdId,

@@ -8,6 +8,7 @@ import type {
   SeniorDeviceStatus,
 } from '../../../domain/entities/SeniorDevice.js';
 import type { HouseholdRole } from '../../../domain/entities/Member.js';
+import type { HouseholdMemberPermissions } from '../../../domain/entities/HouseholdSettings.js';
 import { NotFoundError } from '../../../domain/errors/index.js';
 import { nowIso, addHours, mapSeniorDevice } from './helpers.js';
 import { generateDisplayTabletToken, hashDisplayTabletToken } from '../../../domain/security/displayTabletToken.js';
@@ -258,17 +259,8 @@ export class PostgresSeniorDeviceRepository {
     firstName: string;
     lastName: string;
     role: HouseholdRole;
-    phoneNumber?: string;
-    permissions: {
-      manageJournal: boolean;
-      manageAppointments: boolean;
-      manageTasks: boolean;
-      manageCaregiverTodos: boolean;
-      manageMembers: boolean;
-      viewSensitiveInfo: boolean;
-      viewDocuments: boolean;
-      manageDocuments: boolean;
-    };
+    phoneNumber?: string | undefined;
+    permissions: HouseholdMemberPermissions;
   }): Promise<{ id: string }> {
     const id = randomUUID();
     const now = nowIso();

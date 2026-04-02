@@ -190,7 +190,7 @@ export function registerMemberRoutes(
       const params = request.params as { householdId: string; memberId: string };
 
       try {
-        await ensureHouseholdPermission(request, repository, params.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, params.householdId, 'archiveMembers');
         await useCases.removeHouseholdMemberUseCase.execute({
           householdId: params.householdId,
           memberId: params.memberId,
@@ -260,7 +260,7 @@ export function registerMemberRoutes(
       const body = request.body as { role: 'senior' | 'caregiver' };
 
       try {
-        await ensureHouseholdPermission(request, repository, params.householdId, 'manageMembers');
+        await ensureHouseholdPermission(request, repository, params.householdId, 'editMemberRoles');
         const updatedMember = await useCases.updateHouseholdMemberRoleUseCase.execute({
           householdId: params.householdId,
           memberId: params.memberId,

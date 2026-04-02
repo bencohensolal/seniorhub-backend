@@ -6,7 +6,7 @@ import { CreateSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevice
 import { AuthenticateSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevices/AuthenticateSeniorDeviceUseCase.js';
 import { RefreshSeniorDeviceSessionUseCase } from '../../../domain/usecases/seniorDevices/RefreshSeniorDeviceSessionUseCase.js';
 import { RevokeSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevices/RevokeSeniorDeviceUseCase.js';
-import { ArchiveSeniorUseCase } from '../../../domain/usecases/seniorDevices/ArchiveSeniorUseCase.js';
+import { ArchiveMemberUseCase } from '../../../domain/usecases/seniorDevices/ArchiveSeniorUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
 
@@ -366,7 +366,7 @@ export const registerSeniorDeviceRoutes = (
     async (request, reply) => {
       try {
         const params = archiveMemberParamsSchema.parse(request.params);
-        const useCase = new ArchiveSeniorUseCase(repository);
+        const useCase = new ArchiveMemberUseCase(repository);
 
         await useCase.execute({
           householdId: params.householdId,
@@ -376,7 +376,7 @@ export const registerSeniorDeviceRoutes = (
 
         return reply.status(200).send({
           status: 'success',
-          message: 'Senior archived and devices revoked successfully.',
+          message: 'Member archived successfully.',
         });
       } catch (error) {
         return handleDomainError(error, reply);
