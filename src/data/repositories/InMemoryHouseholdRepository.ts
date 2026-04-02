@@ -789,6 +789,18 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
     throw new Error('Task operations not implemented in InMemoryRepository');
   }
 
+  async confirmTask(_taskId: string, _householdId: string, _confirmedBy: string): Promise<never> {
+    throw new Error('Task operations not implemented in InMemoryRepository');
+  }
+
+  async listUnconfirmedTasks(): Promise<never[]> {
+    return [];
+  }
+
+  async markConfirmationNotified(_taskIds: string[]): Promise<void> {
+    // no-op
+  }
+
   // Task Reminder methods - stub implementations for test compatibility
   async listTaskReminders(_taskId: string, _householdId: string): Promise<never[]> {
     return [];

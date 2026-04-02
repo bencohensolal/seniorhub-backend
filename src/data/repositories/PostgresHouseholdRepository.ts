@@ -121,6 +121,9 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   updateTask = (taskId: string, householdId: string, input: UpdateTaskInput): Promise<Task> => this.tasks.updateTask(taskId, householdId, input);
   deleteTask = (taskId: string, householdId: string): Promise<void> => this.tasks.deleteTask(taskId, householdId);
   completeTask = (taskId: string, householdId: string, input: CompleteTaskInput, completedBy: string): Promise<Task> => this.tasks.completeTask(taskId, householdId, input, completedBy);
+  confirmTask = (taskId: string, householdId: string, confirmedBy: string): Promise<Task> => this.tasks.confirmTask(taskId, householdId, confirmedBy);
+  listUnconfirmedTasks = (): Promise<Task[]> => this.tasks.listUnconfirmedTasks();
+  markConfirmationNotified = (taskIds: string[]): Promise<void> => this.tasks.markConfirmationNotified(taskIds);
 
   // Task Reminders
   listTaskReminders = (taskId: string, householdId: string): Promise<TaskReminder[]> => this.tasks.listTaskReminders(taskId, householdId);
