@@ -53,6 +53,7 @@ export interface HouseholdRepository {
   findActiveMemberByUserInHousehold(userId: string, householdId: string): Promise<Member | null>;
   listUserHouseholds(userId: string): Promise<UserHouseholdMembership[]>;
   listHouseholdMembers(householdId: string): Promise<Member[]>;
+  listArchivedHouseholdMembers(householdId: string): Promise<Member[]>;
   createHousehold(name: string, requester: AuthenticatedRequester): Promise<Household>;
   createBulkInvitations(input: {
     householdId: string;
@@ -269,6 +270,7 @@ export interface HouseholdRepository {
   revokeAllSeniorDevicesForMember(memberId: string, householdId: string, revokedBy: string): Promise<void>;
   countActiveSeniorDevices(householdId: string): Promise<number>;
   archiveMember(memberId: string, householdId: string): Promise<void>;
+  restoreMember(memberId: string, householdId: string): Promise<void>;
   createProxyMember(input: {
     householdId: string;
     userId: string;

@@ -1511,6 +1511,8 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async revokeAllSeniorDevicesForMember(_memberId: string, _householdId: string, _revokedBy: string): Promise<void> {}
   async countActiveSeniorDevices(_householdId: string): Promise<number> { return 0; }
   async archiveMember(_memberId: string, _householdId: string): Promise<void> {}
+  async restoreMember(_memberId: string, _householdId: string): Promise<void> {}
+  async listArchivedHouseholdMembers(_householdId: string): Promise<any[]> { return []; }
   async createProxyMember(_input: any): Promise<{ id: string }> { throw new Error('Not implemented in-memory'); }
 
   // Caregiver Todos stubs

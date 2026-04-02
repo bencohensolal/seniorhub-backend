@@ -227,6 +227,8 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   revokeAllSeniorDevicesForMember = (memberId: string, householdId: string, revokedBy: string): Promise<void> => this.seniorDevices.revokeAllSeniorDevicesForMember(memberId, householdId, revokedBy);
   countActiveSeniorDevices = (householdId: string): Promise<number> => this.seniorDevices.countActiveSeniorDevices(householdId);
   archiveMember = (memberId: string, householdId: string): Promise<void> => this.core.archiveMember(memberId, householdId);
+  restoreMember = (memberId: string, householdId: string): Promise<void> => this.core.restoreMember(memberId, householdId);
+  listArchivedHouseholdMembers = (householdId: string) => this.core.listArchivedHouseholdMembers(householdId);
 
   // Caregiver Todos
   listCaregiverTodos = (householdId: string, filters?: { status?: string; assignedTo?: string }): Promise<CaregiverTodoWithComments[]> => this.caregiverTodos.listCaregiverTodos(householdId, filters);

@@ -7,8 +7,10 @@ import { AuthenticateSeniorDeviceUseCase } from '../../../domain/usecases/senior
 import { RefreshSeniorDeviceSessionUseCase } from '../../../domain/usecases/seniorDevices/RefreshSeniorDeviceSessionUseCase.js';
 import { RevokeSeniorDeviceUseCase } from '../../../domain/usecases/seniorDevices/RevokeSeniorDeviceUseCase.js';
 import { ArchiveMemberUseCase } from '../../../domain/usecases/seniorDevices/ArchiveSeniorUseCase.js';
+import { RestoreMemberUseCase } from '../../../domain/usecases/households/RestoreMemberUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
+import { ensureHouseholdPermission } from '../utils.js';
 
 // Rate limiting (in-memory, per IP/deviceId)
 const deviceAuthRateState = new Map<string, { count: number; windowStartMs: number }>();
@@ -377,6 +379,92 @@ export const registerSeniorDeviceRoutes = (
         return reply.status(200).send({
           status: 'success',
           message: 'Member archived successfully.',
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // 4b. POST /v1/households/:householdId/members/:memberId/restore - Restore archived member
+  fastify.post(
+    '/v1/households/:householdId/members/:memberId/restore',
+    {
+      preHandler: requireUserAuth,
+      schema: {
+        tags: ['Household Members'],
+        params: {
+          type: 'object',
+          properties: {
+            householdId: { type: 'string' },
+            memberId: { type: 'string' },
+          },
+          required: ['householdId', 'memberId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = archiveMemberParamsSchema.parse(request.params);
+        await ensureHouseholdPermission(request, repository, params.householdId, 'archiveMembers');
+        const useCase = new RestoreMemberUseCase(repository);
+
+        await useCase.execute({
+          householdId: params.householdId,
+          memberId: params.memberId,
+          requesterUserId: request.requester!.userId,
+        });
+
+        return reply.status(200).send({
+          status: 'success',
+          message: 'Member restored successfully.',
+        });
+      } catch (error) {
+        return handleDomainError(error, reply);
+      }
+    },
+  );
+
+  // 4c. GET /v1/households/:householdId/members/archived - List archived members
+  fastify.get(
+    '/v1/households/:householdId/members/archived',
+    {
+      preHandler: requireUserAuth,
+      schema: {
+        tags: ['Household Members'],
+        params: {
+          type: 'object',
+          properties: { householdId: { type: 'string' } },
+          required: ['householdId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = z.object({ householdId: z.string() }).parse(request.params);
+        const members = await repository.listArchivedHouseholdMembers(params.householdId);
+
+        return reply.status(200).send({
+          status: 'success',
+          data: members,
         });
       } catch (error) {
         return handleDomainError(error, reply);

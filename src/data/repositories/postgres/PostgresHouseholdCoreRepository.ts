@@ -1125,6 +1125,44 @@ export class PostgresHouseholdCoreRepository {
     }
   }
 
+  async restoreMember(memberId: string, householdId: string): Promise<void> {
+    const result = await this.pool.query(
+      `UPDATE household_members
+       SET status = 'active'
+       WHERE id = $1 AND household_id = $2 AND status = 'archived'`,
+      [memberId, householdId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Archived member not found.');
+    }
+  }
+
+  async listArchivedHouseholdMembers(householdId: string): Promise<Member[]> {
+    const result = await this.pool.query<any>(
+      `SELECT id, household_id, user_id, email, first_name, last_name, role, status, joined_at, created_at, auth_provider, phone_number
+       FROM household_members
+       WHERE household_id = $1 AND status = 'archived'
+       ORDER BY joined_at ASC`,
+      [householdId],
+    );
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      householdId: row.household_id,
+      userId: row.user_id,
+      email: row.email,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role,
+      status: row.status,
+      joinedAt: row.joined_at?.toISOString?.() ?? row.joined_at,
+      createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+      authProvider: row.auth_provider,
+      phoneNumber: row.phone_number,
+    }));
+  }
+
   async updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member> {
     const rolePerms = this.permissionsForRole(newRole);
     const result = await this.pool.query<{
