@@ -51,17 +51,19 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
 
   async create(input: CreateJournalEntryInput): Promise<JournalEntry> {
     const now = nowIso();
-    const entry: JournalEntry = {
-      id: randomUUID(),
-      householdId: input.householdId,
-      seniorIds: input.seniorIds,
-      authorId: input.authorId,
-      content: input.content,
-      description: input.description,
-      category: input.category || 'general',
-      createdAt: now,
-      updatedAt: now,
-    };
+    const entry: JournalEntry = Object.assign(
+      {
+        id: randomUUID(),
+        householdId: input.householdId,
+        seniorIds: input.seniorIds,
+        authorId: input.authorId,
+        content: input.content,
+        category: input.category || 'general' as JournalCategory,
+        createdAt: now,
+        updatedAt: now,
+      },
+      input.description != null ? { description: input.description } : {},
+    );
     this.entries.push(entry);
     return entry;
   }
@@ -71,30 +73,38 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
     if (idx === -1) throw new NotFoundError('Journal entry not found.');
 
     const existing = this.entries[idx]!;
-    const updated: JournalEntry = {
+    let hasChanges = false;
+
+    const base: JournalEntry = {
       id: existing.id,
       householdId: existing.householdId,
-      seniorIds: input.seniorIds !== undefined ? input.seniorIds : existing.seniorIds,
+      seniorIds: existing.seniorIds,
       authorId: existing.authorId,
-      content: input.content !== undefined ? input.content : existing.content,
-      description: input.description !== undefined ? (input.description ?? undefined) : existing.description,
-      category: input.category !== undefined ? input.category : existing.category,
-      archivedAt: existing.archivedAt,
+      content: existing.content,
+      category: existing.category,
       createdAt: existing.createdAt,
       updatedAt: nowIso(),
     };
 
-    if (
-      updated.seniorIds === existing.seniorIds &&
-      updated.content === existing.content &&
-      updated.description === existing.description &&
-      updated.category === existing.category
-    ) {
-      throw new ValidationError('No fields to update.');
+    if (existing.description != null) base.description = existing.description;
+    if (existing.archivedAt != null) base.archivedAt = existing.archivedAt;
+
+    if (input.seniorIds !== undefined) { base.seniorIds = input.seniorIds; hasChanges = true; }
+    if (input.content !== undefined) { base.content = input.content; hasChanges = true; }
+    if (input.category !== undefined) { base.category = input.category; hasChanges = true; }
+    if (input.description !== undefined) {
+      if (input.description === null) {
+        delete base.description;
+      } else {
+        base.description = input.description;
+      }
+      hasChanges = true;
     }
 
-    this.entries[idx] = updated;
-    return updated;
+    if (!hasChanges) throw new ValidationError('No fields to update.');
+
+    this.entries[idx] = base;
+    return base;
   }
 
   async delete(id: string): Promise<void> {
@@ -109,7 +119,18 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
     if (idx === -1 || !entry || entry.archivedAt) {
       throw new NotFoundError('Journal entry not found or already archived.');
     }
-    const updated: JournalEntry = { ...entry, archivedAt: nowIso(), updatedAt: nowIso() };
+    const updated: JournalEntry = {
+      id: entry.id,
+      householdId: entry.householdId,
+      seniorIds: entry.seniorIds,
+      authorId: entry.authorId,
+      content: entry.content,
+      category: entry.category,
+      createdAt: entry.createdAt,
+      archivedAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    if (entry.description != null) updated.description = entry.description;
     this.entries[idx] = updated;
     return updated;
   }
@@ -126,11 +147,11 @@ export class InMemoryJournalEntryRepository implements JournalEntryRepository {
       seniorIds: entry.seniorIds,
       authorId: entry.authorId,
       content: entry.content,
-      description: entry.description,
       category: entry.category,
       createdAt: entry.createdAt,
       updatedAt: nowIso(),
     };
+    if (entry.description != null) updated.description = entry.description;
     this.entries[idx] = updated;
     return updated;
   }
