@@ -2,10 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { HouseholdRepository } from '../../../domain/repositories/HouseholdRepository.js';
 import type { GetHouseholdSubscriptionUseCase } from '../../../domain/usecases/subscriptions/GetHouseholdSubscriptionUseCase.js';
-import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
+import { paramsSchema } from '../householdSchemas.js';
 import { getRequesterContext } from '../utils.js';
 import { handleDomainError } from '../../errorHandler.js';
-import type { AuditCategory } from '../../../domain/entities/AuditEvent.js';
+import type { AuditCategory, ListAuditEventsParams } from '../../../domain/entities/AuditEvent.js';
 
 const UNLIMITED = Number.MAX_SAFE_INTEGER;
 
@@ -25,19 +25,6 @@ export function registerHistoryRoutes(
   // GET /v1/households/:householdId/history
   fastify.get(
     '/v1/households/:householdId/history',
-    {
-      schema: {
-        tags: ['History'],
-        summary: 'List activity history for a household',
-        params: paramsSchema,
-        querystring: querySchema,
-        response: {
-          400: errorResponseSchema,
-          403: errorResponseSchema,
-          500: errorResponseSchema,
-        },
-      },
-    },
     async (request, reply) => {
       const paramsResult = paramsSchema.safeParse(request.params);
       const queryResult = querySchema.safeParse(request.query);
@@ -65,10 +52,7 @@ export function registerHistoryRoutes(
           sinceDate = d.toISOString();
         }
 
-        const params: import('../../../domain/entities/AuditEvent.js').ListAuditEventsParams = {
-          householdId,
-          limit,
-        };
+        const params: ListAuditEventsParams = { householdId, limit };
         if (category) params.category = category as AuditCategory;
         if (cursor) params.cursor = cursor;
         if (sinceDate) params.sinceDate = sinceDate;
