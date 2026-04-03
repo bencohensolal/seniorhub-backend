@@ -141,10 +141,10 @@ export const DEFAULT_TABLET_CONFIG: TabletDisplayConfig = {
   slideDuration: 10000,
   dataCacheDuration: 300000,
   dataRefreshInterval: 300000,
-  kioskModeEnabled: false,
-  language: 'en',
-  tapToAdvanceEnabled: false,
-  showCountdownEnabled: false,
+  kioskModeEnabled: true,
+  language: 'fr',
+  tapToAdvanceEnabled: true,
+  showCountdownEnabled: true,
   screens: [
     {
       type: 'summary',
