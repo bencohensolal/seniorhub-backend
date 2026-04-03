@@ -7,8 +7,8 @@ import { getEmailProvider } from '../../data/services/email/emailProvider.js';
  * Map a RevenueCat product_id to a SeniorHub plan.
  */
 function mapProductToPlan(productId: string): SubscriptionPlan {
-  if (productId.startsWith('serenite')) return 'serenite';
-  if (productId.startsWith('famille')) return 'famille';
+  if (productId.startsWith('serenite') || productId.startsWith('serenity')) return 'serenite';
+  if (productId.startsWith('famille') || productId.startsWith('family')) return 'famille';
   return 'gratuit';
 }
 
