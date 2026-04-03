@@ -49,10 +49,11 @@ export function registerRevenueCatWebhookRoute(
       },
     },
     async (request, reply) => {
-      // Verify authorization
+      // Verify authorization — accept both "Bearer <key>" and raw "<key>"
       if (webhookAuthKey) {
         const authHeader = request.headers.authorization ?? '';
-        if (authHeader !== `Bearer ${webhookAuthKey}`) {
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+        if (token !== webhookAuthKey) {
           request.log.warn('RevenueCat webhook: invalid authorization');
           return reply.status(401).send({ error: 'Unauthorized' });
         }
