@@ -50,8 +50,8 @@ function buildGratuitLimits(): PlanLimits {
     maxCaregiverTodos:         envInt('PLAN_GRATUIT_MAX_CAREGIVER_TODOS', 5),
     maxJournalEntries:         envInt('PLAN_GRATUIT_MAX_JOURNAL_ENTRIES', 3),
     storageQuotaBytes:         envMb ('PLAN_GRATUIT_STORAGE_QUOTA_MB', 100),
-    maxTablets:                envInt('PLAN_GRATUIT_MAX_TABLETS', 0),
-    maxPhotoScreensPerTablet:  envInt('PLAN_GRATUIT_MAX_PHOTO_SCREENS_PER_TABLET', 0),
+    maxTablets:                envInt('PLAN_GRATUIT_MAX_TABLETS', 1),
+    maxPhotoScreensPerTablet:  envInt('PLAN_GRATUIT_MAX_PHOTO_SCREENS_PER_TABLET', 3),
     maxEmergencyContacts:      envInt('PLAN_GRATUIT_MAX_EMERGENCY_CONTACTS', 2),
     historyDays:               envInt('PLAN_GRATUIT_HISTORY_DAYS', 7),
   };
