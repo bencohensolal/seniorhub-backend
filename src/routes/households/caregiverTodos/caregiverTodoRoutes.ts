@@ -248,7 +248,7 @@ export function registerCaregiverTodoRoutes(
           updates,
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'update_caregiver_todo', paramsResult.data.todoId, { ...(body.title !== undefined && { title: body.title }) });
+        logAudit(repository, request, paramsResult.data.householdId, 'update_caregiver_todo', paramsResult.data.todoId, { title: todo.title });
         return reply.status(200).send({
           status: 'success',
           data: todo,
@@ -358,7 +358,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'complete_caregiver_todo', paramsResult.data.todoId);
+        logAudit(repository, request, paramsResult.data.householdId, 'complete_caregiver_todo', paramsResult.data.todoId, { title: todo.title });
         return reply.status(200).send({
           status: 'success',
           data: todo,
@@ -416,7 +416,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'nudge_caregiver_todo', paramsResult.data.todoId);
+        logAudit(repository, request, paramsResult.data.householdId, 'nudge_caregiver_todo', paramsResult.data.todoId, { title: todo.title });
         return reply.status(200).send({
           status: 'success',
           data: todo,

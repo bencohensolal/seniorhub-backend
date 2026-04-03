@@ -383,7 +383,7 @@ export function registerAppointmentRoutes(
           data: updateData,
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'update_appointment', paramsResult.data.appointmentId, { title: body.title || '' });
+        logAudit(repository, request, paramsResult.data.householdId, 'update_appointment', paramsResult.data.appointmentId, { title: appointment.title });
         return reply.status(200).send({
           status: 'success',
           data: appointment,

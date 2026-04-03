@@ -265,7 +265,7 @@ export const registerDisplayTabletRoutes = (
         // Remove internal actor IDs from response
         const { tokenHash, createdBy, revokedBy, ...sanitized } = tablet;
 
-        logAudit(repository, request, params.householdId, 'update_display_tablet', params.tabletId);
+        logAudit(repository, request, params.householdId, 'update_display_tablet', params.tabletId, { name: sanitized.name });
 
         return reply.status(200).send({
           status: 'success',
@@ -425,7 +425,7 @@ export const registerDisplayTabletRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
-        logAudit(repository, request, params.householdId, 'regenerate_tablet_token', params.tabletId);
+        logAudit(repository, request, params.householdId, 'regenerate_tablet_token', params.tabletId, { name: tablet.name });
 
         return reply.status(200).send({
           status: 'success',

@@ -240,7 +240,7 @@ export function registerJournalRoutes(
           updates,
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'update_journal_entry', paramsResult.data.entryId);
+        logAudit(repository, request, paramsResult.data.householdId, 'update_journal_entry', paramsResult.data.entryId, { title: entry.content?.substring(0, 50) || '' });
 
         return reply.status(200).send({
           status: 'success',

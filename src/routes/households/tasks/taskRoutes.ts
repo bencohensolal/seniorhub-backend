@@ -346,7 +346,7 @@ export function registerTaskRoutes(
           updates: updateData,
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'update_task', paramsResult.data.taskId);
+        logAudit(repository, request, paramsResult.data.householdId, 'update_task', paramsResult.data.taskId, { title: task.title });
         return reply.status(200).send({
           status: 'success',
           data: task,
@@ -422,7 +422,7 @@ export function registerTaskRoutes(
 
         const task = await useCases.completeTaskUseCase.execute(inputData);
 
-        logAudit(repository, request, paramsResult.data.householdId, 'complete_task', paramsResult.data.taskId);
+        logAudit(repository, request, paramsResult.data.householdId, 'complete_task', paramsResult.data.taskId, { title: task.title });
         return reply.status(200).send({
           status: 'success',
           data: task,
@@ -480,7 +480,7 @@ export function registerTaskRoutes(
           requester: getRequesterContext(request),
         });
 
-        logAudit(repository, request, paramsResult.data.householdId, 'confirm_task', paramsResult.data.taskId);
+        logAudit(repository, request, paramsResult.data.householdId, 'confirm_task', paramsResult.data.taskId, { title: task.title });
         return reply.status(200).send({
           status: 'success',
           data: task,
