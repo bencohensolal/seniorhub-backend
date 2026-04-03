@@ -11,6 +11,7 @@ import { RestoreMemberUseCase } from '../../../domain/usecases/households/Restor
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 // Rate limiting (in-memory, per IP/deviceId)
 const deviceAuthRateState = new Map<string, { count: number; windowStartMs: number }>();
@@ -194,6 +195,8 @@ export const registerSeniorDeviceRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
+        logAudit(repository, request, params.householdId, 'create_senior_device', device.id, { name: body.name });
+
         return reply.status(201).send({
           status: 'success',
           data: device,
@@ -376,6 +379,8 @@ export const registerSeniorDeviceRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
+        logAudit(repository, request, params.householdId, 'archive_senior', params.memberId);
+
         return reply.status(200).send({
           status: 'success',
           message: 'Member archived successfully.',
@@ -508,6 +513,8 @@ export const registerSeniorDeviceRoutes = (
           deviceId: params.deviceId,
           requesterUserId: request.requester!.userId,
         });
+
+        logAudit(repository, request, params.householdId, 'revoke_senior_device', params.deviceId);
 
         return reply.status(200).send({
           status: 'success',

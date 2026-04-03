@@ -23,6 +23,7 @@ import {
   createTaskReminderBodySchema,
   updateTaskReminderBodySchema,
 } from './taskSchemas.js';
+import { logAudit } from '../auditHelper.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext, verifyTabletHouseholdAccess } from '../utils.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
@@ -238,6 +239,7 @@ export function registerTaskRoutes(
 
         const task = await useCases.createTaskUseCase.execute(inputData);
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_task', task.id, { title: body.title });
         return reply.status(201).send({
           status: 'success',
           data: task,
@@ -344,6 +346,7 @@ export function registerTaskRoutes(
           updates: updateData,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_task', paramsResult.data.taskId);
         return reply.status(200).send({
           status: 'success',
           data: task,
@@ -419,6 +422,7 @@ export function registerTaskRoutes(
 
         const task = await useCases.completeTaskUseCase.execute(inputData);
 
+        logAudit(repository, request, paramsResult.data.householdId, 'complete_task', paramsResult.data.taskId);
         return reply.status(200).send({
           status: 'success',
           data: task,
@@ -476,6 +480,7 @@ export function registerTaskRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'confirm_task', paramsResult.data.taskId);
         return reply.status(200).send({
           status: 'success',
           data: task,
@@ -529,6 +534,7 @@ export function registerTaskRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_task', paramsResult.data.taskId);
         return reply.status(204).send();
       } catch (error) {
         return handleDomainError(error, reply);
@@ -606,6 +612,7 @@ export function registerTaskRoutes(
 
         const reminder = await useCases.createTaskReminderUseCase.execute(inputData);
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_task_reminder', reminder.id);
         return reply.status(201).send({
           status: 'success',
           data: reminder,
@@ -687,6 +694,7 @@ export function registerTaskRoutes(
           updates: updateData,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_task_reminder', paramsResult.data.reminderId);
         return reply.status(200).send({
           status: 'success',
           data: reminder,
@@ -742,6 +750,7 @@ export function registerTaskRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_task_reminder', paramsResult.data.reminderId);
         return reply.status(204).send();
       } catch (error) {
         return handleDomainError(error, reply);

@@ -14,6 +14,7 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
+import { logAudit } from '../auditHelper.js';
 
 export function registerJournalRoutes(
   fastify: FastifyInstance,
@@ -159,6 +160,8 @@ export function registerJournalRoutes(
           ...(body.category !== undefined && { category: body.category }),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_journal_entry', entry.id, { title: body.content });
+
         return reply.status(201).send({
           status: 'success',
           data: entry,
@@ -236,6 +239,8 @@ export function registerJournalRoutes(
           requester: getRequesterContext(request),
           updates,
         });
+
+        logAudit(repository, request, paramsResult.data.householdId, 'update_journal_entry', paramsResult.data.entryId);
 
         return reply.status(200).send({
           status: 'success',
@@ -360,6 +365,8 @@ export function registerJournalRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
+
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_journal_entry', paramsResult.data.entryId);
 
         return reply.status(204).send();
       } catch (error) {

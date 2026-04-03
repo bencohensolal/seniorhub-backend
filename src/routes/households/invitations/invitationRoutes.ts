@@ -24,6 +24,7 @@ import {
 } from './invitationSchemas.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 /**
  * Detects if the request is coming from a mobile device
@@ -276,14 +277,8 @@ export const registerInvitationRoutes = (
         invitationEmailRuntime.queue.enqueueBulk(emailJobs);
 
         for (const delivery of result.deliveries) {
-          await repository.logAuditEvent({
-            householdId: paramsResult.data.householdId,
-            actorUserId: request.requester!.userId,
-            action: 'invitation_created',
-            targetId: delivery.invitationId,
-            metadata: {
-              inviteeEmailMasked: maskEmail(delivery.inviteeEmail),
-            },
+          logAudit(repository, request, paramsResult.data.householdId, 'invitation_created', delivery.invitationId, {
+            inviteeEmailMasked: maskEmail(delivery.inviteeEmail),
           });
         }
 
@@ -389,6 +384,12 @@ export const registerInvitationRoutes = (
       const result = await useCases.autoAcceptPendingInvitationsUseCase.execute({
         requester: getRequesterContext(request),
       });
+
+      for (const household of result.households) {
+        logAudit(repository, request, household.householdId, 'auto_accept_invitations', null, {
+          role: household.role,
+        });
+      }
 
       return reply.status(200).send({
         status: 'success',
@@ -571,14 +572,10 @@ export const registerInvitationRoutes = (
           ...invitationIdentifier,
         });
 
-        await repository.logAuditEvent({
-          householdId: result.householdId,
-          actorUserId: requester.userId,
-          action: 'invitation_accepted',
-          targetId: payloadResult.data.invitationId ?? payloadResult.data.token ?? 'pending-email-selection',
-          metadata: {
-            requesterEmailMasked: maskEmail(requester.email),
-          },
+        // Attach requester so logAudit can read actorUserId (public endpoint, no auth hook)
+        (request as any).requester = requester;
+        logAudit(repository, request, result.householdId, 'invitation_accepted', payloadResult.data.invitationId ?? payloadResult.data.token ?? 'pending-email-selection', {
+          requesterEmailMasked: maskEmail(requester.email),
         });
 
         return reply.status(200).send({
@@ -668,14 +665,8 @@ export const registerInvitationRoutes = (
           }]);
         }
 
-        await repository.logAuditEvent({
-          householdId: paramsResult.data.householdId,
-          actorUserId: request.requester!.userId,
-          action: 'invitation_resent',
-          targetId: paramsResult.data.invitationId,
-          metadata: {
-            requesterEmailMasked: maskEmail(request.requester!.email),
-          },
+        logAudit(repository, request, paramsResult.data.householdId, 'invitation_resent', paramsResult.data.invitationId, {
+          requesterEmailMasked: maskEmail(request.requester!.email),
         });
 
         return reply.status(200).send({
@@ -766,14 +757,8 @@ export const registerInvitationRoutes = (
           fallbackUrl: result.fallbackUrl,
         }]);
 
-        await repository.logAuditEvent({
-          householdId: paramsResult.data.householdId,
-          actorUserId: request.requester!.userId,
-          action: 'invitation_reactivated',
-          targetId: paramsResult.data.invitationId,
-          metadata: {
-            requesterEmailMasked: maskEmail(request.requester!.email),
-          },
+        logAudit(repository, request, paramsResult.data.householdId, 'invitation_reactivated', paramsResult.data.invitationId, {
+          requesterEmailMasked: maskEmail(request.requester!.email),
         });
 
         return reply.status(200).send({
@@ -841,14 +826,8 @@ export const registerInvitationRoutes = (
           requester: getRequesterContext(request),
         });
 
-        await repository.logAuditEvent({
-          householdId: paramsResult.data.householdId,
-          actorUserId: request.requester!.userId,
-          action: 'invitation_cancelled',
-          targetId: paramsResult.data.invitationId,
-          metadata: {
-            requesterEmailMasked: maskEmail(request.requester!.email),
-          },
+        logAudit(repository, request, paramsResult.data.householdId, 'invitation_cancelled', paramsResult.data.invitationId, {
+          requesterEmailMasked: maskEmail(request.requester!.email),
         });
 
         return reply.status(200).send({

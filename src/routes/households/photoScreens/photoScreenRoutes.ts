@@ -25,6 +25,7 @@ import {
   photoParamsSchema,
 } from './photoScreenSchemas.js';
 import { MAX_PHOTO_SIZE_MB, MAX_PHOTO_CAPTION_LENGTH } from '../../../domain/entities/PhotoScreen.js';
+import { logAudit } from '../../households/auditHelper.js';
 
 const MAX_FILE_SIZE = MAX_PHOTO_SIZE_MB * 1024 * 1024; // Convert to bytes
 const getMultipartFieldValue = (field: MultipartFields[string]): string | undefined => {
@@ -87,6 +88,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       ...(body.showCaptions !== undefined && { showCaptions: body.showCaptions }),
       requester,
     });
+
+    logAudit(repository, request, householdId, 'create_photo_screen', photoScreen.id, { name: body.name });
 
     return reply.code(201).send({
       success: true,
@@ -184,6 +187,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       requester,
     });
 
+    logAudit(repository, request, householdId, 'update_photo_screen', screenId);
+
     return reply.send({
       success: true,
       data: photoScreen,
@@ -212,6 +217,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       photoScreenId: screenId,
       requester,
     });
+
+    logAudit(repository, request, householdId, 'delete_photo_screen', screenId);
 
     return reply.send({
       success: true,
@@ -293,6 +300,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       requester,
     });
 
+    logAudit(repository, request, householdId, 'upload_photo', photo.id);
+
     return reply.code(201).send({
       success: true,
       data: photo,
@@ -328,6 +337,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       requester,
     });
 
+    logAudit(repository, request, householdId, 'update_photo', photoId);
+
     return reply.send({
       success: true,
       data: photo,
@@ -357,6 +368,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       photoId,
       requester,
     });
+
+    logAudit(repository, request, householdId, 'delete_photo', photoId);
 
     return reply.send({
       success: true,
@@ -390,6 +403,8 @@ export async function photoScreenRoutes(server: FastifyInstance) {
       photoOrders: body.photoOrders,
       requester,
     });
+
+    logAudit(repository, request, householdId, 'reorder_photos', screenId);
 
     return reply.send({
       success: true,

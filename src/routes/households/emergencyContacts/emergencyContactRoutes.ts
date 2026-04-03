@@ -8,6 +8,7 @@ import type { ReorderEmergencyContactsUseCase } from '../../../domain/usecases/e
 import type { TriggerEmergencyAlertUseCase } from '../../../domain/usecases/emergencyContacts/TriggerEmergencyAlertUseCase.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 const errorResponseSchema = {
   type: 'object',
@@ -34,7 +35,7 @@ const emergencyContactSchema = {
 
 export function registerEmergencyContactRoutes(
   fastify: FastifyInstance,
-  _repository: HouseholdRepository,
+  repository: HouseholdRepository,
   useCases: {
     listEmergencyContactsUseCase: ListEmergencyContactsUseCase;
     createEmergencyContactUseCase: CreateEmergencyContactUseCase;
@@ -135,6 +136,7 @@ export function registerEmergencyContactRoutes(
           ...(body.priorityOrder !== undefined && { priorityOrder: body.priorityOrder }),
           requesterUserId: requester.userId,
         });
+        logAudit(repository, request, householdId, 'create_emergency_contact', contact.id, { name: body.name });
         return reply.status(201).send({ status: 'success', data: contact });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -185,6 +187,7 @@ export function registerEmergencyContactRoutes(
           orderedIds: body.orderedIds,
           requesterUserId: requester.userId,
         });
+        logAudit(repository, request, householdId, 'reorder_emergency_contacts');
         return reply.status(200).send({ status: 'success' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -252,6 +255,7 @@ export function registerEmergencyContactRoutes(
           },
           requesterUserId: requester.userId,
         });
+        logAudit(repository, request, householdId, 'update_emergency_contact', contactId, { ...(body.name !== undefined && { name: body.name }) });
         return reply.status(200).send({ status: 'success', data: contact });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -296,6 +300,7 @@ export function registerEmergencyContactRoutes(
           householdId,
           requesterUserId: requester.userId,
         });
+        logAudit(repository, request, householdId, 'delete_emergency_contact', contactId);
         return reply.status(200).send({ status: 'success' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -334,6 +339,7 @@ export function registerEmergencyContactRoutes(
       try {
         const requester = getRequesterContext(request);
         const result = await useCases.triggerEmergencyAlertUseCase.execute(householdId, requester.userId);
+        logAudit(repository, request, householdId, 'trigger_emergency_alert');
         return reply.status(200).send({ status: 'ok', tokensSent: result.tokensSent });
       } catch (error) {
         return handleDomainError(error, reply);

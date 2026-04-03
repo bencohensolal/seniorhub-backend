@@ -8,6 +8,7 @@ import { createHouseholdBodySchema, paramsSchema, errorResponseSchema } from '..
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
+import { logAudit } from '../auditHelper.js';
 import type {
   HouseholdMemberPermissions,
   HouseholdNotificationSettings,
@@ -91,6 +92,8 @@ export const registerHouseholdRoutes = (
         name: payloadResult.data.name,
         requester: getRequesterContext(request),
       });
+
+      logAudit(repository, request, household.id, 'create_household', household.id, { name: payloadResult.data.name });
 
       return reply.status(201).send({
         status: 'success',
@@ -269,6 +272,8 @@ export const registerHouseholdRoutes = (
           paramsResult.data.householdId,
           bodyResult.data.name,
         );
+
+        logAudit(repository, request, paramsResult.data.householdId, 'update_household_name', paramsResult.data.householdId, { name: bodyResult.data.name });
 
         return reply.status(200).send({
           status: 'success',
@@ -508,6 +513,7 @@ export const registerHouseholdRoutes = (
           }),
         };
         const settings = await repository.updateHouseholdSettings(paramsResult.data.householdId, payload);
+        logAudit(repository, request, paramsResult.data.householdId, 'update_household_settings', paramsResult.data.householdId);
         return reply.status(200).send({ status: 'success', data: settings });
       } catch (error) {
         return handleDomainError(error, reply);

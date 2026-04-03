@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { env } from '../../../config/env.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../../domain/entities/Household.js';
-import type { AuditEventInput, HouseholdInvitation } from '../../../domain/entities/Invitation.js';
+import type { HouseholdInvitation } from '../../../domain/entities/Invitation.js';
+import { getCategoryForAction } from '../../../domain/entities/AuditEvent.js';
+import type { AuditEventInput, AuditEvent, ListAuditEventsParams, ListAuditEventsResult } from '../../../domain/entities/AuditEvent.js';
 import type { HouseholdRole, Member } from '../../../domain/entities/Member.js';
 import { isInvitationTokenValid, signInvitationToken } from '../../../domain/security/invitationToken.js';
 import { buildInvitationLinks } from '../../../domain/services/buildInvitationLinks.js';
@@ -1073,11 +1075,80 @@ export class PostgresHouseholdCoreRepository {
   }
 
   async logAuditEvent(input: AuditEventInput): Promise<void> {
+    const category = input.category ?? getCategoryForAction(input.action);
     await this.pool.query(
-      `INSERT INTO audit_events (id, household_id, actor_user_id, action, target_id, metadata, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)`,
-      [randomUUID(), input.householdId, input.actorUserId, input.action, input.targetId, JSON.stringify(input.metadata), nowIso()],
+      `INSERT INTO audit_events (id, household_id, actor_user_id, action, category, target_id, metadata, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)`,
+      [
+        randomUUID(),
+        input.householdId,
+        input.actorUserId ?? null,
+        input.action,
+        category,
+        input.targetId ?? null,
+        JSON.stringify(input.metadata ?? {}),
+        nowIso(),
+      ],
     );
+  }
+
+  async listAuditEvents(params: ListAuditEventsParams): Promise<ListAuditEventsResult> {
+    const conditions: string[] = ['ae.household_id = $1'];
+    const values: unknown[] = [params.householdId];
+    let idx = 2;
+
+    if (params.category) {
+      conditions.push(`ae.category = $${idx}`);
+      values.push(params.category);
+      idx++;
+    }
+    if (params.sinceDate) {
+      conditions.push(`ae.created_at >= $${idx}`);
+      values.push(params.sinceDate);
+      idx++;
+    }
+    if (params.cursor) {
+      conditions.push(`ae.created_at < $${idx}`);
+      values.push(params.cursor);
+      idx++;
+    }
+
+    const limit = Math.min(params.limit || 50, 100);
+    values.push(limit + 1); // fetch one extra for pagination
+
+    const sql = `
+      SELECT
+        ae.id, ae.household_id, ae.actor_user_id, ae.action, ae.category,
+        ae.target_id, ae.metadata, ae.created_at,
+        hm.first_name AS actor_first_name, hm.last_name AS actor_last_name
+      FROM audit_events ae
+      LEFT JOIN household_members hm ON hm.user_id = ae.actor_user_id AND hm.household_id = ae.household_id
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY ae.created_at DESC
+      LIMIT $${idx}
+    `;
+
+    const result = await this.pool.query(sql, values);
+    const hasMore = result.rows.length > limit;
+    const rows = hasMore ? result.rows.slice(0, limit) : result.rows;
+
+    const events: AuditEvent[] = rows.map((row: any) => ({
+      id: row.id,
+      householdId: row.household_id,
+      actorUserId: row.actor_user_id,
+      actorFirstName: row.actor_first_name ?? null,
+      actorLastName: row.actor_last_name ?? null,
+      action: row.action,
+      category: row.category,
+      targetId: row.target_id,
+      metadata: row.metadata ?? {},
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    }));
+
+    return {
+      events,
+      nextCursor: hasMore ? events[events.length - 1].createdAt : null,
+    };
   }
 
   async findMemberById(memberId: string): Promise<Member | null> {

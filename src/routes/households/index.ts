@@ -88,6 +88,7 @@ import { registerEmergencyContactRoutes } from './emergencyContacts/emergencyCon
 import { registerSeniorDeviceRoutes } from './seniorDevices/seniorDeviceRoutes.js';
 import { registerCaregiverTodoRoutes } from './caregiverTodos/caregiverTodoRoutes.js';
 import { registerSubscriptionRoutes } from './subscriptions/subscriptionRoutes.js';
+import { registerHistoryRoutes } from './history/historyRoutes.js';
 import { ListCaregiverTodosUseCase } from '../../domain/usecases/caregiverTodos/ListCaregiverTodosUseCase.js';
 import { CreateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CreateCaregiverTodoUseCase.js';
 import { UpdateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/UpdateCaregiverTodoUseCase.js';
@@ -307,6 +308,10 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
   registerSeniorDeviceRoutes(fastify, repository);
 
   registerSubscriptionRoutes(fastify, repository, {
+    getHouseholdSubscriptionUseCase: useCases.getHouseholdSubscriptionUseCase,
+  });
+
+  registerHistoryRoutes(fastify, repository, {
     getHouseholdSubscriptionUseCase: useCases.getHouseholdSubscriptionUseCase,
   });
 

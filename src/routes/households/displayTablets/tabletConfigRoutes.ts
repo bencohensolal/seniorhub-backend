@@ -7,6 +7,7 @@ import { requireUserAuth } from '../../../plugins/authContext.js';
 import { tabletDisplayConfigSchema, validateScreenSettings } from './displayTabletSchemas.js';
 import { ValidationError } from '../../../domain/errors/index.js';
 import { tabletConfigNotifier } from '../../../domain/services/tabletConfigNotifier.js';
+import { logAudit } from '../auditHelper.js';
 
 const householdTabletParamsSchema = z.object({
   householdId: z.string().uuid(),
@@ -142,6 +143,8 @@ export function registerTabletConfigRoutes(
         if (tablet.config) {
           tabletConfigNotifier.notifyConfigUpdate(params.tabletId, tablet.config);
         }
+
+        logAudit(repository, request, params.householdId, 'update_tablet_config', params.tabletId);
 
         return reply.status(200).send({
           success: true,

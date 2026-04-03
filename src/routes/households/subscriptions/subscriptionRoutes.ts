@@ -4,6 +4,7 @@ import type { GetHouseholdSubscriptionUseCase } from '../../../domain/usecases/s
 import type { SubscriptionPlan } from '../../../domain/entities/Subscription.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 const errorResponseSchema = {
   type: 'object',
@@ -119,6 +120,8 @@ export function registerSubscriptionRoutes(
         });
 
         request.log.info({ householdId, plan, productId }, 'Subscription confirmed via app');
+
+        logAudit(repository, request, householdId, 'confirm_subscription_purchase', sub.id, { plan, productId });
 
         // Return updated subscription info
         const requester = getRequesterContext(request);

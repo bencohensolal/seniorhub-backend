@@ -7,6 +7,7 @@ import type { LeaveHouseholdUseCase } from '../../../domain/usecases/households/
 import { paramsSchema, errorResponseSchema } from '../householdSchemas.js';
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 import { buildHouseholdPrivacyContext, filterMembersByPrivacy } from '../../../domain/services/privacyFilter.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 
@@ -148,6 +149,8 @@ export function registerMemberRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, params.householdId, 'leave_household');
+
         return reply.status(200).send({ status: 'success', message: 'Successfully left the household.' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -196,6 +199,8 @@ export function registerMemberRoutes(
           memberId: params.memberId,
           requester: getRequesterContext(request),
         });
+
+        logAudit(repository, request, params.householdId, 'remove_member', params.memberId);
 
         return reply.status(200).send({ status: 'success', message: 'Member removed successfully.' });
       } catch (error) {
@@ -269,6 +274,8 @@ export function registerMemberRoutes(
         });
         const privacyContext = await buildHouseholdPrivacyContext(repository, params.householdId);
         const [filteredMember] = filterMembersByPrivacy([updatedMember], privacyContext, request.requester?.userId);
+
+        logAudit(repository, request, params.householdId, 'update_member_role', params.memberId, { role: body.role });
 
         return reply.status(200).send({ status: 'success', data: filteredMember });
       } catch (error) {

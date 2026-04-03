@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { env } from '../../config/env.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
-import type { AuditEvent, AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import type { HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import { getCategoryForAction } from '../../domain/entities/AuditEvent.js';
+import type { AuditEvent, AuditEventInput, ListAuditEventsParams, ListAuditEventsResult } from '../../domain/entities/AuditEvent.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
 import { signInvitationToken, isInvitationTokenValid } from '../../domain/security/invitationToken.js';
 import { buildInvitationLinks } from '../../domain/services/buildInvitationLinks.js';
@@ -617,13 +619,30 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async logAuditEvent(input: AuditEventInput): Promise<void> {
     auditEvents.push({
       id: randomUUID(),
-      householdId: input.householdId,
-      actorUserId: input.actorUserId,
+      householdId: input.householdId ?? '',
+      actorUserId: input.actorUserId ?? null,
+      actorFirstName: null,
+      actorLastName: null,
       action: input.action,
-      targetId: input.targetId,
-      metadata: input.metadata,
+      category: input.category ?? getCategoryForAction(input.action),
+      targetId: input.targetId ?? null,
+      metadata: input.metadata ?? {},
       createdAt: nowIso(),
     });
+  }
+
+  async listAuditEvents(params: ListAuditEventsParams): Promise<ListAuditEventsResult> {
+    let filtered = auditEvents.filter((e) => e.householdId === params.householdId);
+    if (params.category) filtered = filtered.filter((e) => e.category === params.category);
+    if (params.sinceDate) filtered = filtered.filter((e) => e.createdAt >= params.sinceDate!);
+    if (params.cursor) filtered = filtered.filter((e) => e.createdAt < params.cursor!);
+    filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const limit = params.limit || 50;
+    const events = filtered.slice(0, limit);
+    return {
+      events,
+      nextCursor: filtered.length > limit ? events[events.length - 1].createdAt : null,
+    };
   }
 
   async findMemberById(memberId: string): Promise<Member | null> {

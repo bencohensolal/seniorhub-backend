@@ -20,6 +20,7 @@ import { handleDomainError } from '../../errorHandler.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
 import { NotFoundError } from '../../../domain/errors/index.js';
+import { logAudit } from '../auditHelper.js';
 
 export function registerOccurrenceRoutes(
   fastify: FastifyInstance,
@@ -101,6 +102,7 @@ export function registerOccurrenceRoutes(
           modifications: bodyResult.data.modifications as Array<{ occurrenceDate: string; overrides: OccurrenceOverrides }>,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'batch_modify_occurrences', paramsResult.data.appointmentId);
         return reply.status(200).send({ status: 'success', data: results });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -169,6 +171,7 @@ export function registerOccurrenceRoutes(
           dates: bodyResult.data.dates,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'batch_cancel_occurrences', paramsResult.data.appointmentId);
         return reply.status(200).send({ status: 'success', data: results });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -226,6 +229,7 @@ export function registerOccurrenceRoutes(
           occurrenceDate: paramsResult.data.occurrenceDate,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'restore_occurrence', paramsResult.data.appointmentId);
         return reply.status(200).send({ status: 'success', data: occurrence });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -380,6 +384,7 @@ export function registerOccurrenceRoutes(
           overrides: (bodyResult.data.overrides || {}) as OccurrenceOverrides,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'modify_occurrence', paramsResult.data.appointmentId);
         return reply.status(200).send({ status: 'success', data: occurrence });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -440,6 +445,7 @@ export function registerOccurrenceRoutes(
           occurrenceDate: paramsResult.data.occurrenceDate,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'cancel_occurrence', paramsResult.data.appointmentId);
         return reply.status(200).send({ status: 'success', data: occurrence });
       } catch (error) {
         return handleDomainError(error, reply);

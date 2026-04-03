@@ -12,6 +12,7 @@ import {
   createTextScreenSchema,
   updateTextScreenSchema,
 } from './textScreenSchemas.js';
+import { logAudit } from '../../households/auditHelper.js';
 
 export async function textScreenRoutes(server: FastifyInstance) {
   const repository = createHouseholdRepository();
@@ -53,6 +54,8 @@ export async function textScreenRoutes(server: FastifyInstance) {
       ...(body.animation !== undefined && { animation: body.animation }),
       requester,
     });
+
+    logAudit(repository, request, householdId, 'create_text_screen', textScreen.id, { title: body.title });
 
     return reply.code(201).send({
       success: true,
@@ -156,6 +159,8 @@ export async function textScreenRoutes(server: FastifyInstance) {
       requester,
     });
 
+    logAudit(repository, request, householdId, 'update_text_screen', screenId);
+
     return reply.send({
       success: true,
       data: textScreen,
@@ -184,6 +189,8 @@ export async function textScreenRoutes(server: FastifyInstance) {
       textScreenId: screenId,
       requester,
     });
+
+    logAudit(repository, request, householdId, 'delete_text_screen', screenId);
 
     return reply.send({
       success: true,

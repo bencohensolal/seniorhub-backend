@@ -24,6 +24,7 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 export function registerAppointmentRoutes(
   fastify: FastifyInstance,
@@ -268,6 +269,7 @@ export function registerAppointmentRoutes(
 
         const appointment = await useCases.createAppointmentUseCase.execute(inputData);
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_appointment', appointment.id, { title: body.title });
         return reply.status(201).send({
           status: 'success',
           data: appointment,
@@ -381,6 +383,7 @@ export function registerAppointmentRoutes(
           data: updateData,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_appointment', paramsResult.data.appointmentId, { title: body.title || '' });
         return reply.status(200).send({
           status: 'success',
           data: appointment,
@@ -436,6 +439,7 @@ export function registerAppointmentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_appointment', paramsResult.data.appointmentId);
         return reply.status(204).send();
       } catch (error) {
         return handleDomainError(error, reply);
@@ -512,6 +516,7 @@ export function registerAppointmentRoutes(
 
         const reminder = await useCases.createAppointmentReminderUseCase.execute(inputData);
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_appointment_reminder', reminder.id);
         return reply.status(201).send({
           status: 'success',
           data: reminder,
@@ -591,6 +596,7 @@ export function registerAppointmentRoutes(
           data: updateData,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_appointment_reminder', paramsResult.data.reminderId);
         return reply.status(200).send({
           status: 'success',
           data: reminder,
@@ -648,6 +654,7 @@ export function registerAppointmentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_appointment_reminder', paramsResult.data.reminderId);
         return reply.status(204).send();
       } catch (error) {
         return handleDomainError(error, reply);

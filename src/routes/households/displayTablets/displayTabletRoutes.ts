@@ -12,6 +12,7 @@ import { RefreshDisplayTabletSessionUseCase } from '../../../domain/usecases/dis
 import { handleDomainError } from '../../errorHandler.js';
 import { requireUserAuth } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 // Tablet auth rate limiting (in-memory, per IP/tabletId)
 const tabletAuthRateState = new Map<string, { count: number; windowStartMs: number }>();
@@ -190,6 +191,8 @@ export const registerDisplayTabletRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
+        logAudit(repository, request, params.householdId, 'create_display_tablet', tablet.id, { name: body.name });
+
         return reply.status(201).send({
           status: 'success',
           data: tablet,
@@ -262,6 +265,8 @@ export const registerDisplayTabletRoutes = (
         // Remove internal actor IDs from response
         const { tokenHash, createdBy, revokedBy, ...sanitized } = tablet;
 
+        logAudit(repository, request, params.householdId, 'update_display_tablet', params.tabletId);
+
         return reply.status(200).send({
           status: 'success',
           data: sanitized,
@@ -309,6 +314,8 @@ export const registerDisplayTabletRoutes = (
           requesterUserId: request.requester!.userId,
         });
 
+        logAudit(repository, request, params.householdId, 'revoke_display_tablet', params.tabletId);
+
         return reply.status(200).send({
           status: 'success',
           message: 'Display tablet revoked successfully.',
@@ -355,6 +362,8 @@ export const registerDisplayTabletRoutes = (
           tabletId: params.tabletId,
           requesterUserId: request.requester!.userId,
         });
+
+        logAudit(repository, request, params.householdId, 'delete_display_tablet', params.tabletId);
 
         return reply.status(200).send({
           status: 'success',
@@ -415,6 +424,8 @@ export const registerDisplayTabletRoutes = (
           tabletId: params.tabletId,
           requesterUserId: request.requester!.userId,
         });
+
+        logAudit(repository, request, params.householdId, 'regenerate_tablet_token', params.tabletId);
 
         return reply.status(200).send({
           status: 'success',

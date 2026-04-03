@@ -29,20 +29,5 @@ export interface InvitationDeliveryResult {
   reason: string | null;
 }
 
-export interface AuditEvent {
-  id: string;
-  householdId: string;
-  actorUserId: string;
-  action: 'invitation_created' | 'invitation_accepted' | 'invitation_cancelled' | 'invitation_resent' | 'invitation_reactivated';
-  targetId: string;
-  metadata: Record<string, string>;
-  createdAt: string;
-}
-
-export interface AuditEventInput {
-  householdId: string;
-  actorUserId: string;
-  action: 'invitation_created' | 'invitation_accepted' | 'invitation_cancelled' | 'invitation_resent' | 'invitation_reactivated';
-  targetId: string;
-  metadata: Record<string, string>;
-}
+// Re-export from the centralized AuditEvent module for backward compatibility
+export type { AuditEvent, AuditEventInput } from './AuditEvent.js';

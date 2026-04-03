@@ -1,7 +1,8 @@
 import type { HouseholdOverview } from '../entities/Household.js';
 import type { Member } from '../entities/Member.js';
 import type { Household, AuthenticatedRequester } from '../entities/Household.js';
-import type { AuditEventInput, HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
+import type { HouseholdInvitation, InvitationDeliveryResult } from '../entities/Invitation.js';
+import type { AuditEventInput, ListAuditEventsParams, ListAuditEventsResult } from '../entities/AuditEvent.js';
 import type { HouseholdRole } from '../entities/Member.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../entities/AppointmentReminder.js';
@@ -97,6 +98,7 @@ export interface HouseholdRepository {
   removeMember(memberId: string): Promise<void>;
   updateMemberRole(memberId: string, newRole: HouseholdRole): Promise<Member>;
   logAuditEvent(input: AuditEventInput): Promise<void>;
+  listAuditEvents(params: ListAuditEventsParams): Promise<ListAuditEventsResult>;
 
   // Appointments
   listHouseholdAppointments(householdId: string): Promise<AppointmentWithReminders[]>;

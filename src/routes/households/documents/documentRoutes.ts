@@ -37,6 +37,7 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
 import { ensureHouseholdPermission, verifyTabletHouseholdAccess, getRequesterContext } from '../utils.js';
+import { logAudit } from '../auditHelper.js';
 
 export function registerDocumentRoutes(
   fastify: FastifyInstance,
@@ -244,6 +245,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_folder', folder.id, { name: bodyResult.data.name });
         return reply.status(201).send({
           status: 'success',
           data: folder,
@@ -312,6 +314,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_folder', paramsResult.data.folderId, { ...(bodyResult.data.name !== undefined && { name: bodyResult.data.name }) });
         return reply.status(200).send({
           status: 'success',
           data: folder,
@@ -368,6 +371,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_folder', paramsResult.data.folderId);
         return reply.status(204).send({
           status: 'success',
         });
@@ -437,6 +441,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'upload_document', document.id, { name: bodyResult.data.name });
         return reply.status(201).send({
           status: 'success',
           data: document,
@@ -505,6 +510,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_document', paramsResult.data.documentId, { ...(bodyResult.data.name !== undefined && { name: bodyResult.data.name }) });
         return reply.status(200).send({
           status: 'success',
           data: document,
@@ -561,6 +567,7 @@ export function registerDocumentRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_document', paramsResult.data.documentId);
         return reply.status(204).send({
           status: 'success',
         });
@@ -640,6 +647,7 @@ export function registerDocumentRoutes(
             requester: getRequesterContext(request),
           });
 
+          logAudit(repository, request, householdId, 'upload_document', document.id, { name });
           return reply.status(201).send({ status: 'success', data: document });
         } catch (error) {
           return handleDomainError(error, reply);
@@ -666,6 +674,7 @@ export function registerDocumentRoutes(
           itemType: body.itemType as 'folder' | 'document',
           requester: getRequesterContext(request),
         });
+        logAudit(repository, request, paramsResult.data.householdId, 'move_to_trash', body.itemId, { itemType: body.itemType! });
         return reply.status(204).send({ status: 'success' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -690,6 +699,7 @@ export function registerDocumentRoutes(
           itemType: body.itemType as 'folder' | 'document',
           requester: getRequesterContext(request),
         });
+        logAudit(repository, request, paramsResult.data.householdId, 'restore_from_trash', body.itemId, { itemType: body.itemType! });
         return reply.status(204).send({ status: 'success' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -715,6 +725,7 @@ export function registerDocumentRoutes(
           itemType: body.itemType as 'folder' | 'document',
           requester: getRequesterContext(request),
         });
+        logAudit(repository, request, paramsResult.data.householdId, 'permanently_delete_document', body.itemId, { itemType: body.itemType! });
         return reply.status(204).send({ status: 'success' });
       } catch (error) {
         return handleDomainError(error, reply);
@@ -736,6 +747,7 @@ export function registerDocumentRoutes(
           householdId: paramsResult.data.householdId,
           requester: getRequesterContext(request),
         });
+        logAudit(repository, request, paramsResult.data.householdId, 'purge_expired_trash');
         return reply.status(200).send({ status: 'success', data: result });
       } catch (error) {
         return handleDomainError(error, reply);

@@ -18,6 +18,7 @@ import {
 import { handleDomainError } from '../../errorHandler.js';
 import { ensureHouseholdPermission, getRequesterContext } from '../utils.js';
 import { requireWritePermission } from '../../../plugins/authContext.js';
+import { logAudit } from '../auditHelper.js';
 
 export function registerCaregiverTodoRoutes(
   fastify: FastifyInstance,
@@ -164,6 +165,7 @@ export function registerCaregiverTodoRoutes(
           ...(body.dueDate !== undefined && { dueDate: body.dueDate }),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'create_caregiver_todo', todo.id, { title: body.title });
         return reply.status(201).send({
           status: 'success',
           data: todo,
@@ -246,6 +248,7 @@ export function registerCaregiverTodoRoutes(
           updates,
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'update_caregiver_todo', paramsResult.data.todoId, { ...(body.title !== undefined && { title: body.title }) });
         return reply.status(200).send({
           status: 'success',
           data: todo,
@@ -300,6 +303,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'delete_caregiver_todo', paramsResult.data.todoId);
         return reply.status(204).send();
       } catch (error) {
         return handleDomainError(error, reply);
@@ -354,6 +358,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'complete_caregiver_todo', paramsResult.data.todoId);
         return reply.status(200).send({
           status: 'success',
           data: todo,
@@ -411,6 +416,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'nudge_caregiver_todo', paramsResult.data.todoId);
         return reply.status(200).send({
           status: 'success',
           data: todo,
@@ -478,6 +484,7 @@ export function registerCaregiverTodoRoutes(
           requester: getRequesterContext(request),
         });
 
+        logAudit(repository, request, paramsResult.data.householdId, 'add_caregiver_todo_comment', paramsResult.data.todoId);
         return reply.status(201).send({
           status: 'success',
           data: comment,
