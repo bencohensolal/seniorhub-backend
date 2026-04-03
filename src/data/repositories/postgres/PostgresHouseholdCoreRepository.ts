@@ -1147,7 +1147,7 @@ export class PostgresHouseholdCoreRepository {
 
     return {
       events,
-      nextCursor: hasMore ? events[events.length - 1].createdAt : null,
+      nextCursor: hasMore ? (events.at(-1)?.createdAt ?? null) : null,
     };
   }
 

@@ -1,7 +1,8 @@
 import type { Pool } from 'pg';
 import type { HouseholdRepository } from '../../domain/repositories/HouseholdRepository.js';
 import type { AuthenticatedRequester, Household, HouseholdOverview } from '../../domain/entities/Household.js';
-import type { AuditEventInput, HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import type { HouseholdInvitation } from '../../domain/entities/Invitation.js';
+import type { AuditEventInput, ListAuditEventsParams, ListAuditEventsResult } from '../../domain/entities/AuditEvent.js';
 import type { HouseholdRole, Member } from '../../domain/entities/Member.js';
 import type { Appointment, AppointmentWithReminders, CreateAppointmentInput, UpdateAppointmentInput } from '../../domain/entities/Appointment.js';
 import type { AppointmentReminder, CreateAppointmentReminderInput, UpdateAppointmentReminderInput } from '../../domain/entities/AppointmentReminder.js';
@@ -87,6 +88,7 @@ export class PostgresHouseholdRepository implements HouseholdRepository {
   resendInvitation = (input: { householdId: string; invitationId: string; requesterUserId: string }): Promise<{ newToken: string; newExpiresAt: string; acceptLinkUrl: string; deepLinkUrl: string; fallbackUrl: string | null }> => this.core.resendInvitation(input);
   reactivateInvitation = (input: { householdId: string; invitationId: string; requesterUserId: string }): Promise<{ id: string; inviteeFirstName: string; inviteeLastName: string; inviteeEmail: string; assignedRole: HouseholdRole; newToken: string; newExpiresAt: string; acceptLinkUrl: string; deepLinkUrl: string; fallbackUrl: string | null }> => this.core.reactivateInvitation(input);
   logAuditEvent = (input: AuditEventInput): Promise<void> => this.core.logAuditEvent(input);
+  listAuditEvents = (params: ListAuditEventsParams): Promise<ListAuditEventsResult> => this.core.listAuditEvents(params);
   findMemberById = (memberId: string): Promise<Member | null> => this.core.findMemberById(memberId);
   removeMember = (memberId: string): Promise<void> => this.core.removeMember(memberId);
   updateMemberRole = (memberId: string, newRole: HouseholdRole): Promise<Member> => this.core.updateMemberRole(memberId, newRole);

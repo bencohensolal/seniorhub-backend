@@ -634,14 +634,16 @@ export class InMemoryHouseholdRepository implements HouseholdRepository {
   async listAuditEvents(params: ListAuditEventsParams): Promise<ListAuditEventsResult> {
     let filtered = auditEvents.filter((e) => e.householdId === params.householdId);
     if (params.category) filtered = filtered.filter((e) => e.category === params.category);
-    if (params.sinceDate) filtered = filtered.filter((e) => e.createdAt >= params.sinceDate!);
-    if (params.cursor) filtered = filtered.filter((e) => e.createdAt < params.cursor!);
+    const sinceDate = params.sinceDate;
+    const cursor = params.cursor;
+    if (sinceDate) filtered = filtered.filter((e) => e.createdAt >= sinceDate);
+    if (cursor) filtered = filtered.filter((e) => e.createdAt < cursor);
     filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const limit = params.limit || 50;
     const events = filtered.slice(0, limit);
     return {
       events,
-      nextCursor: filtered.length > limit ? events[events.length - 1].createdAt : null,
+      nextCursor: filtered.length > limit ? (events.at(-1)?.createdAt ?? null) : null,
     };
   }
 

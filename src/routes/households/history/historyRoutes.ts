@@ -65,15 +65,17 @@ export function registerHistoryRoutes(
           sinceDate = d.toISOString();
         }
 
-        const result = await repository.listAuditEvents({
+        const params: import('../../../domain/entities/AuditEvent.js').ListAuditEventsParams = {
           householdId,
-          category: category as AuditCategory | undefined,
-          cursor,
           limit,
-          sinceDate,
-        });
+        };
+        if (category) params.category = category as AuditCategory;
+        if (cursor) params.cursor = cursor;
+        if (sinceDate) params.sinceDate = sinceDate;
 
-        return reply.status(200).send({
+        const result = await repository.listAuditEvents(params);
+
+        return reply.send({
           status: 'success',
           data: result,
         });
