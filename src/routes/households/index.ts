@@ -89,6 +89,9 @@ import { registerSeniorDeviceRoutes } from './seniorDevices/seniorDeviceRoutes.j
 import { registerCaregiverTodoRoutes } from './caregiverTodos/caregiverTodoRoutes.js';
 import { registerSubscriptionRoutes } from './subscriptions/subscriptionRoutes.js';
 import { registerHistoryRoutes } from './history/historyRoutes.js';
+import { registerReportRoutes } from './reports/reportRoutes.js';
+import { GenerateHouseholdReportUseCase } from '../../domain/usecases/reports/GenerateHouseholdReportUseCase.js';
+import { GenerateWeeklySummaryUseCase } from '../../domain/usecases/reports/GenerateWeeklySummaryUseCase.js';
 import { ListCaregiverTodosUseCase } from '../../domain/usecases/caregiverTodos/ListCaregiverTodosUseCase.js';
 import { CreateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/CreateCaregiverTodoUseCase.js';
 import { UpdateCaregiverTodoUseCase } from '../../domain/usecases/caregiverTodos/UpdateCaregiverTodoUseCase.js';
@@ -313,6 +316,14 @@ export const householdsRoutes: FastifyPluginAsync = async (fastify) => {
 
   registerHistoryRoutes(fastify, repository, {
     getHouseholdSubscriptionUseCase: useCases.getHouseholdSubscriptionUseCase,
+  });
+
+  const generateHouseholdReportUseCase = new GenerateHouseholdReportUseCase(repository, journalRepository);
+  const generateWeeklySummaryUseCase = new GenerateWeeklySummaryUseCase(repository, journalRepository);
+
+  registerReportRoutes(fastify, repository, {
+    generateHouseholdReportUseCase,
+    generateWeeklySummaryUseCase,
   });
 
   // Register photo screen routes with v1 prefix

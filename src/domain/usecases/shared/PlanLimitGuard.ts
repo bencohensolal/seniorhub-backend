@@ -61,4 +61,31 @@ export class PlanLimitGuard {
     const subscription = await this.repository.ensureDefaultSubscription(householdId);
     return subscription.status === 'cancelled' ? 'gratuit' : subscription.plan;
   }
+
+  /**
+   * Ensure the household has at least the required plan level.
+   * Used to gate premium features (e.g., PDF export → serenite only).
+   */
+  async ensurePlanFeature(input: {
+    householdId: string;
+    requiredPlan: SubscriptionPlan;
+    feature: string;
+  }): Promise<SubscriptionPlan> {
+    const PLAN_LEVEL: Record<SubscriptionPlan, number> = { gratuit: 0, famille: 1, serenite: 2 };
+    const currentPlan = await this.getHouseholdPlan(input.householdId);
+
+    if (PLAN_LEVEL[currentPlan] < PLAN_LEVEL[input.requiredPlan]) {
+      const detail: PlanLimitExceeded = {
+        code: 'PLAN_LIMIT_REACHED',
+        resource: input.feature,
+        current: 0,
+        limit: 0,
+        currentPlan,
+        upgradePlan: UPGRADE_PATH[currentPlan],
+      };
+      throw new ConflictError(JSON.stringify(detail));
+    }
+
+    return currentPlan;
+  }
 }
